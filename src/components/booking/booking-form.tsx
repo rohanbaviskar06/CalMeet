@@ -183,7 +183,16 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
           const separator = customPaymentLink.includes("?") ? "&" : "?";
           const paymentLinkWithRef = `${customPaymentLink}${separator}reference_id=${result.booking.id}`;
           setTimeout(() => {
-            window.location.href = paymentLinkWithRef;
+            try {
+              // If loaded in an iframe, redirect the parent window to keep it on the same tab
+              if (window.self !== window.top) {
+                window.top!.location.href = paymentLinkWithRef;
+              } else {
+                window.location.href = paymentLinkWithRef;
+              }
+            } catch (e) {
+              window.location.href = paymentLinkWithRef;
+            }
           }, 1200);
           return;
         }
