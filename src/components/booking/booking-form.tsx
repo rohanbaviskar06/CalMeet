@@ -12,7 +12,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
-import { createBooking, deletePendingBooking } from "@/app/actions/bookings";
+import { createBooking, deletePendingBooking, verifyBookingPayment } from "@/app/actions/bookings";
 import { toast } from "sonner";
 
 interface BookingFormProps {
@@ -208,7 +208,6 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
             handler: async function (response: any) {
               setIsSubmitting(true);
               try {
-                const { verifyBookingPayment } = await import("@/app/actions/bookings");
                 const verifyResult = await verifyBookingPayment(
                   result.bookingId,
                   response.razorpay_payment_id,
