@@ -329,7 +329,9 @@ export async function createBooking(formData: z.infer<typeof bookingSchema>) {
     }
 
     // Send notifications/emails for non-paid bookings immediately
-    await sendBookingNotifications(booking.id);
+    if (!requiresPayment || !hasCustomPaymentLink) {
+      await sendBookingNotifications(booking.id);
+    }
 
     return { 
       success: true, 
@@ -393,6 +395,41 @@ export async function verifyBookingPayment(
   } catch (error: any) {
     console.error("Verification error:", error);
     return { success: false, error: error.message || "An error occurred during verification." };
+  }
+}
+
+export async function confirmCustomPaymentBooking(bookingId: string, paymentId: string) {
+  try {
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { eventType: true }
+    });
+    
+    if (!booking) {
+      return { success: false, error: "Booking not found." };
+    }
+
+    if (booking.status === "CONFIRMED") {
+      return { success: true };
+    }
+
+    // Update status to confirmed and paid
+    await prisma.booking.update({
+      where: { id: bookingId },
+      data: {
+        status: "CONFIRMED",
+        paymentStatus: "PAID",
+        razorpayPaymentId: paymentId
+      }
+    });
+
+    // Send notifications/emails now that the payment is confirmed
+    await sendBookingNotifications(bookingId);
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to confirm custom payment booking:", error);
+    return { success: false, error: error.message || "Confirmation failed." };
   }
 }
 

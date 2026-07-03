@@ -180,8 +180,10 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
 
         if (customPaymentLink) {
           toast.success("Redirecting to payment gateway to complete your booking...");
+          const separator = customPaymentLink.includes("?") ? "&" : "?";
+          const paymentLinkWithRef = `${customPaymentLink}${separator}reference_id=${result.booking.id}`;
           setTimeout(() => {
-            window.location.href = customPaymentLink;
+            window.location.href = paymentLinkWithRef;
           }, 1200);
           return;
         }
