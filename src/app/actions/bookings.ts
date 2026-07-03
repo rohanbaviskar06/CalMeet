@@ -219,10 +219,11 @@ export async function createBooking(formData: z.infer<typeof bookingSchema>) {
 
     // Check payment requirements
     const requiresPayment = eventType.requiresPayment;
+    const hasCustomPaymentLink = eventType.description?.includes("<!-- PAYMENT_LINK:");
     let keyId = "";
     let keySecret = "";
 
-    if (requiresPayment) {
+    if (requiresPayment && !hasCustomPaymentLink) {
       const razorpayIntegration = await prisma.integration.findFirst({
         where: { userId: eventType.userId, type: "razorpay" }
       });
@@ -293,7 +294,7 @@ export async function createBooking(formData: z.infer<typeof bookingSchema>) {
       });
     }
 
-    if (requiresPayment) {
+    if (requiresPayment && !hasCustomPaymentLink) {
       try {
         const Razorpay = require("razorpay");
         const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });

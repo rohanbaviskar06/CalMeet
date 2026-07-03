@@ -10,12 +10,17 @@ import { Loader2 } from "lucide-react";
 import { RichTextEditor } from "./rich-text-editor";
 
 export function EventTypeForm({ initialData }: { initialData?: any }) {
+  const matches = initialData?.description?.match(/<!-- PAYMENT_LINK: (.*?) -->/);
+  const initialPaymentLink = matches ? matches[1] : "";
+  const cleanDescription = initialData?.description?.replace(/<!-- PAYMENT_LINK: (.*?) -->/, "") || "";
+
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [description, setDescription] = useState(initialData?.description || "");
+  const [description, setDescription] = useState(cleanDescription || "");
   const [requiresPayment, setRequiresPayment] = useState(initialData?.requiresPayment || false);
   const [price, setPrice] = useState(initialData?.price || "");
   const [currency, setCurrency] = useState(initialData?.currency || "INR");
+  const [paymentLink, setPaymentLink] = useState(initialPaymentLink || "");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -25,7 +30,7 @@ export function EventTypeForm({ initialData }: { initialData?: any }) {
     const data = {
       title: formData.get("title") as string,
       slug: formData.get("slug") as string | undefined,
-      description: description,
+      description: requiresPayment && paymentLink ? `${description}<!-- PAYMENT_LINK: ${paymentLink} -->` : description,
       duration: parseInt(formData.get("duration") as string),
       videoCallProvider: formData.get("videoCallProvider") as string,
       requiresPayment,
@@ -144,31 +149,46 @@ export function EventTypeForm({ initialData }: { initialData?: any }) {
             </div>
 
             {requiresPayment && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Price *</label>
-                  <input
-                    type="number"
-                    min="1"
-                    step="any"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    placeholder="e.g. 500"
-                    className="w-full px-4 py-2 rounded-lg border bg-background focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                    required={requiresPayment}
-                  />
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Price *</label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="any"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      placeholder="e.g. 500"
+                      className="w-full px-4 py-2 rounded-lg border bg-background focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                      required={requiresPayment}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Currency *</label>
+                    <select
+                      value={currency}
+                      onChange={(e) => setCurrency(e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg border bg-background focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                      required={requiresPayment}
+                    >
+                      <option value="INR">INR (₹)</option>
+                      <option value="USD">USD ($)</option>
+                    </select>
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Currency *</label>
-                  <select
-                    value={currency}
-                    onChange={(e) => setCurrency(e.target.value)}
+                  <label className="text-sm font-medium">Custom Payment Link (e.g. Razorpay Payment Link)</label>
+                  <input
+                    type="url"
+                    value={paymentLink}
+                    onChange={(e) => setPaymentLink(e.target.value)}
+                    placeholder="https://rzp.io/i/..."
                     className="w-full px-4 py-2 rounded-lg border bg-background focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                    required={requiresPayment}
-                  >
-                    <option value="INR">INR (₹)</option>
-                    <option value="USD">USD ($)</option>
-                  </select>
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Optional. If provided, guests will be redirected to this payment link after scheduling.
+                  </p>
                 </div>
               </div>
             )}

@@ -175,6 +175,17 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
       });
 
       if (result.success) {
+        const matches = eventType.description?.match(/<!-- PAYMENT_LINK: (.*?) -->/);
+        const customPaymentLink = matches ? matches[1] : null;
+
+        if (customPaymentLink) {
+          toast.success("Redirecting to payment gateway to complete your booking...");
+          setTimeout(() => {
+            window.location.href = customPaymentLink;
+          }, 1200);
+          return;
+        }
+
         if (result.requiresPayment && result.razorpayOrder) {
           // Dynamic Razorpay SDK loader helper
           const loadScript = () => {
