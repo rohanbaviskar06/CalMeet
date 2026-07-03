@@ -179,21 +179,24 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
         const customPaymentLink = matches ? matches[1] : null;
 
         if (customPaymentLink) {
-          toast.success("Redirecting to payment gateway to complete your booking...");
-          const separator = customPaymentLink.includes("?") ? "&" : "?";
-          const paymentLinkWithRef = `${customPaymentLink}${separator}reference_id=${result.booking.id}`;
-          setTimeout(() => {
-            try {
-              // If loaded in an iframe, redirect the parent window to keep it on the same tab
-              if (window.self !== window.top) {
-                window.top!.location.href = paymentLinkWithRef;
-              } else {
+          const bookingId = result.booking?.id || result.bookingId;
+          if (bookingId) {
+            toast.success("Redirecting to payment gateway to complete your booking...");
+            const separator = customPaymentLink.includes("?") ? "&" : "?";
+            const paymentLinkWithRef = `${customPaymentLink}${separator}reference_id=${bookingId}`;
+            setTimeout(() => {
+              try {
+                // If loaded in an iframe, redirect the parent window to keep it on the same tab
+                if (window.self !== window.top) {
+                  window.top!.location.href = paymentLinkWithRef;
+                } else {
+                  window.location.href = paymentLinkWithRef;
+                }
+              } catch (e) {
                 window.location.href = paymentLinkWithRef;
               }
-            } catch (e) {
-              window.location.href = paymentLinkWithRef;
-            }
-          }, 1200);
+            }, 1200);
+          }
           return;
         }
 
