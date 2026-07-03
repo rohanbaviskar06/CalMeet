@@ -217,26 +217,7 @@ export async function createBooking(formData: z.infer<typeof bookingSchema>) {
     const startTime = new Date(validatedData.startTime);
     const endTime = new Date(validatedData.endTime);
 
-    // Check payment requirements
-    const requiresPayment = eventType.requiresPayment;
-    const hasCustomPaymentLink = eventType.description?.includes("<!-- PAYMENT_LINK:");
-    let keyId = "";
-    let keySecret = "";
 
-    if (requiresPayment && !hasCustomPaymentLink) {
-      const razorpayIntegration = await prisma.integration.findFirst({
-        where: { userId: eventType.userId, type: "razorpay" }
-      });
-      if (!razorpayIntegration) {
-        return { success: false, error: "Host has not configured payments yet." };
-      }
-      const credentials = JSON.parse(razorpayIntegration.credentials as string || "{}");
-      keyId = credentials.keyId;
-      keySecret = credentials.keySecret;
-      if (!keyId || !keySecret) {
-        return { success: false, error: "Host payments credentials are misconfigured." };
-      }
-    }
 
     // 2. Try to create a video call link based on event type settings
     let meetLink = null;
@@ -294,44 +275,8 @@ export async function createBooking(formData: z.infer<typeof bookingSchema>) {
       });
     }
 
-    if (requiresPayment && !hasCustomPaymentLink) {
-      try {
-        const Razorpay = require("razorpay");
-        const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
-        const orderAmount = Math.round((eventType.price || 0) * 100);
-        const order = await razorpay.orders.create({
-          amount: orderAmount,
-          currency: eventType.currency || "INR",
-          receipt: booking.id,
-        });
-
-        // Update booking with the order ID
-        const updatedBooking = await prisma.booking.update({
-          where: { id: booking.id },
-          data: { razorpayOrderId: order.id }
-        });
-
-        return {
-          success: true,
-          requiresPayment: true,
-          bookingId: booking.id,
-          razorpayOrder: {
-            id: order.id,
-            amount: orderAmount,
-            currency: order.currency,
-          },
-          keyId,
-        };
-      } catch (err: any) {
-        console.error("Razorpay order creation failed:", err);
-        return { success: false, error: "Failed to initialize payment gateway: " + (err.message || "") };
-      }
-    }
-
-    // Send notifications/emails for non-paid bookings immediately
-    if (!requiresPayment || !hasCustomPaymentLink) {
-      await sendBookingNotifications(booking.id);
-    }
+    // Send notifications/emails for bookings immediately
+    await sendBookingNotifications(booking.id);
 
     return { 
       success: true, 
@@ -340,96 +285,6 @@ export async function createBooking(formData: z.infer<typeof bookingSchema>) {
   } catch (error) {
     console.error("Booking creation error:", error);
     return { success: false, error: "Failed to create booking" };
-  }
-}
-
-export async function verifyBookingPayment(
-  bookingId: string,
-  razorpayPaymentId: string,
-  razorpayOrderId: string,
-  razorpaySignature: string
-) {
-  try {
-    const booking = await prisma.booking.findUnique({
-      where: { id: bookingId },
-      include: { eventType: true }
-    });
-    if (!booking) {
-      return { success: false, error: "Booking not found" };
-    }
-
-    const hostId = booking.eventType.userId;
-    const razorpayIntegration = await prisma.integration.findFirst({
-      where: { userId: hostId, type: "razorpay" }
-    });
-    if (!razorpayIntegration) {
-      return { success: false, error: "Host has not configured payments yet." };
-    }
-    const credentials = JSON.parse(razorpayIntegration.credentials as string || "{}");
-    const { keySecret } = credentials;
-
-    // Verify signature
-    const hmac = crypto.createHmac("sha256", keySecret);
-    hmac.update(razorpayOrderId + "|" + razorpayPaymentId);
-    const generatedSignature = hmac.digest("hex");
-
-    if (generatedSignature !== razorpaySignature) {
-      return { success: false, error: "Payment verification failed. Invalid signature." };
-    }
-
-    // Update booking status
-    await prisma.booking.update({
-      where: { id: bookingId },
-      data: {
-        status: "CONFIRMED",
-        paymentStatus: "PAID",
-        razorpayPaymentId,
-        razorpaySignature,
-      }
-    });
-
-    // Send notifications/emails now that the payment is confirmed
-    await sendBookingNotifications(bookingId);
-
-    return { success: true };
-  } catch (error: any) {
-    console.error("Verification error:", error);
-    return { success: false, error: error.message || "An error occurred during verification." };
-  }
-}
-
-export async function confirmCustomPaymentBooking(bookingId: string, paymentId: string) {
-  try {
-    const booking = await prisma.booking.findUnique({
-      where: { id: bookingId },
-      include: { eventType: true }
-    });
-    
-    if (!booking) {
-      return { success: false, error: "Booking not found." };
-    }
-
-    if (booking.status === "CONFIRMED") {
-      return { success: true };
-    }
-
-    // Update status to confirmed and paid
-    await prisma.booking.update({
-      where: { id: bookingId },
-      data: {
-        status: "CONFIRMED",
-        paymentStatus: "PAID",
-        razorpayPaymentId: paymentId
-      }
-    });
-
-    // Send notifications/emails now that the payment is confirmed
-    await sendBookingNotifications(bookingId);
-
-    return { success: true };
-  } catch (error: any) {
-    console.error("Failed to confirm custom payment booking:", error);
-    return { success: false, error: error.message || "Confirmation failed." };
   }
 }
 

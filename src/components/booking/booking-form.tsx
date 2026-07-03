@@ -12,7 +12,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
-import { createBooking, deletePendingBooking, verifyBookingPayment } from "@/app/actions/bookings";
+import { createBooking } from "@/app/actions/bookings";
 import { toast } from "sonner";
 
 interface BookingFormProps {
@@ -175,108 +175,8 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
       });
 
       if (result.success) {
-        const matches = eventType.description?.match(/<!-- PAYMENT_LINK: (.*?) -->/);
-        const customPaymentLink = matches ? matches[1] : null;
-
-        if (customPaymentLink) {
-          const bookingId = result.booking?.id || result.bookingId;
-          if (bookingId) {
-            toast.success("Redirecting to payment gateway to complete your booking...");
-            const separator = customPaymentLink.includes("?") ? "&" : "?";
-            const paymentLinkWithRef = `${customPaymentLink}${separator}reference_id=${bookingId}`;
-            setTimeout(() => {
-              try {
-                // If loaded in an iframe, redirect the parent window to keep it on the same tab
-                if (window.self !== window.top) {
-                  window.top!.location.href = paymentLinkWithRef;
-                } else {
-                  window.location.href = paymentLinkWithRef;
-                }
-              } catch (e) {
-                window.location.href = paymentLinkWithRef;
-              }
-            }, 1200);
-          }
-          return;
-        }
-
-        if (result.requiresPayment && result.razorpayOrder) {
-          // Dynamic Razorpay SDK loader helper
-          const loadScript = () => {
-            return new Promise((resolve) => {
-              if ((window as any).Razorpay) {
-                resolve(true);
-                return;
-              }
-              const script = document.createElement("script");
-              script.src = "https://checkout.razorpay.com/v1/checkout.js";
-              script.onload = () => resolve(true);
-              script.onerror = () => resolve(false);
-              document.body.appendChild(script);
-            });
-          };
-
-          const isLoaded = await loadScript();
-          if (!isLoaded) {
-            toast.error("Failed to load payment gateway. Please check your internet connection.");
-            setIsSubmitting(false);
-            return;
-          }
-
-          const options = {
-            key: result.keyId,
-            amount: result.razorpayOrder.amount,
-            currency: result.razorpayOrder.currency,
-            name: "CalMeet Booking",
-            description: `${eventType.title} Booking Payment`,
-            order_id: result.razorpayOrder.id,
-            handler: async function (response: any) {
-              setIsSubmitting(true);
-              try {
-                const verifyResult = await verifyBookingPayment(
-                  result.bookingId,
-                  response.razorpay_payment_id,
-                  response.razorpay_order_id,
-                  response.razorpay_signature
-                );
-                if (verifyResult.success) {
-                  toast.success("Payment verified and meeting scheduled!");
-                  setStep(3); // Success step
-                } else {
-                  toast.error(verifyResult.error || "Payment verification failed.");
-                }
-              } catch (err) {
-                toast.error("An error occurred during payment verification.");
-              } finally {
-                setIsSubmitting(false);
-              }
-            },
-            prefill: {
-              name: formData.get('name') as string,
-              email: formData.get('email') as string,
-            },
-            theme: {
-              color: "#0f172a",
-            },
-            modal: {
-              ondismiss: async function () {
-                toast.info("Payment cancelled.");
-                setIsSubmitting(false);
-                try {
-                  await deletePendingBooking(result.bookingId);
-                } catch (e) {
-                  console.error("Failed to delete pending booking:", e);
-                }
-              }
-            }
-          };
-
-          const rzp = new (window as any).Razorpay(options);
-          rzp.open();
-        } else {
-          toast.success("Meeting booked successfully!");
-          setStep(3); // Success step
-        }
+        toast.success("Meeting booked successfully!");
+        setStep(3); // Success step
       } else {
         toast.error(result.error || "Failed to book meeting");
       }

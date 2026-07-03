@@ -11,16 +11,11 @@ import { RichTextEditor } from "./rich-text-editor";
 
 export function EventTypeForm({ initialData }: { initialData?: any }) {
   const matches = initialData?.description?.match(/<!-- PAYMENT_LINK: (.*?) -->/);
-  const initialPaymentLink = matches ? matches[1] : "";
   const cleanDescription = initialData?.description?.replace(/<!-- PAYMENT_LINK: (.*?) -->/, "") || "";
 
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [description, setDescription] = useState(cleanDescription || "");
-  const [requiresPayment, setRequiresPayment] = useState(initialData?.requiresPayment || false);
-  const [price, setPrice] = useState(initialData?.price || "");
-  const [currency, setCurrency] = useState(initialData?.currency || "INR");
-  const [paymentLink, setPaymentLink] = useState(initialPaymentLink || "");
+  const [description, setDescription] = useState(cleanDescription || initialData?.description || "");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -30,12 +25,12 @@ export function EventTypeForm({ initialData }: { initialData?: any }) {
     const data = {
       title: formData.get("title") as string,
       slug: formData.get("slug") as string | undefined,
-      description: requiresPayment && paymentLink ? `${description}<!-- PAYMENT_LINK: ${paymentLink} -->` : description,
+      description: description,
       duration: parseInt(formData.get("duration") as string),
       videoCallProvider: formData.get("videoCallProvider") as string,
-      requiresPayment,
-      price: requiresPayment ? parseFloat(price) : null,
-      currency: requiresPayment ? currency : "INR",
+      requiresPayment: false,
+      price: null,
+      currency: "INR",
     };
 
     try {
@@ -133,66 +128,7 @@ export function EventTypeForm({ initialData }: { initialData?: any }) {
             <p className="text-xs text-muted-foreground">CalMeet uses a built-in video room — no external account required.</p>
           </div>
 
-          {/* Payment Settings */}
-          <div className="space-y-4 pt-4 border-t">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <label className="text-sm font-medium">Require Payment</label>
-                <p className="text-xs text-muted-foreground">Charge guests before they can book this event type.</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={requiresPayment}
-                onChange={(e) => setRequiresPayment(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-              />
-            </div>
 
-            {requiresPayment && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Price *</label>
-                    <input
-                      type="number"
-                      min="1"
-                      step="any"
-                      value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                      placeholder="e.g. 500"
-                      className="w-full px-4 py-2 rounded-lg border bg-background focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                      required={requiresPayment}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Currency *</label>
-                    <select
-                      value={currency}
-                      onChange={(e) => setCurrency(e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg border bg-background focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                      required={requiresPayment}
-                    >
-                      <option value="INR">INR (₹)</option>
-                      <option value="USD">USD ($)</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Custom Payment Link (e.g. Razorpay Payment Link)</label>
-                  <input
-                    type="url"
-                    value={paymentLink}
-                    onChange={(e) => setPaymentLink(e.target.value)}
-                    placeholder="https://rzp.io/i/..."
-                    className="w-full px-4 py-2 rounded-lg border bg-background focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Optional. If provided, guests will be redirected to this payment link after scheduling.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
 
           <div className="flex gap-4 pt-4">
             <Button 

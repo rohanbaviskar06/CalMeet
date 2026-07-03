@@ -18,7 +18,6 @@ import { ConnectGoogleButton } from "@/components/dashboard/connect-google-butto
 import { ConnectZoomButton } from "@/components/dashboard/connect-zoom-button";
 import { ConnectSlackButton } from "@/components/dashboard/connect-slack-button";
 import { ConnectZapierButton } from "@/components/dashboard/connect-zapier-button";
-import { ConnectRazorpayButton } from "@/components/dashboard/connect-razorpay-button";
 import { DisconnectAccountButton } from "@/components/dashboard/disconnect-account-button";
 import { RequestIntegrationBanner } from "@/components/dashboard/request-integration-banner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -43,7 +42,6 @@ export default async function IntegrationsPage() {
   const zoomAccount = accounts.find(a => a.provider === "zoom");
   const slackIntegration = integrationsList.find(i => i.type === "slack");
   const zapierIntegration = integrationsList.find(i => i.type === "zapier");
-  const razorpayIntegration = integrationsList.find(i => i.type === "razorpay");
 
   const categories = [
     {
@@ -127,15 +125,6 @@ export default async function IntegrationsPage() {
       logo: "/logos/stripe.png",
       category: "business",
       comingSoon: true
-    },
-    {
-      id: "razorpay",
-      name: "Razorpay",
-      description: "Accept payments for your bookings and paid events via Razorpay.",
-      logo: "/logos/razorpay.svg",
-      category: "business",
-      isConnected: !!razorpayIntegration,
-      component: <ConnectRazorpayButton isConnected={!!razorpayIntegration} />
     },
     {
       id: "zapier",
