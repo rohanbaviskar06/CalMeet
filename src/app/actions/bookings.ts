@@ -256,13 +256,13 @@ export async function createBooking(formData: z.infer<typeof bookingSchema>) {
         guestEmail: validatedData.guestEmail,
         startTime,
         endTime,
-        status: requiresPayment ? "PENDING" : "CONFIRMED",
+        status: "CONFIRMED",
         meetLink: meetLink,
         notes: validatedData.notes || null,
         utmSource: validatedData.utmSource || null,
         utmMedium: validatedData.utmMedium || null,
         referer: validatedData.referer || null,
-        paymentStatus: requiresPayment ? "UNPAID" : "PAID",
+        paymentStatus: "PAID",
       },
     });
 
