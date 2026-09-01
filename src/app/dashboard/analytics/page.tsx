@@ -3,11 +3,12 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { TrendingUp, Users, CalendarDays, MousePointerClick, ArrowUpRight, ArrowDownRight, Zap, Clock, XCircle, Filter, Globe } from "lucide-react";
+import { TrendingUp, Users, CalendarDays, MousePointerClick, ArrowUpRight, ArrowDownRight, Zap, Clock, XCircle, Filter, Globe, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { ProGatedPage } from "@/components/dashboard/pro-gated-page";
 import { RealtimeDashboardListener } from "@/components/dashboard/realtime-dashboard";
+import Link from "next/link";
 
 export default async function AnalyticsPage() {
   const session = await getServerSession(authOptions);
@@ -424,14 +425,32 @@ export default async function AnalyticsPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Time & Day Occupancy Heatmap</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  Time & Day Occupancy Heatmap
+                  {user?.plan === "FREE" && (
+                    <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" /> Teams Plan
+                    </span>
+                  )}
+                </CardTitle>
                 <CardDescription>Visualize the busiest times and days when your meetings are scheduled.</CardDescription>
               </div>
-              <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-2.5 py-1 rounded-md">
-                Active Bookings
-              </span>
+              <div className="flex items-center gap-2">
+                {user?.plan === "FREE" ? (
+                  <Link href="/dashboard/settings?tab=plans">
+                    <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1 border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10">
+                      <Sparkles className="h-3 w-3" /> Upgrade
+                    </Button>
+                  </Link>
+                ) : (
+                  <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-md">
+                    Live Real-Time
+                  </span>
+                )}
+              </div>
             </div>
           </CardHeader>
+
           <CardContent className="overflow-x-auto">
             <div className="min-w-[760px] space-y-4 pt-2">
               {/* Hour Grid Labels */}

@@ -27,9 +27,10 @@ export function Footer() {
             <h4 className="font-bold text-sm uppercase tracking-widest text-foreground">Product</h4>
             <ul className="space-y-4 text-sm text-muted-foreground font-medium">
               <li><Link href="/resources" className="hover:text-primary transition-colors">Features</Link></li>
-              <li><Link href="/integrations" className="hover:text-primary transition-colors">Integrations</Link></li>
+              <li><Link href="/resources/app-store" className="hover:text-primary transition-colors">Integrations & Apps</Link></li>
+              <li><Link href="/resources/api-docs" className="hover:text-primary transition-colors">API Documentation</Link></li>
+              <li><Link href="/blog" className="hover:text-primary transition-colors">Blog & Updates</Link></li>
               <li><Link href="/pricing" className="hover:text-primary transition-colors">Pricing</Link></li>
-              <li><Link href="/demo" className="hover:text-primary transition-colors">Live Demo</Link></li>
             </ul>
           </div>
 

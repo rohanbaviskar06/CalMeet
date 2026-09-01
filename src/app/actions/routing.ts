@@ -103,3 +103,37 @@ export async function deleteRoutingForm(id: string) {
   revalidatePath("/dashboard/routing");
   return { success: true };
 }
+
+export async function duplicateRoutingForm(id: string) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user) {
+    throw new Error("Unauthorized");
+  }
+  const userId = (session.user as any).id;
+
+  const original = await prisma.routingForm.findUnique({
+    where: { id, userId }
+  });
+
+  if (!original) {
+    throw new Error("Routing form not found");
+  }
+
+  const newSlug = `${original.slug}-copy-${Math.floor(Math.random() * 1000)}`;
+
+  const created = await prisma.routingForm.create({
+    data: {
+      userId,
+      name: `${original.name} (Copy)`,
+      slug: newSlug,
+      questions: original.questions,
+      routes: original.routes,
+      isActive: true,
+    }
+  });
+
+  revalidatePath("/dashboard/routing");
+  return { success: true, form: created };
+}
+

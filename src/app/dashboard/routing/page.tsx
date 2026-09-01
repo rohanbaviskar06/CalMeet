@@ -17,7 +17,9 @@ export default async function RoutingPage() {
     select: { username: true, plan: true } 
   });
 
-  if (user?.plan !== "PRO") {
+  const isPaidPlan = user?.plan && user.plan !== "FREE";
+
+  if (!isPaidPlan) {
     return (
       <ProGatedPage 
         title="Routing Forms" 
@@ -39,21 +41,28 @@ export default async function RoutingPage() {
 
   const eventTypes = await prisma.eventType.findMany({
     where: { userId: (session.user as any).id },
-    select: { id: true, title: true }
+    select: { id: true, title: true, duration: true, slug: true }
   });
 
+  const username = user?.username || session.user.email?.split("@")[0] || (session.user as any).id;
   const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
   const serializedForms = forms.map(f => ({
     ...f,
     questions: JSON.parse(f.questions || "[]"),
     routes: JSON.parse(f.routes || "[]"),
-    link: `${baseUrl}/${user?.username || (session.user as any).id}/${f.slug}`
+    link: `/${username}/${f.slug}`
   }));
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <RoutingClient initialForms={serializedForms} eventTypes={eventTypes} baseUrl={`${baseUrl}/${user?.username || (session.user as any).id}`} />
+    <div className="max-w-6xl mx-auto space-y-6">
+      <RoutingClient 
+        initialForms={serializedForms} 
+        eventTypes={eventTypes} 
+        username={username}
+        baseUrl={`${baseUrl}/${username}`} 
+      />
     </div>
   );
 }
+

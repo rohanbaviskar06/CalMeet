@@ -1,6 +1,24 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
+    optimizePackageImports: [
+      "lucide-react",
+      "date-fns",
+      "framer-motion",
+      "@base-ui/react",
+      "sonner",
+      "clsx",
+      "tailwind-merge"
+    ],
+  },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production",
+  },
   async headers() {
     return [
       {

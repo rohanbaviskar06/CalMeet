@@ -1,9 +1,12 @@
 "use client";
 
 import { Navbar } from "@/components/landing/navbar";
+import { Footer } from "@/components/landing/footer";
 import { motion } from "framer-motion";
 import { Zap, Video, Phone, MessageSquare, ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { toast } from "sonner";
 
 export default function InstantMeetingsPage() {
   return (
@@ -26,13 +29,17 @@ export default function InstantMeetingsPage() {
               Why wait? Launch a meeting room instantly from your dashboard or via a unique permanent link. 
               Zero friction, maximum velocity.
             </p>
-            <div className="flex justify-center gap-4">
-              <Button size="lg" className="h-16 px-10 rounded-full text-lg font-bold bg-yellow-500 hover:bg-yellow-600 text-black">
-                Launch Instant Room
-              </Button>
-              <Button size="lg" variant="outline" className="h-16 px-10 rounded-full text-lg font-bold border-yellow-500/20">
-                Copy Personal Link
-              </Button>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link href="/dashboard">
+                <Button size="lg" className="h-16 px-10 rounded-full text-lg font-bold bg-yellow-500 hover:bg-yellow-600 text-black">
+                  Launch Instant Room
+                </Button>
+              </Link>
+              <Link href="/dashboard/settings">
+                <Button size="lg" variant="outline" className="h-16 px-10 rounded-full text-lg font-bold border-yellow-500/20">
+                  Configure Settings
+                </Button>
+              </Link>
             </div>
           </motion.div>
         </section>
@@ -107,11 +114,7 @@ export default function InstantMeetingsPage() {
         </section>
       </main>
 
-      <footer className="py-12 border-t bg-zinc-50 dark:bg-zinc-950 mt-24">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} CalMeet Inc. Lightning fast.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

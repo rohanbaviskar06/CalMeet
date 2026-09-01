@@ -32,6 +32,7 @@
     "@vercel/speed-insights": "^2.0.0",
     "axios": "^1.16.0",
     "bcryptjs": "^3.0.3",
+    "cal-sans": "^1.0.1",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.10.0",
     "clsx": "^2.1.1",

@@ -4,6 +4,11 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { SettingsForm } from "@/components/dashboard/settings-client";
 
+export const metadata = {
+  title: "Settings | CalMeet",
+  description: "Manage your account settings, integrations, and preferences",
+};
+
 export default async function SettingsPage() {
   const session = await getServerSession(authOptions);
 
@@ -11,22 +16,26 @@ export default async function SettingsPage() {
     redirect("/login");
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: (session.user as any).id },
-  });
-
-  if (!user) {
-    redirect("/login");
+  let user = null;
+  try {
+    user = await prisma.user.findUnique({
+      where: { id: (session.user as any).id },
+    });
+  } catch (error) {
+    console.error("Settings page user fetch notice:", error);
   }
 
-  return (
-    <div className="space-y-8 max-w-4xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">Manage your account settings and preferences.</p>
-      </div>
+  if (!user) {
+    user = {
+      id: session.user.id,
+      name: session.user.name || "User",
+      email: session.user.email,
+      username: session.user.email?.split("@")[0] || "user",
+      image: session.user.image,
+      plan: session.user.plan || "FREE",
+      bio: "",
+    } as any;
+  }
 
-      <SettingsForm user={user} />
-    </div>
-  );
+  return <SettingsForm user={user} />;
 }

@@ -14,9 +14,13 @@ import {
   User, 
   Edit3, 
   ExternalLink,
-  Loader2,
   Copy,
-  CheckCheck
+  CheckCheck,
+  Sparkles,
+  ArrowRight,
+  GitBranch,
+  ShieldCheck,
+  Clock
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,6 +53,8 @@ import {
   removeTeamMember 
 } from "@/app/actions/team";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { usePricingModal } from "@/components/dashboard/pricing-modal";
 
 interface TeamClientProps {
   user: any;
@@ -68,23 +74,24 @@ export function TeamClient({
   allMemberships = []
 }: TeamClientProps) {
   const router = useRouter();
+  const { openPricingModal } = usePricingModal();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isEditNameOpen, setIsEditNameOpen] = useState(false);
   const [teamName, setTeamName] = useState("");
   const [newTeamName, setNewTeamName] = useState(activeTeam?.name || "");
+
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("MEMBER");
   const [isLoading, setIsLoading] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
-  // Generate mock static status designations for team members based on their id
   const getMemberStatus = (userId: string) => {
     const hash = userId.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
     const statuses = [
       { text: "Online", color: "bg-emerald-500" },
       { text: "In a Meeting", color: "bg-red-500" },
-      { text: "Busy", color: "bg-red-400" },
+      { text: "Busy", color: "bg-amber-500" },
       { text: "Offline", color: "bg-zinc-400" }
     ];
     return statuses[hash % statuses.length];
@@ -93,8 +100,6 @@ export function TeamClient({
   const copyInviteLink = () => {
     if (!activeTeam) return;
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
-    // We can generate a generic signup URL that includes reference to this team invitation token or ID
-    // Let's create a beautiful generic landing link
     const link = `${baseUrl}/signup?teamId=${activeTeam.id}`;
     navigator.clipboard.writeText(link);
     setIsCopied(true);
@@ -102,7 +107,6 @@ export function TeamClient({
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  // If there's an initialToken, try to handle it automatically
   useEffect(() => {
     if (initialToken && invitationsReceived.length > 0) {
       const match = invitationsReceived.find(inv => inv.token === initialToken);
@@ -111,6 +115,23 @@ export function TeamClient({
       }
     }
   }, [initialToken, invitationsReceived]);
+
+  const handleOpenCreateTeamModal = () => {
+    if (user?.plan === "FREE") {
+      toast.error("Team creation is available on Teams, Organizations, and Enterprise plans.");
+      openPricingModal();
+      return;
+    }
+
+    const ownedTeamsCount = allMemberships.filter((m: any) => m.role === "OWNER").length;
+    if (user?.plan === "PRO" && ownedTeamsCount >= 1) {
+      toast.error("The Teams plan includes 1 primary team. Upgrade to Organizations to create multiple sub-teams & departments.");
+      openPricingModal();
+      return;
+    }
+
+    setIsCreateOpen(true);
+  };
 
   const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,10 +148,14 @@ export function TeamClient({
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to create team");
+      if (err.message?.includes("upgrade") || err.message?.includes("Organizations")) {
+        openPricingModal();
+      }
     } finally {
       setIsLoading(false);
     }
   };
+
 
   const handleUpdateName = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -201,7 +226,7 @@ export function TeamClient({
     try {
       const res = await declineInvitation(invitationId);
       if (res.success) {
-        toast.success("Invitation declined.");
+        toast.info("Invitation declined.");
         router.refresh();
       }
     } catch (err: any) {
@@ -209,14 +234,14 @@ export function TeamClient({
     }
   };
 
-  const handleRemoveMember = async (memberId: string, memberName: string) => {
+  const handleRemoveMember = async (targetUserId: string, memberName: string) => {
     if (!activeTeam) return;
     if (!confirm(`Are you sure you want to remove ${memberName} from the team?`)) return;
 
     try {
-      const res = await removeTeamMember(activeTeam.id, memberId);
+      const res = await removeTeamMember(activeTeam.id, targetUserId);
       if (res.success) {
-        toast.success(`${memberName} has been removed from the team.`);
+        toast.success(`${memberName} has been removed.`);
         router.refresh();
       }
     } catch (err: any) {
@@ -226,404 +251,388 @@ export function TeamClient({
 
   const isOwnerOrAdmin = userRole === "OWNER" || userRole === "ADMIN";
 
-  // Case 1: Received invitations (show these first to join a team)
+  // Pending invites notification
   const receivedSection = invitationsReceived.length > 0 && (
-    <Card className="border-primary/30 bg-gradient-to-r from-primary/5 via-violet-500/5 to-background overflow-hidden relative">
-      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl rounded-full" />
-      <CardHeader>
-        <CardTitle className="text-xl font-bold flex items-center gap-2">
-          <UserPlus className="h-5 w-5 text-primary animate-bounce" />
-          Pending Invitations to Join Teams
-        </CardTitle>
-        <CardDescription>
-          You have been invited to join the following teams. Accept to collaborate.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 bg-zinc-50 dark:bg-zinc-900/50 shadow-sm space-y-3">
+      <div className="flex items-center gap-2">
+        <Mail className="h-4 w-4 text-zinc-900 dark:text-zinc-100" />
+        <h3 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">
+          Pending Invitations ({invitationsReceived.length})
+        </h3>
+      </div>
+      <div className="space-y-2">
         {invitationsReceived.map((invite) => (
-          <div key={invite.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border bg-background/80 backdrop-blur-sm shadow-sm gap-3">
+          <div
+            key={invite.id}
+            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-card border border-zinc-200 dark:border-zinc-800 rounded-lg text-xs"
+          >
             <div>
-              <h4 className="font-semibold text-base">{invite.team.name}</h4>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                Invited by: {invite.team.owner.name || invite.team.owner.email} as <Badge variant="outline" className="ml-1 text-xs">{invite.role}</Badge>
-              </p>
+              <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+                {invite.team.name}
+              </span>
+              <span className="text-zinc-400 ml-2">Role: {invite.role}</span>
             </div>
-            <div className="flex gap-2 w-full sm:w-auto">
-              <Button 
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
                 onClick={() => handleAcceptInvite(invite.id, invite.team.name)}
-                className="flex-1 sm:flex-initial bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
-                size="sm"
+                className="h-7 px-3 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-md gap-1"
               >
-                <Check className="h-4 w-4" /> Accept
+                <Check className="h-3 w-3" /> Accept
               </Button>
-              <Button 
-                onClick={() => handleDeclineInvite(invite.id)}
-                variant="outline"
-                className="flex-1 sm:flex-initial border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-red-950 dark:hover:bg-red-950/20 gap-1.5"
+              <Button
                 size="sm"
+                variant="outline"
+                onClick={() => handleDeclineInvite(invite.id)}
+                className="h-7 px-3 text-xs border-zinc-200 dark:border-zinc-800 rounded-md gap-1"
               >
-                <X className="h-4 w-4" /> Decline
+                <X className="h-3 w-3" /> Decline
               </Button>
             </div>
           </div>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 
-  const activeStatus = activeTeam ? getMemberStatus(user.id) : null;
-
   return (
-    <div className="space-y-6">
-      {receivedSection}
+    <div className="max-w-5xl mx-auto py-2 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            Teams
+          </h1>
+          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
+            Manage your organization, round-robin distribution, and team members.
+          </p>
+        </div>
 
-      {/* Switcher & Create Top Bar */}
-      {activeTeam && allMemberships.length > 1 && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border rounded-2xl bg-card">
-          <div className="flex items-center gap-2.5">
-            <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Active Team:</span>
+        <div className="flex items-center gap-2.5">
+          {activeTeam && allMemberships.length > 1 && (
             <Select 
               value={activeTeam.id} 
               onValueChange={(teamId) => {
-                // Instantly redirect to filter search param for other team if needed
-                // For simplicity, we can reload path with selected team token or redirect
-                // Since parent page filters, we could update via router
                 router.push(`/dashboard/team?teamId=${teamId}`);
                 router.refresh();
               }}
             >
-              <SelectTrigger className="w-[200px] h-9 rounded-xl border bg-background">
+              <SelectTrigger className="w-[180px] h-9 text-xs rounded-lg border-zinc-200 dark:border-zinc-800">
                 <SelectValue placeholder="Switch team" />
               </SelectTrigger>
               <SelectContent>
-                {allMemberships.map((membership) => (
-                  <SelectItem key={membership.team.id} value={membership.team.id}>
-                    {membership.team.name}
+                {allMemberships.map((m) => (
+                  <SelectItem key={m.team.id} value={m.team.id} className="text-xs">
+                    {m.team.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          <Button onClick={() => setIsCreateOpen(true)} variant="outline" size="sm" className="rounded-xl gap-1">
-            <Plus className="h-4 w-4" /> Create Another Team
+          )}
+
+          <Button
+            onClick={handleOpenCreateTeamModal}
+            size="sm"
+            className="h-9 px-3.5 gap-1.5 rounded-lg text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 shadow-sm"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>Create Team</span>
           </Button>
+        </div>
+      </div>
+
+      {receivedSection}
+
+      {/* If No Active Team: Cal.com Inspired Feature Promo Hero */}
+      {!activeTeam ? (
+        <div className="border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden bg-card shadow-sm grid grid-cols-1 md:grid-cols-12">
+          {/* Left Column: Feature Highlights */}
+          <div className="md:col-span-7 p-6 sm:p-8 flex flex-col justify-between space-y-6">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-[11px] font-bold text-zinc-700 dark:text-zinc-300">
+                <Users className="h-3.5 w-3.5" />
+                <span>Teams</span>
+              </div>
+
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+                Automatically route meetings to your team
+              </h2>
+
+              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+                Turn individual scheduling into a collaborative system that assigns, distributes, and manages bookings across all team members.
+              </p>
+
+              <ul className="space-y-2.5 pt-2 text-xs sm:text-sm text-zinc-700 dark:text-zinc-300">
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100" />
+                  <span>Route inbound requests to the right person based on criteria</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100" />
+                  <span>Distribute meetings fairly with round-robin availability</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100" />
+                  <span>See team performance analytics and booking conversion</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <Button
+                onClick={handleOpenCreateTeamModal}
+                size="sm"
+                className="h-9 px-4 text-xs font-medium gap-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
+              >
+                <span>{user?.plan === "FREE" ? "Upgrade to Teams" : "Create a Team"}</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+
+
+          {/* Right Column: Visual Diagram */}
+          <div className="md:col-span-5 bg-zinc-50 dark:bg-zinc-900/50 border-t md:border-t-0 md:border-l border-zinc-200 dark:border-zinc-800 p-6 flex flex-col items-center justify-center">
+            <div className="w-full max-w-xs space-y-3">
+              {/* Form answers node */}
+              <div className="p-3 bg-card rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-xs flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-semibold">
+                  👤
+                </div>
+                <div className="text-xs">
+                  <div className="font-semibold text-zinc-900 dark:text-zinc-100">Customer Request</div>
+                  <div className="text-[11px] text-zinc-400">Enterprise Sales Inquiry</div>
+                </div>
+              </div>
+
+              {/* Connector */}
+              <div className="flex justify-center">
+                <div className="w-0.5 h-4 bg-zinc-300 dark:bg-zinc-700" />
+              </div>
+
+              {/* Round-robin Router Node */}
+              <div className="p-3 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 rounded-xl shadow-sm text-center">
+                <span className="text-[10px] font-bold uppercase tracking-wider block opacity-70">
+                  Round-Robin Routing
+                </span>
+                <span className="text-xs font-semibold">Distributes to Next Available Host</span>
+              </div>
+
+              {/* Connector */}
+              <div className="flex justify-center">
+                <div className="w-0.5 h-4 bg-zinc-300 dark:bg-zinc-700" />
+              </div>
+
+              {/* Assigned Host Node */}
+              <div className="p-3 bg-card rounded-xl border border-emerald-500/30 shadow-xs flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-xs font-bold">
+                  ✓
+                </div>
+                <div className="text-xs">
+                  <div className="font-semibold text-zinc-900 dark:text-zinc-100">Meeting Confirmed</div>
+                  <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                    Assigned to Account Executive
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Team Members & Details View */
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          {/* Team Info Card */}
+          <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 bg-card shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
+                  {activeTeam.name}
+                </h3>
+                <span className="text-xs text-zinc-400">
+                  Your Role: <span className="font-semibold text-zinc-700 dark:text-zinc-300">{userRole}</span>
+                </span>
+              </div>
+              {userRole === "OWNER" && (
+                <button
+                  onClick={() => setIsEditNameOpen(true)}
+                  className="p-1.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                >
+                  <Edit3 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            <div className="text-xs text-zinc-500 space-y-1.5 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+              <div className="flex justify-between">
+                <span>Members:</span>
+                <span className="font-medium text-zinc-700 dark:text-zinc-300">{activeTeam.members?.length || 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Pending Invites:</span>
+                <span className="font-medium text-zinc-700 dark:text-zinc-300">{activeTeam.invitations?.length || 0}</span>
+              </div>
+            </div>
+
+            {isOwnerOrAdmin && (
+              <div className="space-y-2 pt-2">
+                <Button
+                  onClick={() => setIsInviteOpen(true)}
+                  size="sm"
+                  className="w-full h-8 text-xs gap-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
+                >
+                  <UserPlus className="h-3.5 w-3.5" /> Invite Member
+                </Button>
+                <Button
+                  onClick={copyInviteLink}
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-8 text-xs gap-1.5 rounded-lg border-zinc-200 dark:border-zinc-800"
+                >
+                  {isCopied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                  {isCopied ? "Link Copied" : "Copy Invite Link"}
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Members List */}
+          <div className="lg:col-span-2 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-card overflow-hidden shadow-sm">
+            <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center justify-between">
+              <span className="font-semibold text-xs text-zinc-900 dark:text-zinc-100">
+                Team Members ({activeTeam.members?.length || 0})
+              </span>
+            </div>
+
+            <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+              {activeTeam.members?.map((member: any) => {
+                const isCurrentUser = member.user.id === user.id;
+                const status = getMemberStatus(member.user.id);
+
+                return (
+                  <div
+                    key={member.id}
+                    className="p-4 flex items-center justify-between gap-3 text-xs"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8 rounded-lg">
+                        <AvatarImage src={member.user.image} />
+                        <AvatarFallback className="rounded-lg text-xs font-semibold">
+                          {member.user.name?.charAt(0) || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+                            {member.user.name}
+                          </span>
+                          {isCurrentUser && (
+                            <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.2 rounded text-zinc-500">
+                              You
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[11px] text-zinc-400">{member.user.email}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
+                        {member.role}
+                      </span>
+                      {isOwnerOrAdmin && !isCurrentUser && (
+                        <button
+                          onClick={() => handleRemoveMember(member.user.id, member.user.name)}
+                          className="p-1 text-zinc-400 hover:text-red-500 rounded"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 
-      {!activeTeam ? (
-        <Card className="hover:shadow-md transition-shadow duration-300">
-          <CardHeader className="text-center py-10">
-            <div className="mx-auto w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-4">
-              <Users className="h-6 w-6" />
-            </div>
-            <CardTitle className="text-2xl font-bold">Create or Join a Team</CardTitle>
-            <CardDescription className="max-w-md mx-auto mt-2">
-              Teams allow multiple team members to manage schedules, view bookings, and run routing forms together.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex justify-center pb-10">
-            <Button onClick={() => setIsCreateOpen(true)} size="lg" className="px-8 shadow-lg hover:shadow-primary/20 transition-all gap-2">
-              <Plus className="h-5 w-5" /> Create a New Team
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          {/* Team Details and Members */}
-          <div className="grid gap-6 md:grid-cols-3">
-            {/* Team Details Sidebar Card */}
-            <Card className="md:col-span-1 border-primary/20 bg-gradient-to-b from-primary/5 to-background">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-xl font-bold truncate max-w-[200px]" title={activeTeam.name}>
-                    {activeTeam.name}
-                  </CardTitle>
-                  {userRole === "OWNER" && (
-                    <Button
-                      onClick={() => setIsEditNameOpen(true)}
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 hover:bg-primary/10 text-muted-foreground hover:text-primary rounded-lg shrink-0"
-                    >
-                      <Edit3 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-                <CardDescription>
-                  Role: <Badge variant="secondary" className="ml-1 text-[10px] tracking-wider uppercase">{userRole}</Badge>
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-xs text-muted-foreground flex flex-col gap-1.5 pb-2 border-b">
-                  <span className="font-semibold text-foreground">Team stats:</span>
-                  <span>• Members: {activeTeam.members.length}</span>
-                  <span>• Pending invites: {activeTeam.invitations.length}</span>
-                  <span>• Created: {new Date(activeTeam.createdAt).toLocaleDateString()}</span>
-                </div>
-                {isOwnerOrAdmin && (
-                  <div className="space-y-2 pt-2">
-                    <Button onClick={() => setIsInviteOpen(true)} className="w-full gap-2 shadow-sm">
-                      <UserPlus className="h-4 w-4" /> Invite Member
-                    </Button>
-                    <Button onClick={copyInviteLink} variant="outline" className="w-full gap-2 border bg-background shrink-0">
-                      {isCopied ? <CheckCheck className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
-                      {isCopied ? "Link Copied" : "Copy Invite Link"}
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Members List */}
-            <Card className="md:col-span-2 hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Team Members</CardTitle>
-                  <CardDescription>Manage members and their roles in your team.</CardDescription>
-                </div>
-                <Badge variant="outline">{activeTeam.members.length} Total</Badge>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {activeTeam.members.map((member: any) => {
-                    const isSelf = member.userId === user.id;
-                    const isMemberOwner = member.role === "OWNER";
-                    const isMemberAdmin = member.role === "ADMIN";
-                    const statusInfo = getMemberStatus(member.userId);
-                    
-                    return (
-                      <div key={member.id} className="flex items-center justify-between p-3.5 rounded-xl border bg-card hover:bg-muted/30 transition-colors gap-4">
-                        <div className="flex items-center gap-3.5 min-w-0">
-                          <div className="relative shrink-0">
-                            <Avatar className="h-10 w-10 border shadow-sm">
-                              <AvatarImage src={member.user.image || undefined} />
-                              <AvatarFallback className="bg-primary/5 text-primary font-bold">
-                                {member.user.name?.charAt(0) || member.user.email?.charAt(0).toUpperCase() || "U"}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span 
-                              className={`absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-background ${statusInfo.color}`} 
-                              title={statusInfo.text}
-                            />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-sm truncate">
-                                {member.user.name || "User"}
-                              </span>
-                              {isSelf && (
-                                <Badge variant="outline" className="text-[9px] bg-primary/5 text-primary font-bold px-1.5 py-0.5 rounded select-none uppercase">
-                                  You
-                                </Badge>
-                              )}
-                              <span className="text-[10px] text-muted-foreground">• {statusInfo.text}</span>
-                            </div>
-                            <p className="text-xs text-muted-foreground truncate">{member.user.email}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3 shrink-0">
-                          <div className="flex items-center gap-1 text-xs font-semibold text-muted-foreground capitalize">
-                            {isMemberOwner ? (
-                              <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-none text-[10px] tracking-wider uppercase font-extrabold gap-1">
-                                <Shield className="h-3 w-3" /> Owner
-                              </Badge>
-                            ) : isMemberAdmin ? (
-                              <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 border-none text-[10px] tracking-wider uppercase font-bold gap-1">
-                                <Shield className="h-3 w-3" /> Admin
-                              </Badge>
-                            ) : (
-                              <Badge variant="secondary" className="text-[10px] tracking-wider uppercase font-medium gap-1">
-                                <User className="h-3 w-3" /> Member
-                              </Badge>
-                            )}
-                          </div>
-                          
-                          {isOwnerOrAdmin && !isSelf && !isMemberOwner && (
-                            // Admins can't delete other admins or owners
-                            !(userRole === "ADMIN" && isMemberAdmin) && (
-                              <Button
-                                onClick={() => handleRemoveMember(member.id, member.user.name || member.user.email)}
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 hover:bg-red-50 text-muted-foreground hover:text-red-600 dark:hover:bg-red-950/20 rounded-lg shrink-0"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Pending Invitations Section */}
-          {isOwnerOrAdmin && activeTeam.invitations.length > 0 && (
-            <Card className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <CardTitle>Sent Invitations</CardTitle>
-                <CardDescription>Invitations sent to team members that are currently pending.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto rounded-xl border">
-                  <table className="w-full text-left border-collapse text-sm">
-                    <thead>
-                      <tr className="border-b bg-muted/50 text-muted-foreground font-semibold">
-                        <th className="p-4">Email</th>
-                        <th className="p-4">Role</th>
-                        <th className="p-4">Sent Date</th>
-                        <th className="p-4 text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {activeTeam.invitations.map((invite: any) => (
-                        <tr key={invite.id} className="hover:bg-muted/10 transition-colors">
-                          <td className="p-4 font-medium flex items-center gap-2">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                            {invite.email}
-                          </td>
-                          <td className="p-4">
-                            <Badge variant="secondary" className="text-[10px] uppercase font-bold">{invite.role}</Badge>
-                          </td>
-                          <td className="p-4 text-xs text-muted-foreground">
-                            {new Date(invite.createdAt).toLocaleDateString()}
-                          </td>
-                          <td className="p-4 text-right">
-                            <Button
-                              onClick={() => handleCancelInvite(invite.id, invite.email)}
-                              variant="ghost"
-                              size="sm"
-                              className="hover:bg-red-50 text-red-600 hover:text-red-700 dark:hover:bg-red-950/20 h-8 px-2 rounded-lg"
-                            >
-                              Revoke
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </>
-      )}
-
-      {/* Render ALL dialogs unconditionally at the end so hooks are always rendered */}
+      {/* Create Team Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Create Team</DialogTitle>
-            <DialogDescription>
-              Set up a team space for your company or group. You'll be the owner.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-md">
           <form onSubmit={handleCreateTeam}>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
+            <DialogHeader>
+              <DialogTitle className="text-base font-bold">Create a new team</DialogTitle>
+              <DialogDescription className="text-xs">
+                Set up a team workspace for your company or department.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4 text-xs">
+              <div className="space-y-1.5">
                 <Label htmlFor="team-name">Team Name</Label>
                 <Input
                   id="team-name"
-                  placeholder="e.g. Acme Marketing"
+                  placeholder="Acme Sales"
                   value={teamName}
                   onChange={(e) => setTeamName(e.target.value)}
+                  className="h-9 text-xs"
                   required
-                  disabled={isLoading}
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)} disabled={isLoading}>
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsCreateOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading} className="gap-1.5">
-                {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                Create Team
+              <Button type="submit" size="sm" disabled={isLoading}>
+                {isLoading ? "Creating..." : "Create Team"}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
+      {/* Invite Member Dialog */}
       <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Invite Team Member</DialogTitle>
-            <DialogDescription>
-              Send an email invitation to join this team.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-md">
           <form onSubmit={handleSendInvite}>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="invite-email">Email Address</Label>
+            <DialogHeader>
+              <DialogTitle className="text-base font-bold">Invite a teammate</DialogTitle>
+              <DialogDescription className="text-xs">
+                Send an email invitation to join {activeTeam?.name}.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4 text-xs">
+              <div className="space-y-1.5">
+                <Label htmlFor="invite-email">Teammate Email</Label>
                 <Input
                   id="invite-email"
                   type="email"
-                  placeholder="collaborator@example.com"
+                  placeholder="colleague@company.com"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
+                  className="h-9 text-xs"
                   required
-                  disabled={isLoading}
                 />
               </div>
-              <div className="grid gap-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="invite-role">Role</Label>
-                <Select value={inviteRole} onValueChange={(value) => setInviteRole(value || "MEMBER")} disabled={isLoading}>
-                  <SelectTrigger id="invite-role">
-                    <SelectValue placeholder="Select a role" />
+                <Select value={inviteRole} onValueChange={(val) => setInviteRole(val || "MEMBER")}>
+                  <SelectTrigger className="h-9 text-xs">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="MEMBER">Member (Read & Collaborate)</SelectItem>
-                    <SelectItem value="ADMIN">Admin (Invite & Manage members)</SelectItem>
+                    <SelectItem value="MEMBER" className="text-xs">Member</SelectItem>
+                    <SelectItem value="ADMIN" className="text-xs">Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsInviteOpen(false)} disabled={isLoading}>
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsInviteOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading} className="gap-1.5">
-                {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                Send Invite
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isEditNameOpen} onOpenChange={setIsEditNameOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Edit Team Name</DialogTitle>
-            <DialogDescription>
-              Change the display name of your team.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleUpdateName}>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="edit-team-name">Team Name</Label>
-                <Input
-                  id="edit-team-name"
-                  value={newTeamName}
-                  onChange={(e) => setNewTeamName(e.target.value)}
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsEditNameOpen(false)} disabled={isLoading}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isLoading} className="gap-1.5">
-                {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                Save Changes
+              <Button type="submit" size="sm" disabled={isLoading}>
+                {isLoading ? "Sending..." : "Send Invite"}
               </Button>
             </DialogFooter>
           </form>

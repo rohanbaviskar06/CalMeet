@@ -47,6 +47,7 @@ model User {
   timezone      String?        @default("UTC")
   plan          String         @default("FREE")
   hideWatermark Boolean        @default(false)
+  completedOnboarding Boolean  @default(false)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   accounts      Account[]

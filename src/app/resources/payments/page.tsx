@@ -1,9 +1,11 @@
 "use client";
 
 import { Navbar } from "@/components/landing/navbar";
+import { Footer } from "@/components/landing/footer";
 import { motion } from "framer-motion";
 import { CreditCard, Shield, Zap, DollarSign, CheckCircle, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function PaymentsPage() {
   return (
@@ -26,13 +28,17 @@ export default function PaymentsPage() {
               Accept payments directly through your booking flow. Connect with Stripe 
               to secure your revenue and reduce no-shows.
             </p>
-            <div className="flex justify-center gap-4">
-              <Button size="lg" className="h-16 px-10 rounded-full text-lg font-bold bg-blue-600 hover:bg-blue-700">
-                Connect Stripe
-              </Button>
-              <Button size="lg" variant="outline" className="h-16 px-10 rounded-full text-lg font-bold border-blue-500/20">
-                View Pricing
-              </Button>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link href="/dashboard/integrations">
+                <Button size="lg" className="h-16 px-10 rounded-full text-lg font-bold bg-blue-600 hover:bg-blue-700 cursor-pointer">
+                  Connect Stripe
+                </Button>
+              </Link>
+              <Link href="/pricing">
+                <Button size="lg" variant="outline" className="h-16 px-10 rounded-full text-lg font-bold border-blue-500/20">
+                  View Pricing
+                </Button>
+              </Link>
             </div>
           </motion.div>
         </section>
@@ -113,18 +119,16 @@ export default function PaymentsPage() {
                  Connect your Stripe account in minutes and start monetizing your expertise 
                  with every booking.
               </p>
-              <Button size="lg" className="rounded-full px-12 h-16 font-bold bg-blue-600 hover:bg-blue-700 text-lg">
-                 Get Started for Free
-              </Button>
+              <Link href="/signup">
+                <Button size="lg" className="rounded-full px-12 h-16 font-bold bg-blue-600 hover:bg-blue-700 text-lg">
+                   Get Started for Free
+                </Button>
+              </Link>
            </div>
         </section>
       </main>
 
-      <footer className="py-12 border-t bg-zinc-50 dark:bg-zinc-950 mt-24">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} CalMeet Inc. Secure transactions.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

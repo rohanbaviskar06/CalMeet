@@ -1,0 +1,54 @@
+services:
+  database:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-calmeet}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-calmeet}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  calmeet:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@database:5432/${POSTGRES_DB:-calmeet}?schema=public
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-your_super_secret_key_change_in_production}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - ZOOM_CLIENT_ID=${ZOOM_CLIENT_ID}
+      - ZOOM_CLIENT_SECRET=${ZOOM_CLIENT_SECRET}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+    depends_on:
+      database:
+        condition: service_healthy
+
+  studio:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./prisma:/app/prisma
+    command: npx prisma studio --port 5555 --browser none
+    ports:
+      - "5555:5555"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@database:5432/${POSTGRES_DB:-calmeet}?schema=public
+    depends_on:
+      database:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

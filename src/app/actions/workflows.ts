@@ -78,3 +78,30 @@ export async function updateWorkflow(id: string, data: {
   revalidatePath("/dashboard/workflows");
 }
 
+export async function duplicateWorkflow(id: string) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) throw new Error("Unauthorized");
+  const userId = (session.user as any).id;
+
+  const original = await prisma.workflow.findUnique({
+    where: { id, userId }
+  });
+
+  if (!original) throw new Error("Workflow not found");
+
+  const workflow = await prisma.workflow.create({
+    data: {
+      userId,
+      name: `${original.name} (Copy)`,
+      trigger: original.trigger,
+      action: original.action,
+      isActive: true,
+      isPremium: original.isPremium,
+    }
+  });
+
+  revalidatePath("/dashboard/workflows");
+  return workflow;
+}
+
+

@@ -134,64 +134,48 @@ export async function sendBookingNotifications(bookingId: string) {
       console.error("Failed to trigger Zapier webhook:", zapierError);
     }
 
-    // 4. Send confirmation emails using Resend
+    // 4. Send rich confirmation emails to Guest (no account required) & Host
     try {
-      if (process.env.RESEND_API_KEY) {
-        console.log("Sending booking confirmation emails via Resend...");
-        const formattedDate = startTime.toLocaleString("en-US", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          timeZoneName: "short",
-          timeZone: eventType.user.timezone || "UTC"
-        });
+      console.log(`Sending booking confirmation email to guest (${guestEmail}) and host (${eventType.user.email})...`);
+      const { generateGuestConfirmationEmail } = await import("@/lib/email-templates");
+      const { sendEmail } = await import("@/lib/resend");
 
-        // Email to the guest
-        await resend.emails.send({
-          from: "CalMeet <onboarding@resend.dev>",
-          to: guestEmail,
-          subject: `Confirmed: ${eventType.title} with ${eventType.user.name || "Host"}`,
-          html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
-              <h2 style="color: #0f172a;">Meeting Confirmed!</h2>
-              <p>Hi <strong>${guestName}</strong>,</p>
-              <p>Your booking for <strong>${eventType.title}</strong> is confirmed.</p>
-              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
-              <p><strong>Host:</strong> ${eventType.user.name || "User"} (${eventType.user.email || ""})</p>
-              <p><strong>Time:</strong> ${formattedDate}</p>
-              ${meetLink ? `<p><strong>Video Call Link:</strong> <a href="${meetLink}">${meetLink}</a></p>` : ""}
-              ${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ""}
-            </div>
-          `
-        });
+      const hostName = eventType.user.name || "Host";
+      const hostEmail = eventType.user.email || "";
 
-        // Email to the host
-        if (eventType.user.email) {
-          await resend.emails.send({
-            from: "CalMeet <onboarding@resend.dev>",
-            to: eventType.user.email,
-            subject: `New Booking: ${guestName} - ${eventType.title}`,
-            html: `
-              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
-                <h2 style="color: #0f172a;">New Meeting Scheduled</h2>
-                <p>Hi <strong>${eventType.user.name || "Host"}</strong>,</p>
-                <p><strong>${guestName}</strong> (${guestEmail}) has scheduled a meeting with you.</p>
-                <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
-                <p><strong>Event:</strong> ${eventType.title}</p>
-                <p><strong>Time:</strong> ${formattedDate}</p>
-                ${meetLink ? `<p><strong>Video Call Link:</strong> <a href="${meetLink}">${meetLink}</a></p>` : ""}
-                ${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ""}
-              </div>
-            `
-          });
-        }
-        console.log("Confirmation emails successfully sent.");
-      } else {
-        console.log("Resend API key is missing. Skipping email notifications.");
+      const emailHtml = generateGuestConfirmationEmail({
+        guestName,
+        guestEmail,
+        hostName,
+        hostEmail,
+        eventTitle: eventType.title,
+        duration: eventType.duration,
+        startTime,
+        endTime,
+        meetLink,
+        notes,
+        timezone: eventType.user.timezone || "UTC",
+        bookingId: booking.id,
+      });
+
+      // Send to the Guest (No account needed!)
+      await sendEmail({
+        to: guestEmail,
+        subject: `Confirmed: ${eventType.title} with ${hostName}`,
+        html: emailHtml,
+        fromName: `${hostName} via CalMeet`,
+      });
+
+      // Send notification to Host
+      if (hostEmail) {
+        await sendEmail({
+          to: hostEmail,
+          subject: `New Booking: ${guestName} - ${eventType.title}`,
+          html: emailHtml,
+          fromName: "CalMeet Scheduling",
+        });
       }
+      console.log("Confirmation emails successfully dispatched.");
     } catch (emailError) {
       console.error("Failed to send booking confirmation emails:", emailError);
     }

@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma"; // Updated client
+import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -14,20 +14,21 @@ export default async function AvailabilityPage() {
   const user = await prisma.user.findUnique({
     where: { id: (session.user as any).id },
     include: {
-      availability: true
+      availability: true,
+      teamMemberships: {
+        include: {
+          team: true
+        }
+      }
     }
   });
 
-  const userTimezone = user?.timezone || "UTC";
+  const userTimezone = user?.timezone || "Asia/Kolkata";
 
   return (
-    <div className="space-y-8 max-w-2xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Availability</h1>
-        <p className="text-muted-foreground">Set your default working hours and days of the week.</p>
-      </div>
-
+    <div className="max-w-5xl mx-auto py-2">
       <AvailabilityForm 
+        user={user}
         initialAvailability={user?.availability || []} 
         initialTimezone={userTimezone} 
       />

@@ -5,6 +5,9 @@ import { motion } from "framer-motion";
 import { Link as LinkIcon, Share2, Users, Shield, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+import { Footer } from "@/components/landing/footer";
+import Link from "next/link";
+
 export default function DynamicGroupLinksPage() {
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-black">
@@ -32,9 +35,11 @@ export default function DynamicGroupLinksPage() {
             Create powerful, short-lived links for specific groups, events, or campaigns. 
             Full control over who books and when.
           </p>
-          <Button size="lg" className="h-16 px-10 rounded-full text-lg font-bold bg-rose-600 hover:bg-rose-700">
-            Create Dynamic Link
-          </Button>
+          <Link href="/dashboard/event-types">
+            <Button size="lg" className="h-16 px-10 rounded-full text-lg font-bold bg-rose-600 hover:bg-rose-700">
+              Create Dynamic Link
+            </Button>
+          </Link>
         </section>
 
         {/* Feature Grid */}
@@ -48,7 +53,7 @@ export default function DynamicGroupLinksPage() {
                     permanent link shared.
                  </p>
                  <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border flex items-center gap-4 text-xs font-mono text-muted-foreground">
-                    <span className="flex-grow truncate">calmeet.inc/alex/private-291</span>
+                    <span className="flex-grow truncate">calmeet.app/alex/private-291</span>
                     <Button variant="ghost" size="sm" className="h-8">Copy</Button>
                  </div>
               </div>
@@ -89,22 +94,22 @@ export default function DynamicGroupLinksPage() {
                  Start creating dynamic links and take total control over your schedule.
               </p>
               <div className="flex justify-center gap-4">
-                 <Button size="lg" className="rounded-full px-10 h-14 font-bold bg-rose-600 hover:bg-rose-700">
-                    Get Started
-                 </Button>
-                 <Button size="lg" variant="outline" className="rounded-full px-10 h-14 font-bold">
-                    View Docs
-                 </Button>
+                 <Link href="/signup">
+                   <Button size="lg" className="rounded-full px-10 h-14 font-bold bg-rose-600 hover:bg-rose-700">
+                      Get Started
+                   </Button>
+                 </Link>
+                 <Link href="/resources/help-docs">
+                   <Button size="lg" variant="outline" className="rounded-full px-10 h-14 font-bold">
+                      View Docs
+                   </Button>
+                 </Link>
               </div>
            </div>
         </section>
       </main>
 
-      <footer className="py-12 border-t bg-zinc-50 dark:bg-zinc-950 mt-24">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} CalMeet Inc. Dynamic routing.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

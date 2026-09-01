@@ -1,9 +1,11 @@
 "use client";
 
 import { Navbar } from "@/components/landing/navbar";
+import { Footer } from "@/components/landing/footer";
 import { motion } from "framer-motion";
 import { Users, Calendar, ArrowRight, UserPlus, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function CollectiveEventsPage() {
   return (
@@ -105,18 +107,17 @@ export default function CollectiveEventsPage() {
               <p className="text-xl text-emerald-100 mb-12">
                  Join thousands of teams using collective events to streamline their multi-host scheduling.
               </p>
-              <Button size="lg" variant="secondary" className="rounded-full px-12 h-16 font-bold text-lg">
-                 Start Team Scheduling
-              </Button>
+              <Link href="/dashboard/event-types">
+                <Button size="lg" className="h-14 px-8 rounded-full text-base font-bold bg-white text-emerald-900 hover:bg-emerald-50">
+                  Create Collective Event
+                </Button>
+              </Link>
            </div>
         </section>
       </main>
 
-      <footer className="py-12 border-t bg-zinc-50 dark:bg-zinc-950 mt-24">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} CalMeet Inc. Collaboration first.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
+

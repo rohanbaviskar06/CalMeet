@@ -77,53 +77,87 @@ export function RoutingQuestionnaire({ routingForm, username, hideWatermark }: {
         </CardHeader>
         <CardContent className="p-6 pt-0">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {routingForm.questions.map((q: any) => (
-              <div key={q.id} className="space-y-3">
-                <Label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{q.text}</Label>
+            {routingForm.questions.map((q: any, qIdx: number) => (
+              <div key={q.id || qIdx} className="space-y-2.5">
+                <Label className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 flex items-center justify-between">
+                  <span>{q.text}</span>
+                  {q.required !== false && <span className="text-[10px] text-zinc-400 font-normal">Required</span>}
+                </Label>
                 
                 {q.type === 'select' ? (
                   <div className="grid gap-2">
-                    {q.options.map((opt: string, i: number) => (
-                      <label 
-                        key={i} 
-                        className="flex items-center space-x-3 border border-zinc-200/60 dark:border-zinc-850 p-3.5 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-900/40 hover:border-zinc-300 dark:hover:border-zinc-800 transition-all cursor-pointer group"
-                      >
-                        <input 
-                          type="radio" 
-                          name={`q-${q.id}`} 
-                          value={opt} 
-                          required
-                          onChange={(e) => handleAnswer(q.id, e.target.value)}
-                          className="w-4 h-4 text-primary bg-background border-zinc-300 focus:ring-primary focus:ring-offset-background"
-                        />
-                        <span className="text-sm font-normal text-zinc-650 dark:text-zinc-350 group-hover:text-primary transition-colors">{opt}</span>
-                      </label>
-                    ))}
+                    {q.options?.map((opt: string, i: number) => {
+                      const isSelected = answers[q.id || `q-${qIdx}`] === opt;
+                      return (
+                        <label 
+                          key={i} 
+                          className={`flex items-center space-x-3 border p-3 rounded-xl transition-all cursor-pointer ${
+                            isSelected 
+                              ? 'border-primary bg-primary/5 text-primary shadow-xs font-semibold' 
+                              : 'border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900/40 hover:border-zinc-300'
+                          }`}
+                        >
+                          <input 
+                            type="radio" 
+                            name={`q-${q.id || qIdx}`} 
+                            value={opt} 
+                            required={q.required !== false}
+                            checked={isSelected}
+                            onChange={(e) => handleAnswer(q.id || `q-${qIdx}`, e.target.value)}
+                            className="w-4 h-4 text-primary bg-background border-zinc-300 focus:ring-primary"
+                          />
+                          <span className="text-xs">{opt}</span>
+                        </label>
+                      );
+                    })}
                   </div>
+                ) : q.type === 'email' ? (
+                  <Input 
+                    type="email"
+                    placeholder="you@company.com" 
+                    onChange={(e) => handleAnswer(q.id || `q-${qIdx}`, e.target.value)}
+                    required={q.required !== false}
+                    className="w-full px-3.5 h-10 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs"
+                  />
+                ) : q.type === 'number' ? (
+                  <Input 
+                    type="number"
+                    placeholder="0" 
+                    onChange={(e) => handleAnswer(q.id || `q-${qIdx}`, e.target.value)}
+                    required={q.required !== false}
+                    className="w-full px-3.5 h-10 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs"
+                  />
                 ) : (
                   <Input 
-                    placeholder="Type your answer..." 
-                    onChange={(e) => handleAnswer(q.id, e.target.value)}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-background text-sm focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none transition-all"
+                    type="text"
+                    placeholder="Type your response..." 
+                    onChange={(e) => handleAnswer(q.id || `q-${qIdx}`, e.target.value)}
+                    required={q.required !== false}
+                    className="w-full px-3.5 h-10 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs"
                   />
                 )}
               </div>
             ))}
 
-            <Button type="submit" className="w-full h-11 text-sm font-medium gap-2 bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 rounded-xl" disabled={isSubmitting}>
+            <Button 
+              type="submit" 
+              className="w-full h-11 text-xs font-bold gap-2 bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 rounded-xl cursor-pointer shadow-sm" 
+              disabled={isSubmitting}
+            >
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Routing you...
+                  Routing to available times...
                 </>
               ) : (
                 <>
-                  Find a Time <ChevronRight className="h-4 w-4" />
+                  <span>Find Available Time</span>
+                  <ChevronRight className="h-4 w-4" />
                 </>
               )}
             </Button>
           </form>
+
         </CardContent>
       </Card>
       

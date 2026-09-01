@@ -17,7 +17,9 @@ export default async function WorkflowsPage() {
     select: { plan: true }
   });
 
-  if (user?.plan !== "PRO") {
+  const isPaidPlan = user?.plan && user.plan !== "FREE";
+
+  if (!isPaidPlan) {
     return (
       <ProGatedPage 
         title="Workflows" 

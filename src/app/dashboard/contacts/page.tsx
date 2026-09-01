@@ -79,13 +79,9 @@ export default async function ContactsPage() {
   });
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Contacts</h1>
-        <p className="text-muted-foreground">Directory of everyone who has booked a meeting with you.</p>
-      </div>
-
+    <div className="max-w-5xl mx-auto py-2">
       <ContactsClient contacts={contacts} />
     </div>
   );
 }
+

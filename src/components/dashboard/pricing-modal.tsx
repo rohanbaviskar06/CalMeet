@@ -1,12 +1,13 @@
 "use client";
 
 import React, { createContext, useContext, useState, useTransition } from "react";
-import { X, Check, ShieldAlert, Sparkles, Loader2 } from "lucide-react";
+import { X, Check, ShieldAlert, Sparkles, Loader2, Users, Building2, ShieldCheck, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { upgradeToPro, downgradeToFree } from "@/app/actions/plan";
+import { setUserPlan, PlanType } from "@/app/actions/plan";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface PricingModalContextType {
   isOpen: boolean;
@@ -37,36 +38,90 @@ export function PricingModalProvider({
   const openPricingModal = () => setIsOpen(true);
   const closePricingModal = () => setIsOpen(false);
 
-  const handleUpgrade = async () => {
+  const handleSelectPlan = async (targetPlan: PlanType) => {
     startTransition(async () => {
       try {
-        const res = await upgradeToPro();
+        const res = await setUserPlan(targetPlan);
         if (res.success) {
-          toast.success("Successfully upgraded to Pro! Welcome to CalMeet Premium!");
+          toast.success(`Sandbox: Active plan switched to ${targetPlan}!`);
           setIsOpen(false);
-          // Hard reload or route refresh will be performed by router / revalidation
           window.location.reload();
         }
       } catch (err: any) {
-        toast.error(err.message || "Something went wrong during upgrade.");
+        toast.error(err.message || "Something went wrong changing plan.");
       }
     });
   };
 
-  const handleDowngrade = async () => {
-    startTransition(async () => {
-      try {
-        const res = await downgradeToFree();
-        if (res.success) {
-          toast.success("Sandbox simulation: Plan set back to FREE.");
-          setIsOpen(false);
-          window.location.reload();
-        }
-      } catch (err: any) {
-        toast.error(err.message || "Something went wrong during downgrade.");
-      }
-    });
-  };
+  const modalPlans = [
+    {
+      id: "FREE" as PlanType,
+      name: "Individuals",
+      price: "$0",
+      suffix: "/ forever",
+      desc: "For solo professionals & freelancers.",
+      features: [
+        "Unlimited bookings & event types",
+        "Google & Outlook Calendar sync",
+        "Google Meet, Zoom & Cal Video",
+        "Standard CalMeet watermark"
+      ],
+      buttonLabel: "Select Free",
+      isPopular: false
+    },
+    {
+      id: "PRO" as PlanType,
+      name: "Teams",
+      price: "$12",
+      suffix: "/ user / mo",
+      desc: "For collaborative teams & startups.",
+      features: [
+        "Collective & Round-robin routing",
+        "1 Team with unlimited invites",
+        "Remove CalMeet watermark",
+        "Automated SMS/Email workflows",
+        "Dynamic routing forms",
+        "Advanced booking analytics",
+        "Webhooks & developer API keys"
+      ],
+      buttonLabel: "Switch to Teams",
+      isPopular: true
+    },
+    {
+      id: "ORGANIZATION" as PlanType,
+      name: "Organizations",
+      price: "$28",
+      suffix: "/ user / mo",
+      desc: "For scaling multi-team companies.",
+      features: [
+        "Everything in Teams, plus:",
+        "Unlimited sub-teams & departments",
+        "Company subdomain (company.calmeet.com)",
+        "SAML SSO & SCIM directory sync",
+        "Role-Based Access Control (RBAC)",
+        "CRM routing & weighted distribution",
+        "24/7 Priority SLA support"
+      ],
+      buttonLabel: "Switch to Org",
+      isPopular: false
+    },
+    {
+      id: "ENTERPRISE" as PlanType,
+      name: "Enterprise",
+      price: "Custom",
+      suffix: "tailored",
+      desc: "For high security & custom compliance.",
+      features: [
+        "Everything in Organizations, plus:",
+        "Dedicated CSM & onboarding engineer",
+        "99.99% Uptime SLA guarantee",
+        "SOC2 & HIPAA BAA compliance",
+        "Dedicated Slack Connect channel"
+      ],
+      buttonLabel: "Select Enterprise",
+      isPopular: false
+    }
+  ];
 
   return (
     <PricingModalContext.Provider value={{ isOpen, openPricingModal, closePricingModal }}>
@@ -75,161 +130,147 @@ export function PricingModalProvider({
       <AnimatePresence>
         {isOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop with modern glassmorphism blur */}
+            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={closePricingModal}
-              className="absolute inset-0 bg-background/40 backdrop-blur-md dark:bg-black/60"
+              className="absolute inset-0 bg-background/60 backdrop-blur-md dark:bg-black/75"
             />
 
             {/* Modal Body */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              transition={{ type: "spring", duration: 0.5 }}
-              className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl border border-zinc-200/80 bg-white/80 p-6 shadow-2xl backdrop-blur-xl dark:border-zinc-800/85 dark:bg-zinc-950/80 md:p-8"
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              transition={{ type: "spring", duration: 0.45 }}
+              className="relative w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-3xl border border-zinc-200/90 bg-white p-6 shadow-2xl backdrop-blur-2xl dark:border-zinc-800 dark:bg-zinc-950 md:p-8"
             >
               {/* Close Button */}
               <button
                 onClick={closePricingModal}
-                className="absolute right-4 top-4 rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-zinc-950 dark:hover:text-zinc-55 hover:scale-105 active:scale-95 transition-all"
+                className="absolute right-4 top-4 rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
               >
                 <X className="h-5 w-5" />
               </button>
 
-              {/* Sandbox Plan Switcher for Ease of Testing */}
-              <div className="mb-6 flex items-center gap-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 p-3 text-xs text-amber-600 dark:text-amber-400">
-                <ShieldAlert className="h-4 w-4 shrink-0 animate-pulse" />
-                <div className="flex-1">
-                  <span className="font-semibold">Developer Sandbox:</span> Toggle your plan instantly to test feature-gating restrictions. Current plan is <strong className="uppercase">{currentPlan}</strong>.
+              {/* Developer Sandbox Plan Quick-Switcher */}
+              <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 p-3.5 text-xs text-amber-700 dark:text-amber-300">
+                <div className="flex items-center gap-2.5">
+                  <ShieldAlert className="h-4 w-4 shrink-0 animate-pulse text-amber-600 dark:text-amber-400" />
+                  <div>
+                    <span className="font-bold">Sandbox Plan Simulator:</span> Test feature-gating restrictions. Current plan is <strong className="uppercase font-mono bg-amber-500/20 px-2 py-0.5 rounded text-amber-900 dark:text-amber-200">{currentPlan}</strong>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {currentPlan === "PRO" ? (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={handleDowngrade} 
-                      disabled={isPending}
-                      className="h-7 text-[10px] bg-white border-amber-500/40 text-amber-700 hover:bg-amber-50 dark:bg-zinc-900"
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {(["FREE", "PRO", "ORGANIZATION", "ENTERPRISE"] as PlanType[]).map((p) => (
+                    <Button
+                      key={p}
+                      size="sm"
+                      variant={currentPlan === p ? "default" : "outline"}
+                      onClick={() => handleSelectPlan(p)}
+                      disabled={isPending || currentPlan === p}
+                      className={cn(
+                        "h-7 text-[10px] px-2.5 font-bold uppercase",
+                        currentPlan === p && "bg-amber-600 hover:bg-amber-700 text-white border-transparent"
+                      )}
                     >
-                      {isPending && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
-                      Reset to Free
+                      {isPending && currentPlan === p && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+                      {p === "PRO" ? "Teams" : p === "ORGANIZATION" ? "Org" : p}
                     </Button>
-                  ) : (
-                    <Button 
-                      variant="default" 
-                      size="sm" 
-                      onClick={handleUpgrade} 
-                      disabled={isPending}
-                      className="h-7 text-[10px] bg-amber-600 hover:bg-amber-700 text-white"
-                    >
-                      {isPending && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
-                      Simulate Pro Plan
-                    </Button>
-                  )}
+                  ))}
                 </div>
               </div>
 
               {/* Title & Header */}
               <div className="text-center mb-8">
                 <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-xs font-bold text-primary mb-3">
-                  <Sparkles className="h-3 w-3" /> Upgrade to Premium
+                  <Sparkles className="h-3 w-3" /> Compare CalMeet Plans
                 </div>
-                <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl text-zinc-900 dark:text-white">
-                  Unlock all premium tools
+                <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
+                  Upgrade your scheduling power
                 </h2>
-                <p className="mt-2 text-sm md:text-base text-muted-foreground max-w-xl mx-auto">
-                  Take control of your scheduling with automated workflows, smart routing forms, and full-funnel business analytics.
+                <p className="mt-1.5 text-xs md:text-sm text-muted-foreground max-w-xl mx-auto">
+                  Unlock automated reminders, round-robin team scheduling, smart routing forms, and white-label branding.
                 </p>
               </div>
 
               {/* Grid of Plans */}
-              <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-                
-                {/* Current Free Plan / Context */}
-                <div className="flex flex-col rounded-2xl border border-zinc-150 dark:border-zinc-850 p-6 bg-zinc-50/50 dark:bg-zinc-900/30">
-                  <h3 className="text-lg font-bold text-zinc-800 dark:text-zinc-200">Free Starter</h3>
-                  <div className="mt-4 flex items-baseline">
-                    <span className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white">$0</span>
-                    <span className="ml-1 text-xs text-muted-foreground">/ forever</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted-foreground">For simple scheduling and getting started.</p>
-                  
-                  <ul className="mt-6 space-y-3 flex-1">
-                    {[
-                      "1 Active Event Type",
-                      "Unlimited bookings",
-                      "Google Calendar Sync",
-                      "Basic customize styles",
-                    ].map((feat) => (
-                      <li key={feat} className="flex items-center gap-2.5 text-xs">
-                        <Check className="h-4 w-4 text-zinc-400 shrink-0" />
-                        <span className="text-zinc-600 dark:text-zinc-350">{feat}</span>
-                      </li>
-                    ))}
-                  </ul>
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {modalPlans.map((plan) => {
+                  const isCurrent = currentPlan === plan.id;
+                  return (
+                    <div 
+                      key={plan.id}
+                      className={cn(
+                        "flex flex-col rounded-2xl border p-5 transition-all relative overflow-hidden",
+                        plan.isPopular 
+                          ? "border-primary shadow-lg bg-primary/[0.02] dark:bg-primary/[0.04] ring-1 ring-primary/30" 
+                          : "border-border bg-card/60",
+                        isCurrent && "ring-2 ring-emerald-500/50 border-emerald-500/40"
+                      )}
+                    >
+                      {plan.isPopular && (
+                        <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[8px] font-extrabold px-2.5 py-0.5 rounded-bl-lg uppercase tracking-wide">
+                          Popular
+                        </div>
+                      )}
+                      {isCurrent && (
+                        <div className="absolute top-0 left-0 bg-emerald-500 text-white text-[8px] font-extrabold px-2.5 py-0.5 rounded-br-lg uppercase tracking-wide">
+                          Active Plan
+                        </div>
+                      )}
 
-                  <Button variant="outline" className="w-full mt-6 bg-transparent pointer-events-none text-muted-foreground border-dashed">
-                    {currentPlan === "FREE" ? "Current Plan" : "Basic Access"}
-                  </Button>
-                </div>
+                      <div className="pt-2">
+                        <h3 className="text-base font-bold text-foreground">{plan.name}</h3>
+                        <div className="mt-2 flex items-baseline">
+                          <span className="text-2xl font-extrabold text-foreground">{plan.price}</span>
+                          <span className="ml-1 text-[10px] text-muted-foreground">{plan.suffix}</span>
+                        </div>
+                        <p className="mt-1 text-[11px] text-muted-foreground min-h-[30px]">{plan.desc}</p>
+                      </div>
 
-                {/* Gated Pro Tier */}
-                <div className="flex flex-col rounded-2xl border-2 border-primary p-6 bg-white dark:bg-zinc-900 shadow-xl relative overflow-hidden">
-                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[9px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wide">
-                    Locked Premium Features
-                  </div>
-                  
-                  <h3 className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-                    Pro Plan <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">Recommended</span>
-                  </h3>
-                  
-                  <div className="mt-4 flex items-baseline">
-                    <span className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white">$12</span>
-                    <span className="ml-1 text-xs text-muted-foreground">/ month</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted-foreground">Designed for high performance scheduling automation.</p>
+                      <div className="w-full h-px bg-border/60 my-4" />
 
-                  <ul className="mt-6 space-y-3 flex-1">
-                    {[
-                      "Unlimited Event Types & Bookings",
-                      "Custom Workflow Automations (Zap)",
-                      "Dynamic Routing Forms & Rep Router",
-                      "Detailed Booking & Conversion Analytics",
-                      "All Premium Integrations (Zoom, Webex)",
-                      "Custom Domain & White labeling Branding",
-                    ].map((feat) => (
-                      <li key={feat} className="flex items-center gap-2.5 text-xs font-medium">
-                        <Check className="h-4 w-4 text-primary shrink-0" />
-                        <span className="text-zinc-800 dark:text-zinc-100">{feat}</span>
-                      </li>
-                    ))}
-                  </ul>
+                      <ul className="space-y-2 flex-1 text-[11px]">
+                        {plan.features.map((feat, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                            <span className="text-muted-foreground">{feat}</span>
+                          </li>
+                        ))}
+                      </ul>
 
-                  <Button 
-                    variant="default"
-                    onClick={handleUpgrade}
-                    disabled={isPending}
-                    className="w-full mt-6 h-11 bg-primary text-primary-foreground hover:bg-primary/95 text-xs font-bold shadow-md hover:shadow-lg active:scale-98 transition-all"
-                  >
-                    {isPending ? (
-                      <span className="flex items-center gap-2 justify-center">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Upgrading...
-                      </span>
-                    ) : (
-                      currentPlan === "PRO" ? "You Have Pro Access" : "Upgrade to Pro Plan"
-                    )}
-                  </Button>
-                </div>
-
+                      <Button
+                        size="sm"
+                        variant={isCurrent ? "outline" : plan.isPopular ? "default" : "outline"}
+                        disabled={isPending || isCurrent}
+                        onClick={() => handleSelectPlan(plan.id)}
+                        className={cn(
+                          "w-full mt-5 h-9 text-xs font-bold rounded-xl",
+                          isCurrent && "border-emerald-500/40 text-emerald-600 dark:text-emerald-400 pointer-events-none"
+                        )}
+                      >
+                        {isPending ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin mx-auto" />
+                        ) : isCurrent ? (
+                          "Current Plan"
+                        ) : (
+                          plan.buttonLabel
+                        )}
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Bottom Support / Info */}
-              <div className="mt-8 text-center text-[10px] text-muted-foreground">
-                All upgrades are fully sandbox-simulated. Need custom features or SSO for team coordination? <span className="text-primary cursor-pointer hover:underline" onClick={() => toast.info("Contacting team sales simulator...")}>Contact Enterprise Sales</span>.
+              <div className="mt-6 pt-4 border-t border-border/60 text-center text-[11px] text-muted-foreground flex flex-col sm:flex-row items-center justify-between gap-2">
+                <span>Want to see full feature comparison matrix?</span>
+                <Link href="/pricing" target="_blank" className="text-primary hover:underline font-semibold inline-flex items-center gap-1">
+                  View full pricing table <ArrowRight className="h-3 w-3" />
+                </Link>
               </div>
             </motion.div>
           </div>

@@ -1,9 +1,11 @@
 "use client";
 
 import { Navbar } from "@/components/landing/navbar";
+import { Footer } from "@/components/landing/footer";
 import { motion } from "framer-motion";
 import { Moon, Calendar, Zap, Bell, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function OutOfOfficePage() {
   return (
@@ -32,9 +34,11 @@ export default function OutOfOfficePage() {
             Our Out of Office tool automatically handles your scheduling while you&apos;re away. 
             No more manual adjustments or double bookings.
           </p>
-          <Button size="lg" className="h-16 px-10 rounded-full text-lg font-bold bg-indigo-600 hover:bg-indigo-700">
-            Set Your Vacation Dates
-          </Button>
+          <Link href="/dashboard/settings?tab=out-of-office">
+            <Button size="lg" className="h-16 px-10 rounded-full text-lg font-bold bg-indigo-600 hover:bg-indigo-700 cursor-pointer">
+              Set Your Vacation Dates
+            </Button>
+          </Link>
         </section>
 
         {/* Features Section */}
@@ -116,18 +120,16 @@ export default function OutOfOfficePage() {
                  Start protecting your time today. It takes less than 30 seconds to set up 
                  your first out-of-office block.
               </p>
-              <Button size="lg" className="rounded-full px-12 h-14 font-bold bg-indigo-600 hover:bg-indigo-700">
-                 Get Started
-              </Button>
+              <Link href="/dashboard/settings?tab=out-of-office">
+                <Button size="lg" className="rounded-full px-12 h-14 font-bold bg-indigo-600 hover:bg-indigo-700 cursor-pointer">
+                   Get Started
+                </Button>
+              </Link>
            </div>
         </section>
       </main>
 
-      <footer className="py-12 border-t bg-zinc-50 dark:bg-zinc-950 mt-24">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} CalMeet Inc. Reclaim your focus.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -1,17 +1,23 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
-  Calendar, 
+  Calendar as CalendarIcon, 
   Clock, 
   Users, 
   CreditCard,
+  Link2,
+  ExternalLink,
+  ChevronRight,
+  Plus,
+  CheckCircle2,
+  CalendarDays,
+  Sparkles
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { MeetingActions, ShareLinkBox } from "@/components/dashboard/dashboard-client";
+import { MeetingActions, ShareLinkBox, DashboardHeaderActions } from "@/components/dashboard/dashboard-client";
 import { RealtimeDashboardListener } from "@/components/dashboard/realtime-dashboard";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -23,84 +29,67 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  // Fetch data in parallel to reduce load time
-  const [user, totalBookingsCount, upcomingBookingsCount, recentBookings, paidBookings] = await Promise.all([
+  const userId = (session.user as any).id;
+
+  // Fetch data in parallel
+  const [user, totalBookingsCount, upcomingBookings, eventTypes, paidBookings] = await Promise.all([
     prisma.user.findUnique({
-      where: { id: (session.user as any).id },
+      where: { id: userId },
       include: {
         accounts: true,
-        bookings: {
-          where: { 
-            startTime: { gte: new Date() },
-            status: "CONFIRMED"
-          },
-          include: { eventType: true },
-          orderBy: { startTime: "asc" },
-          take: 5
-        }
       }
     }),
     prisma.booking.count({
       where: { 
-        eventType: { userId: (session.user as any).id },
-        status: "CONFIRMED"
-      }
-    }),
-    prisma.booking.count({
-      where: { 
-        eventType: { userId: (session.user as any).id },
-        startTime: { gte: new Date() },
+        eventType: { userId },
         status: "CONFIRMED"
       }
     }),
     prisma.booking.findMany({
       where: { 
-        eventType: { userId: (session.user as any).id },
-        createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0) - 7 * 24 * 60 * 60 * 1000) },
+        eventType: { userId },
+        startTime: { gte: new Date() },
         status: "CONFIRMED"
       },
-      include: { eventType: true }
+      include: { eventType: true },
+      orderBy: { startTime: "asc" },
+      take: 5
+    }),
+    prisma.eventType.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      take: 4
     }),
     prisma.booking.findMany({
       where: {
-        eventType: { 
-          userId: (session.user as any).id,
-          requiresPayment: true
-        },
+        eventType: { userId, requiresPayment: true },
         status: "CONFIRMED",
         paymentStatus: "PAID"
       },
       include: {
         eventType: {
-          select: {
-            price: true,
-            currency: true
-          }
+          select: { price: true, currency: true }
         }
       }
     })
   ]);
-  
+
   if (!user) {
     redirect("/login");
   }
 
-  // Calculate avg duration from all event types (more efficient than all bookings)
-  const eventTypes = await prisma.eventType.findMany({
-    where: { userId: user.id },
-    select: { duration: true }
-  });
+  const username = user.username || user.email?.split("@")[0] || "user";
 
   const avgDuration = eventTypes.length > 0
     ? Math.round(eventTypes.reduce((acc, et) => acc + et.duration, 0) / eventTypes.length)
     : 0;
 
-  // Calculate total payments collected
+  // Earnings calculation
   let totalINR = 0;
   let totalUSD = 0;
   paidBookings.forEach(booking => {
-    const price = booking.eventType.price || 0;
-    if (booking.eventType.currency === "INR") {
+    const price = booking.eventType?.price || 0;
+    if (booking.eventType?.currency === "INR") {
       totalINR += price;
     } else {
       totalUSD += price;
@@ -112,242 +101,214 @@ export default async function DashboardPage() {
     earningsLabel = `₹${totalINR} + $${totalUSD}`;
   } else if (totalUSD > 0) {
     earningsLabel = `$${totalUSD}`;
-  } else {
+  } else if (totalINR > 0) {
     earningsLabel = `₹${totalINR}`;
   }
 
   const stats = [
-    { title: "Total Bookings", value: totalBookingsCount.toString(), icon: Users, change: "All time" },
-    { title: "Upcoming", value: upcomingBookingsCount.toString(), icon: Calendar, change: "Next 7 days" },
-    { title: "Avg. Duration", value: `${avgDuration}m`, icon: Clock, change: "Per meeting" },
-    { title: "Payments Collected", value: earningsLabel, icon: CreditCard, change: "All time earnings" },
+    { title: "Total Bookings", value: totalBookingsCount.toString(), desc: "All time scheduled", icon: Users },
+    { title: "Upcoming", value: upcomingBookings.length.toString(), desc: "In your queue", icon: CalendarIcon },
+    { title: "Avg. Duration", value: `${avgDuration || 30}m`, desc: "Per event type", icon: Clock },
+    { title: "Revenue", value: earningsLabel, desc: "Collected earnings", icon: CreditCard },
   ];
 
-  // Calculate trend data for the last 7 days
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }).reverse();
-
-  const trendData = last7Days.map(date => {
-    const dayStart = date;
-    const dayEnd = new Date(date);
-    dayEnd.setHours(23, 59, 59, 999);
-    
-    const count = recentBookings.filter(b => {
-      const bDate = new Date(b.createdAt);
-      return bDate >= dayStart && bDate <= dayEnd;
-    }).length;
-
-    return {
-      label: format(date, "MMM d"),
-      value: count
-    };
-  });
-
-  const maxTrendValue = Math.max(...trendData.map(d => d.value), 1);
-
-  const googleIntegration = user.accounts.find(a => a.provider === "google");
+  const googleIntegration = user.accounts?.find(a => a.provider === "google");
 
   return (
-    <div className="space-y-6 max-w-full">
+    <div className="space-y-6 max-w-6xl mx-auto py-2">
       <RealtimeDashboardListener />
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-background to-background p-8 border">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
-        <div className="relative z-10">
-          <h1 className="text-3xl font-extrabold tracking-tight">
-            Welcome back, <span className="bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-transparent">{user.name?.split(' ')[0] || 'User'}</span> 👋
+
+      {/* Clean Modern Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200 dark:border-zinc-800 pb-5">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            Welcome back, {user.name?.split(" ")[0] || "there"}
           </h1>
-          <p className="text-muted-foreground mt-2">Here's what's happening with your schedule today.</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+            Here's an overview of your schedule and booking activity today.
+          </p>
         </div>
+
+        <DashboardHeaderActions username={username} />
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-          {stats.map((stat, i) => {
-            const colors = ["text-blue-500 bg-blue-500/10", "text-emerald-500 bg-emerald-500/10", "text-violet-500 bg-violet-500/10"];
-            return (
-              <Card key={stat.title} className="hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-                  <div className={`p-2 rounded-xl ${colors[i % colors.length]}`}>
-                    <stat.icon className="h-4 w-4" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">{stat.value}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    <span className="text-primary font-medium">{stat.change}</span>
-                  </p>
-                </CardContent>
-              </Card>
-            )
-          })}
-
-        <Link href="/dashboard/analytics" className="block cursor-pointer">
-          <Card className="hover:-translate-y-1 hover:shadow-lg transition-all duration-300 hover:border-primary/50">
-            <CardHeader className="pb-2">
+      {/* Minimal 4-Column Stat Cards (Cal.com style) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <div
+              key={stat.title}
+              className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-card hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors shadow-2xs space-y-2"
+            >
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Booking Trend</CardTitle>
-                <span className="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full select-none">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                  Live
+                <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                  {stat.title}
                 </span>
+                <div className="w-6 h-6 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500">
+                  <Icon className="h-3.5 w-3.5" />
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-0.5">Last 7 days</p>
-            </CardHeader>
-            <CardContent className="h-[100px] flex flex-col justify-end px-4 pb-3">
-               {maxTrendValue === 1 && trendData.every(d => d.value === 0) ? (
-                  <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground/50 border-2 border-dashed border-muted rounded-lg">
-                    No data yet
-                  </div>
-               ) : (
-                 <div className="w-full h-full flex flex-col justify-end">
-                   <div className="flex items-end gap-2 h-[65px] w-full">
-                     {trendData.map((d, i) => {
-                       const height = (d.value / maxTrendValue) * 100;
-                       return (
-                         <div key={i} className="flex-1 flex flex-col items-center justify-end h-full group relative" title={`${d.label}: ${d.value}`}>
-                            {d.value > 0 && (
-                              <span className="absolute -top-5 text-[9px] font-bold bg-background text-primary border border-zinc-150 dark:border-zinc-850 px-1 py-0.5 rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none select-none z-10">
-                                {d.value}
-                              </span>
-                            )}
-                            <div 
-                              className="w-full bg-gradient-to-t from-primary/30 to-primary group-hover:from-primary group-hover:to-violet-500 transition-all duration-300 rounded-t-md relative overflow-hidden" 
-                              style={{ height: `${Math.max(height, 8)}%` }}
-                            >
-                              {d.value > 0 && (
-                                <div className="absolute inset-0 bg-white/10 dark:bg-white/5 animate-pulse" />
-                              )}
-                            </div>
-                         </div>
-                       );
-                     })}
-                   </div>
-                   <div className="flex justify-between w-full mt-2 text-[8px] font-semibold text-muted-foreground/80 tracking-wider select-none px-0.5">
-                     {trendData.map((d, i) => (
-                       <span key={i} className="flex-1 text-center truncate">
-                         {d.label.split(" ")[1]}
-                       </span>
-                     ))}
-                   </div>
-                 </div>
-               )}
-            </CardContent>
-          </Card>
-        </Link>
+              <div>
+                <div className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+                  {stat.value}
+                </div>
+                <p className="text-[11px] text-zinc-400 mt-0.5">
+                  {stat.desc}
+                </p>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Upcoming Meetings */}
-        <Card className="col-span-1">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Upcoming Meetings</CardTitle>
-              <CardDescription>Your schedule for the next few days.</CardDescription>
+      {/* Main 2-Column Dashboard Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left / Primary Column: Upcoming Meetings (2 cols) */}
+        <div className="lg:col-span-2 space-y-4">
+          <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl bg-card shadow-2xs overflow-hidden">
+            <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Upcoming Meetings</h2>
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Your scheduled calls for the coming days.</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                render={<Link href="/dashboard/bookings" />}
+                className="h-7 text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+              >
+                View all bookings →
+              </Button>
             </div>
-            <Button variant="outline" size="sm" render={<Link href="/dashboard/bookings" />} nativeButton={false}>
-                View All
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {user.bookings.length === 0 ? (
-                <div className="text-center py-12 px-4 rounded-2xl border-2 border-dashed border-muted/50 bg-muted/10">
-                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-                      <Calendar className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <p className="text-sm font-medium">No upcoming meetings</p>
-                    <p className="text-xs text-muted-foreground mt-1 mb-4">Your schedule is completely clear.</p>
-                    <Button variant="outline" size="sm" render={<Link href="/dashboard/event-types" />} nativeButton={false}>
-                      Share an Event Type
-                    </Button>
+
+            <div className="p-4">
+              {upcomingBookings.length === 0 ? (
+                <div className="text-center py-10 px-4 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800 bg-zinc-50/40 dark:bg-zinc-900/20 space-y-3">
+                  <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 mx-auto flex items-center justify-center text-zinc-400">
+                    <CalendarDays className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">No upcoming meetings</h3>
+                    <p className="text-[11px] text-zinc-400 mt-0.5">Your schedule is completely clear.</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    render={<Link href="/dashboard/event-types" />}
+                    className="h-7 text-xs border-zinc-200 dark:border-zinc-800"
+                  >
+                    Share an Event Link
+                  </Button>
                 </div>
               ) : (
-                user.bookings.map((booking) => (
-                  <div key={booking.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 sm:gap-4 rounded-xl border bg-card hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                        <Calendar className="h-5 w-5 text-primary" />
+                <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                  {upcomingBookings.map((booking) => (
+                    <div key={booking.id} className="py-3 flex items-center justify-between gap-4 first:pt-0 last:pb-0">
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-xs text-zinc-900 dark:text-zinc-100 truncate">
+                            {booking.guestName}
+                          </span>
+                          <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 px-2 py-0.5 rounded-full font-medium">
+                            {booking.eventType?.title || "Meeting"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 text-[11px] text-zinc-400">
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {format(new Date(booking.startTime), "EEE, MMM d · h:mm a")}
+                          </span>
+                          <span>({booking.eventType?.duration || 30} mins)</span>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <h4 className="font-semibold text-sm truncate">{booking.eventType.title}</h4>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {booking.guestName} • {new Intl.DateTimeFormat("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            hour: "numeric",
-                            minute: "2-digit",
-                            hour12: true,
-                            timeZone: user.timezone || "UTC"
-                          }).format(booking.startTime)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 w-full sm:w-auto">
-                      <Badge variant="secondary" className="text-[10px] uppercase">
-                        {booking.meetLink?.includes('/meet/') ? '🎥 CalMeet' : booking.meetLink ? 'Google Meet' : 'Offline'}
-                      </Badge>
+
                       <MeetingActions id={booking.id} meetLink={booking.meetLink} />
                     </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Quick Actions */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Share your link</CardTitle>
-              <CardDescription>Copy your public booking link to share with others.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ShareLinkBox username={user.username || user.id} />
-              <div className="flex gap-2">
-                <Button className="flex-1" render={<Link href="/dashboard/event-types" />} nativeButton={false}>
-                    Create Event Type
-                </Button>
-                <Button variant="outline" className="flex-1" render={<Link href="/dashboard/settings" />} nativeButton={false}>
-                    Settings
-                </Button>
+        {/* Right Column: Quick Links & Connections (1 col) */}
+        <div className="space-y-4">
+          {/* Share Link Card */}
+          <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl bg-card p-4 shadow-2xs space-y-3">
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                Share your public link
+              </h2>
+              <p className="text-[11px] text-zinc-500 mt-0.5">
+                Copy your profile link to share with clients or embed on social media.
+              </p>
+            </div>
+
+            <ShareLinkBox username={username} />
+          </div>
+
+          {/* Active Event Types Preview */}
+          <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl bg-card p-4 shadow-2xs space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                Event Types ({eventTypes.length})
+              </h2>
+              <Link
+                href="/dashboard/event-types"
+                className="text-[11px] font-semibold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+              >
+                Manage →
+              </Link>
+            </div>
+
+            <div className="space-y-2">
+              {eventTypes.map((et) => (
+                <Link
+                  key={et.id}
+                  href={`/dashboard/event-types`}
+                  className="p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/40 dark:bg-zinc-900/30 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors flex items-center justify-between text-xs group"
+                >
+                  <div className="min-w-0 pr-2">
+                    <span className="font-semibold text-zinc-900 dark:text-zinc-100 block truncate group-hover:text-zinc-600 dark:group-hover:text-zinc-200">
+                      {et.title}
+                    </span>
+                    <span className="text-[10px] text-zinc-400">
+                      /{username}/{et.slug} · {et.duration}m
+                    </span>
+                  </div>
+                  <ChevronRight className="h-3.5 w-3.5 text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 shrink-0" />
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Google Calendar Sync Card */}
+          <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl bg-card p-4 shadow-2xs space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                Calendar Sync
+              </h2>
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                <CheckCircle2 className="h-2.5 w-2.5" />
+                Connected
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3 p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/40 dark:bg-zinc-900/30 text-xs">
+              <div className="w-7 h-7 rounded-md bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold text-xs">
+                📅
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Calendar Sync</CardTitle>
-              <CardDescription>
-                {googleIntegration 
-                  ? "Your calendar is currently synced with Google." 
-                  : "Connect your calendar to sync your availability."}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {googleIntegration ? (
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
-                      <span className="text-red-600 font-bold">G</span>
-                  </div>
-                  <div className="flex-1">
-                      <p className="text-sm font-medium">{user.email}</p>
-                      <p className="text-xs text-muted-foreground">Syncing active</p>
-                  </div>
-                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none">Active</Badge>
-                </div>
-              ) : (
-                <Button variant="outline" className="w-full gap-2" render={<Link href="/dashboard/integrations" />} nativeButton={false}>
-                    Connect Calendar
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+              <div className="min-w-0 flex-1">
+                <span className="font-medium text-zinc-900 dark:text-zinc-100 block truncate">
+                  {user.email}
+                </span>
+                <span className="text-[10px] text-zinc-400">
+                  Google Calendar 2-way sync
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

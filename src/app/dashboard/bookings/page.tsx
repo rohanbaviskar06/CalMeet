@@ -75,12 +75,7 @@ export default async function BookingsPage() {
   });
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Bookings</h1>
-        <p className="text-muted-foreground">Manage your meetings and schedule.</p>
-      </div>
-
+    <div className="max-w-5xl mx-auto py-2">
       <BookingsClient 
         initialBookings={bookings} 
         teamMemberships={teamMemberships}

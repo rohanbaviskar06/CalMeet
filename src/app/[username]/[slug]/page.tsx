@@ -20,8 +20,17 @@ export default async function BookingPage({
   const { embed } = await searchParams;
   const isEmbed = embed === "true";
 
-  const user = await prisma.user.findUnique({
-    where: { username },
+  const decodedUsername = decodeURIComponent(username).trim();
+
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { username: { equals: decodedUsername, mode: "insensitive" } },
+        { email: { equals: `${decodedUsername}@gmail.com`, mode: "insensitive" } },
+        { email: { startsWith: `${decodedUsername}@`, mode: "insensitive" } },
+        { id: decodedUsername },
+      ],
+    },
     select: {
       id: true,
       name: true,
@@ -29,6 +38,7 @@ export default async function BookingPage({
       image: true,
       timezone: true,
       bio: true,
+      plan: true,
       hideWatermark: true,
     }
   });
@@ -36,6 +46,9 @@ export default async function BookingPage({
   if (!user) {
     notFound();
   }
+
+
+  const isWhiteLabeled = user.hideWatermark && user.plan !== "FREE";
 
   const eventType = await prisma.eventType.findUnique({
     where: {
@@ -86,8 +99,8 @@ export default async function BookingPage({
             />
           </Card>
           
-          {/* Watermark (Hidden if watermark is disabled by admin) */}
-          {!user.hideWatermark && (
+          {/* Watermark (Hidden only if paid plan and watermark is disabled) */}
+          {!isWhiteLabeled && (
             <div className="mt-8 text-center text-muted-foreground text-sm flex items-center justify-center gap-2">
               <span>Powered by</span>
               <div className="flex items-center gap-1 font-bold text-foreground">
@@ -100,6 +113,7 @@ export default async function BookingPage({
       </div>
     );
   }
+
 
   // Check if it's a Routing Form
   const routingForm = await prisma.routingForm.findUnique({

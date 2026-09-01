@@ -1,6 +1,7 @@
 import { blogPosts } from "@/data/blog-posts";
 import { notFound } from "next/navigation";
 import { Navbar } from "@/components/landing/navbar";
+import { Footer } from "@/components/landing/footer";
 import { Calendar, User, ArrowLeft, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -119,11 +120,8 @@ export default async function BlogPostPage({ params }: Props) {
         </div>
       </main>
 
-      <footer className="py-12 border-t bg-muted/50 mt-24">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} CalMeet Inc. All rights reserved.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
+

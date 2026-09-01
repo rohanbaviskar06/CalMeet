@@ -79,19 +79,7 @@ export default async function TeamPage(props: {
     : [];
 
   return (
-    <div className="space-y-6 max-w-full">
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-background to-background p-8 border">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
-        <div className="relative z-10">
-          <h1 className="text-3xl font-extrabold tracking-tight">
-            Team Management
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Invite and manage your colleagues to collaborate on scheduling and event types.
-          </p>
-        </div>
-      </div>
-
+    <div className="max-w-5xl mx-auto">
       <TeamClient
         user={user}
         activeTeam={activeTeam}
@@ -103,3 +91,4 @@ export default async function TeamPage(props: {
     </div>
   );
 }
+

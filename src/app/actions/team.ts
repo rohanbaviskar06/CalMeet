@@ -13,6 +13,23 @@ export async function createTeam(name: string) {
 
   const userId = (session.user as any).id;
 
+  // Enforce plan restrictions
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { 
+      plan: true,
+      ownedTeams: { select: { id: true } }
+    }
+  });
+
+  if (user?.plan === "FREE") {
+    throw new Error("Team creation is only available on Teams, Organizations, and Enterprise plans. Please upgrade your plan.");
+  }
+
+  if (user?.plan === "PRO" && (user?.ownedTeams?.length || 0) >= 1) {
+    throw new Error("The Teams plan includes 1 team. Upgrade to Organizations or Enterprise to create multiple sub-teams & departments.");
+  }
+
   // Create the team and the owner team membership in a transaction
   const team = await prisma.$transaction(async (tx) => {
     const newTeam = await tx.team.create({

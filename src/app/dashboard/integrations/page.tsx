@@ -12,7 +12,8 @@ import {
   Video, 
   Briefcase, 
   Search,
-  ExternalLink
+  ExternalLink,
+  Code2
 } from "lucide-react";
 import { ConnectGoogleButton } from "@/components/dashboard/connect-google-button";
 import { ConnectZoomButton } from "@/components/dashboard/connect-zoom-button";
@@ -21,6 +22,7 @@ import { ConnectZapierButton } from "@/components/dashboard/connect-zapier-butto
 import { DisconnectAccountButton } from "@/components/dashboard/disconnect-account-button";
 import { RequestIntegrationBanner } from "@/components/dashboard/request-integration-banner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Link from "next/link";
 
 export default async function IntegrationsPage() {
   const session = await getServerSession(authOptions);
@@ -138,73 +140,103 @@ export default async function IntegrationsPage() {
   ];
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">Integrations</h1>
-          <p className="text-muted-foreground">Power up your scheduling workflow with your favorite tools.</p>
+    <div className="space-y-6 max-w-5xl mx-auto py-2">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            Integrations
+          </h1>
+          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
+            Connect your calendar, video conferencing, and business apps.
+          </p>
         </div>
-        <Button variant="outline" className="gap-2 text-xs font-bold uppercase tracking-wider">
-          <ExternalLink className="h-3.5 w-3.5" />
-          API Documentation
-        </Button>
+
+        <Link href="/resources/api-docs">
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="h-9 px-3.5 gap-2 text-xs font-semibold rounded-xl border-zinc-200 dark:border-zinc-800 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 shadow-2xs"
+          >
+            <Code2 className="h-3.5 w-3.5" />
+            <span>API Documentation</span>
+            <ExternalLink className="h-3 w-3 text-zinc-400" />
+          </Button>
+        </Link>
       </div>
 
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="mb-8 p-1 bg-muted/50 border rounded-2xl h-auto w-full md:w-fit flex flex-row flex-nowrap overflow-x-auto no-scrollbar gap-1 max-w-full">
+      <Tabs defaultValue="all" className="w-full space-y-6">
+        <TabsList className="p-1 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-xl h-auto w-full sm:w-fit flex flex-row flex-nowrap overflow-x-auto no-scrollbar gap-1">
           {categories.map((cat) => (
-            <TabsTrigger key={cat.id} value={cat.id} className="rounded-xl py-2.5 px-5 text-xs font-semibold data-[state=active]:shadow-sm flex-none shrink-0 md:flex-none flex items-center gap-2 whitespace-nowrap">
-              <cat.icon className="h-4 w-4" />
-              {cat.label}
+            <TabsTrigger 
+              key={cat.id} 
+              value={cat.id} 
+              className="rounded-lg py-1.5 px-3.5 text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-900 dark:data-[state=active]:text-zinc-100 data-[state=active]:shadow-2xs flex-none shrink-0 flex items-center gap-2 cursor-pointer transition-all"
+            >
+              <cat.icon className="h-3.5 w-3.5" />
+              <span>{cat.label}</span>
             </TabsTrigger>
           ))}
         </TabsList>
 
         {categories.map((cat) => (
           <TabsContent key={cat.id} value={cat.id} className="focus-visible:outline-none">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {integrations
                 .filter(i => cat.id === "all" || i.category === cat.id)
                 .map((item) => (
-                  <Card key={item.id} className={`group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${item.isConnected ? "border-primary/20 bg-primary/5" : "bg-card"}`}>
-                    <CardHeader className="pb-4">
+                  <div 
+                    key={item.id} 
+                    className={`rounded-2xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-5 shadow-2xs flex flex-col justify-between transition-all hover:border-zinc-300 dark:hover:border-zinc-700 ${
+                      item.isConnected ? "ring-1 ring-emerald-500/20 bg-emerald-50/10 dark:bg-emerald-950/10" : ""
+                    }`}
+                  >
+                    <div className="space-y-3">
                       <div className="flex items-start justify-between">
-                        <div className="w-14 h-14 rounded-2xl bg-white border flex items-center justify-center p-2.5 shadow-sm group-hover:scale-105 transition-transform">
+                        <div className="w-12 h-12 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 flex items-center justify-center p-2 shadow-2xs">
                           <img src={item.logo} alt={item.name} className="w-full h-full object-contain" />
                         </div>
                         {item.comingSoon ? (
-                          <Badge variant="outline" className="bg-zinc-100 dark:bg-zinc-800 text-[10px] font-bold uppercase tracking-wider border-zinc-200 dark:border-zinc-700">
+                          <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-[10px] font-bold px-2 py-0.5 rounded-full border border-zinc-200/80 dark:border-zinc-700">
                             Coming Soon
-                          </Badge>
+                          </span>
                         ) : item.isConnected ? (
-                          <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-none px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
-                            Connected
-                          </Badge>
+                          <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/20 flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3" /> Connected
+                          </span>
                         ) : (
-                          <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wider opacity-60">
+                          <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-zinc-200/60 dark:border-zinc-700">
                             Available
-                          </Badge>
+                          </span>
                         )}
                       </div>
-                      <div className="pt-4">
-                        <CardTitle className="text-lg font-bold">{item.name}</CardTitle>
-                        <CardDescription className="line-clamp-2 mt-1 text-xs leading-relaxed">
+
+                      <div>
+                        <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                          {item.name}
+                        </h3>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2 leading-relaxed">
                           {item.description}
-                        </CardDescription>
+                        </p>
                       </div>
-                    </CardHeader>
-                    <CardContent>
+                    </div>
+
+                    <div className="pt-4 mt-4 border-t border-zinc-200/80 dark:border-zinc-800">
                       {!item.comingSoon ? (
-                        <div className="pt-2">
+                        <div>
                           {item.component}
                         </div>
                       ) : (
-                        <Button variant="outline" className="w-full opacity-50 cursor-not-allowed text-xs font-bold" disabled>
-                          Notify Me
+                        <Button 
+                          variant="outline" 
+                          className="w-full opacity-50 cursor-not-allowed text-xs font-semibold h-8 rounded-xl border-zinc-200 dark:border-zinc-800" 
+                          disabled
+                        >
+                          Coming Soon
                         </Button>
                       )}
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 ))}
             </div>
           </TabsContent>

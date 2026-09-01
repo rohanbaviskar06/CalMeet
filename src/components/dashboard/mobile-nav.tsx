@@ -31,12 +31,15 @@ const mainNavItems = [
 ];
 
 const moreNavItems = [
+  { title: "Team", icon: Users, href: "/dashboard/team" },
+  { title: "Contacts", icon: Users, href: "/dashboard/contacts" },
   { title: "Workflows", icon: Zap, href: "/dashboard/workflows" },
   { title: "Routing Forms", icon: GitMerge, href: "/dashboard/routing" },
   { title: "Analytics", icon: BarChart3, href: "/dashboard/analytics" },
   { title: "Integrations", icon: Video, href: "/dashboard/integrations" },
   { title: "Settings", icon: Settings, href: "/dashboard/settings" },
 ];
+
 
 const gatedItems = ["Workflows", "Routing Forms"];
 
@@ -55,6 +58,7 @@ export function MobileNav({ plan = "FREE" }: { plan?: string }) {
               <Link 
                 key={item.href} 
                 href={item.href}
+                prefetch={true}
                 className={cn(
                   "relative flex flex-col items-center justify-center w-14 h-14 transition-colors duration-200 rounded-2xl",
                   isActive 
@@ -138,6 +142,7 @@ export function MobileNav({ plan = "FREE" }: { plan?: string }) {
                     <Link
                       key={item.href}
                       href={isLocked ? "#" : item.href}
+                      prefetch={true}
                       onClick={(e) => {
                         setIsMoreOpen(false);
                         if (isLocked) {

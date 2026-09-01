@@ -39,6 +39,40 @@ export async function updateProfile(data: { name: string, username: string, bio:
   return { success: true };
 }
 
+export async function updateBrandingSettings(data: { hideWatermark: boolean }) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user) {
+    throw new Error("Unauthorized");
+  }
+  const userId = (session.user as any).id;
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { plan: true, username: true }
+  });
+
+  // Verify plan allows removing watermark
+  if (data.hideWatermark && user?.plan === "FREE") {
+    return { error: "Watermark removal is only available on Teams, Organizations, and Enterprise plans." };
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      hideWatermark: data.hideWatermark,
+    }
+  });
+
+  revalidatePath("/dashboard/settings");
+  if (user?.username) {
+    revalidatePath(`/${user.username}`);
+  }
+  return { success: true };
+}
+
+
+
 export async function updateAvatar(imageUrl: string) {
   const session = await getServerSession(authOptions);
 

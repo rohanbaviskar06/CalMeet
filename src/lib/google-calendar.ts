@@ -24,7 +24,8 @@ export async function createGoogleMeetEvent(userId: string, eventData: {
 
     const calendar = await getGoogleCalendarClient(
       account.access_token,
-      account.refresh_token ?? undefined
+      account.refresh_token ?? undefined,
+      account.id
     );
 
     // 2. Create the event with conferenceData for Google Meet

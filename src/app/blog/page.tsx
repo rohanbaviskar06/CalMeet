@@ -14,6 +14,8 @@ import { toast } from "sonner";
 
 
 
+import { Footer } from "@/components/landing/footer";
+
 export default function BlogPage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -203,11 +205,8 @@ export default function BlogPage() {
         </div>
       </main>
 
-      <footer className="py-12 border-t bg-muted/50 mt-24">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} CalMeet Inc. Editorial Team.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
+

@@ -1,6 +1,8 @@
 "use client";
 
+import React, { useState } from "react";
 import { Navbar } from "@/components/landing/navbar";
+import { Footer } from "@/components/landing/footer";
 import { motion } from "framer-motion";
 import { 
   Type, 
@@ -16,10 +18,11 @@ import {
   Network, 
   Webhook,
   Search,
-  ChevronRight
+  ChevronRight,
+  Sparkles,
+  ArrowRight
 } from "lucide-react";
 import Link from "next/link";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 const resources = [
@@ -31,43 +34,49 @@ const resources = [
   },
   {
     title: "Embed",
-    description: "Embed CalMeet into your website",
+    description: "Embed CalMeet into your website or web app",
     icon: <Code2 className="h-6 w-6" />,
     href: "/resources/embed"
   },
   {
-    title: "Blog",
-    description: "Stay up to date with the latest news and updates",
+    title: "REST API Docs",
+    description: "Developer guides, endpoints, and code samples",
+    icon: <Code2 className="h-6 w-6" />,
+    href: "/resources/api-docs"
+  },
+  {
+    title: "Blog & Updates",
+    description: "Stay up to date with the latest features and news",
     icon: <Newspaper className="h-6 w-6" />,
     href: "/blog"
   },
   {
-    title: "App Store",
-    description: "Integrate with your favorite apps",
+    title: "App Store & Integrations",
+    description: "Connect Google Calendar, Zoom, Slack, and Zapier",
     logo: "/logos/google-calendar.svg",
     href: "/resources/app-store"
   },
   {
     title: "Out Of Office",
-    description: "Schedule time off with ease",
+    description: "Schedule time off and forward bookings easily",
     icon: <Moon className="h-6 w-6" />,
     href: "/resources/out-of-office"
   },
   {
     title: "Instant Meetings",
-    description: "Meet with clients in minutes",
+    description: "Meet with clients on-demand in seconds",
     icon: <Zap className="h-6 w-6" />,
     href: "/resources/instant-meetings"
   },
   {
     title: "Collective Events",
-    description: "Schedule events with multiple participants",
+    description: "Schedule events with multiple team participants",
     icon: <Users className="h-6 w-6" />,
     href: "/resources/collective-events"
   },
   {
     title: "Payments",
-    description: "Accept payments for bookings",
+    description: "Accept Stripe payments directly for bookings",
     logo: "/logos/stripe.png",
     href: "/resources/payments"
   },
@@ -78,128 +87,156 @@ const resources = [
     href: "/resources/dynamic-group-links"
   },
   {
-    title: "Help Docs",
-    description: "Need to learn more about our system? Check the help docs",
+    title: "Help Center",
+    description: "Frequently asked questions and how-to guides",
     icon: <FileText className="h-6 w-6" />,
     href: "/resources/help-docs"
   },
   {
     title: "Workflows",
-    description: "Automate scheduling and reminders",
+    description: "Automate SMS, emails, and booking reminders",
     logo: "/logos/zapier.svg",
     href: "/resources/workflows"
   },
   {
     title: "Webhooks",
-    description: "Get notified when something happens",
+    description: "Receive instant JSON payloads when bookings change",
     icon: <Webhook className="h-6 w-6" />,
     href: "/resources/webhooks"
   },
   {
-    title: "Developers",
-    description: "Documentation, API references, and tools for developers",
-    icon: <Code2 className="h-6 w-6" />,
-    href: "/developers"
-  },
-  {
-    title: "Security",
-    description: "Learn about our enterprise-grade security and compliance",
+    title: "Security & Trust",
+    description: "Learn about enterprise security, encryption, and compliance",
     logo: "/logos/teams.png",
     href: "/security"
   },
   {
     title: "Legal & Privacy",
-    description: "Our terms of service, privacy policy, and cookie policy",
+    description: "Terms of service, privacy policy, and cookie guidelines",
     icon: <FileText className="h-6 w-6" />,
     href: "/terms"
   },
   {
     title: "Contact Support",
-    description: "Need help? Our team is available 24/7 to assist you",
+    description: "Need assistance? Our team is available 24/7",
     icon: <Users className="h-6 w-6" />,
     href: "/support"
   }
 ];
 
 export default function ResourcesPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredResources = resources.filter(item => {
+    const q = searchQuery.toLowerCase();
+    return item.title.toLowerCase().includes(q) || item.description.toLowerCase().includes(q);
+  });
+
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
+    <div className="flex flex-col min-h-screen bg-zinc-50/60 dark:bg-[#0c0c0e] text-foreground">
       <Navbar />
-      <main className="flex-grow pt-32 pb-24">
-        <div className="container mx-auto px-4 max-w-6xl">
+
+      <main className="flex-grow pt-28 pb-20 space-y-16">
+        <div className="container mx-auto px-4 max-w-6xl space-y-12">
           {/* Header */}
-          <div className="text-center mb-16">
-             <motion.h1 
-               initial={{ opacity: 0, y: 10 }}
-               animate={{ opacity: 1, y: 0 }}
-               className="text-4xl md:text-6xl font-bold mb-6 tracking-tight"
-             >
-               Resources \u0026 <span className="text-primary italic">Tools</span>
-             </motion.h1>
-             <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
-               Everything you need to integrate, automate, and optimize your scheduling.
-             </p>
-             <div className="max-w-md mx-auto relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input placeholder="Search resources..." className="h-14 pl-12 rounded-2xl border-primary/20" />
-             </div>
+          <div className="text-center space-y-4 max-w-3xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-4"
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider">
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Ecosystem & Platform</span>
+              </div>
+
+              <h1 className="font-heading text-4xl sm:text-6xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
+                Resources & <span className="text-primary italic">Tools</span>
+              </h1>
+              
+              <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                Everything you need to integrate, automate, and optimize your scheduling workflow.
+              </p>
+            </motion.div>
+
+            <div className="max-w-md mx-auto relative pt-2">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+              <input 
+                type="search"
+                placeholder="Search tools, guides, API, embeds..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-11 pl-11 pr-4 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xs text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100"
+              />
+            </div>
           </div>
 
-          {/* Grid Layout from Image */}
+          {/* Grid Layout */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-card border rounded-[2.5rem] p-8 md:p-12 shadow-2xl shadow-primary/5"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-3xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-6 sm:p-10 shadow-2xs"
           >
-            <div className="grid md:grid-cols-3 gap-x-12 gap-y-10">
-              {resources.map((item, i) => (
-                <Link key={item.title} href={item.href} className="group flex items-start">
-                  <div className="relative h-14 w-14 rounded-2xl bg-white border flex items-center justify-center mr-6 flex-shrink-0 group-hover:bg-primary/5 transition-colors shadow-sm overflow-hidden">
-                    {/* Dot decorations from image style */}
-                    <div className="absolute top-1 left-1 w-1 h-1 rounded-full bg-muted-foreground/10" />
-                    <div className="absolute top-1 right-1 w-1 h-1 rounded-full bg-muted-foreground/10" />
-                    <div className="absolute bottom-1 left-1 w-1 h-1 rounded-full bg-muted-foreground/10" />
-                    <div className="absolute bottom-1 right-1 w-1 h-1 rounded-full bg-muted-foreground/10" />
-                    <div className="text-muted-foreground group-hover:text-primary transition-colors">
+            {filteredResources.length === 0 ? (
+              <div className="text-center py-12 text-zinc-500 text-sm">
+                No resources found matching &ldquo;{searchQuery}&rdquo;.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredResources.map((item) => (
+                  <Link 
+                    key={item.title} 
+                    href={item.href} 
+                    className="group p-4 rounded-2xl border border-transparent hover:border-zinc-200 dark:hover:border-zinc-800 hover:bg-zinc-50/80 dark:hover:bg-zinc-900/40 transition-all flex items-start gap-4"
+                  >
+                    <div className="h-12 w-12 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform overflow-hidden p-2.5">
                       {item.logo ? (
-                        <img src={item.logo} alt={item.title} className="w-8 h-8 object-contain" />
+                        <img src={item.logo} alt={item.title} className="w-full h-full object-contain" />
                       ) : (
-                        item.icon
+                        <div className="text-zinc-600 dark:text-zinc-400 group-hover:text-primary transition-colors">
+                          {item.icon}
+                        </div>
                       )}
                     </div>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-lg font-bold group-hover:text-primary transition-colors leading-tight">{item.title}</h3>
+
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-primary transition-colors truncate">
+                          {item.title}
+                        </h3>
+                        <ChevronRight className="h-3.5 w-3.5 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed line-clamp-2">
+                        {item.description}
+                      </p>
                     </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </motion.div>
           
-          {/* CTA Section */}
-          <div className="mt-24 bg-primary text-primary-foreground rounded-[3rem] p-12 md:p-20 relative overflow-hidden">
-             <div className="absolute top-0 right-0 p-12 opacity-10">
-                <Webhook className="h-64 w-64 rotate-12" />
-             </div>
-             <div className="relative z-10 max-w-2xl">
-                <h2 className="text-4xl font-bold mb-6 italic font-serif">Can&apos;t find what you&apos;re looking for?</h2>
-                <p className="text-xl text-primary-foreground/80 mb-10">
-                  Our team is always here to help. Whether you need technical support or just have a question about our features.
-                </p>
-                <Button variant="secondary" size="lg" className="rounded-full px-10 h-14 text-lg font-bold">Contact Support</Button>
-             </div>
+          {/* CTA Banner */}
+          <div className="rounded-3xl border border-zinc-200/80 dark:border-zinc-800 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 text-white p-8 sm:p-12 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="space-y-2 max-w-xl text-center md:text-left">
+              <h2 className="font-heading text-2xl sm:text-3xl font-extrabold text-white">
+                Can&apos;t find what you&apos;re looking for?
+              </h2>
+              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                Our support team is available 24/7 to assist you with integrations, custom routing, or API implementation.
+              </p>
+            </div>
+
+            <Link href="/support">
+              <Button size="lg" className="h-11 px-6 rounded-xl text-xs font-bold bg-white text-zinc-900 hover:bg-zinc-100 shrink-0 shadow-2xs">
+                Contact Support
+              </Button>
+            </Link>
           </div>
         </div>
       </main>
       
-      <footer className="py-12 border-t bg-muted/50">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} CalMeet Inc. Knowledge Hub.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -1,16 +1,18 @@
 "use client";
 
 import { Navbar } from "@/components/landing/navbar";
+import { Footer } from "@/components/landing/footer";
 import { motion } from "framer-motion";
 import { Webhook, Terminal, Shield, Zap, ArrowRight, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { useState } from "react";
 
 export default function WebhooksPage() {
   const [copied, setCopied] = useState(false);
   const samplePayload = `{
   "event": "booking.created",
-  "created_at": "2024-05-12T14:30:00Z",
+  "created_at": "2026-09-15T14:30:00Z",
   "payload": {
     "booking_id": "bk_12345",
     "event_type": "15-minute-sync",
@@ -53,15 +55,17 @@ export default function WebhooksPage() {
             Get notified instantly when events happen in your CalMeet account. 
             Connect your own applications and build custom integrations.
           </p>
-          <Button size="lg" className="h-16 px-10 rounded-full text-lg font-bold bg-violet-600 hover:bg-violet-700">
-            Create Webhook Endpoint
-          </Button>
+          <Link href="/dashboard/settings?tab=developer">
+            <Button size="lg" className="h-16 px-10 rounded-full text-lg font-bold bg-violet-600 hover:bg-violet-700 cursor-pointer">
+              Create Webhook Endpoint
+            </Button>
+          </Link>
         </section>
 
         {/* Technical Details */}
         <section className="container mx-auto px-4 mb-32 max-w-6xl">
            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div className="bg-zinc-950 rounded-[3rem] p-8 md:p-12 text-white relative group">
+              <div className="bg-zinc-950 rounded-[3rem] p-8 md:p-12 text-white relative group border border-zinc-800">
                  <div className="absolute top-8 right-8 cursor-pointer text-zinc-500 hover:text-white transition-colors" onClick={copyPayload}>
                     {copied ? <Check className="h-5 w-5 text-green-500" /> : <Copy className="h-5 w-5" />}
                  </div>
@@ -105,22 +109,22 @@ export default function WebhooksPage() {
                  supported events and security practices.
               </p>
               <div className="flex justify-center gap-4">
-                 <Button size="lg" className="rounded-full px-10 h-14 font-bold bg-violet-600 hover:bg-violet-700">
-                    Explore API Docs
-                 </Button>
-                 <Button size="lg" variant="outline" className="rounded-full px-10 h-14 font-bold">
-                    View FAQ
-                 </Button>
+                 <Link href="/resources/api-docs">
+                   <Button size="lg" className="rounded-full px-10 h-14 font-bold bg-violet-600 hover:bg-violet-700">
+                      Explore API Docs
+                   </Button>
+                 </Link>
+                 <Link href="/resources/help-docs">
+                   <Button size="lg" variant="outline" className="rounded-full px-10 h-14 font-bold">
+                      View FAQ
+                   </Button>
+                 </Link>
               </div>
            </div>
         </section>
       </main>
 
-      <footer className="py-12 border-t bg-zinc-50 dark:bg-zinc-950 mt-24">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} CalMeet Inc. For developers.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

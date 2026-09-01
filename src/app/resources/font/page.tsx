@@ -1,6 +1,7 @@
 "use client";
 
 import { Navbar } from "@/components/landing/navbar";
+import { Footer } from "@/components/landing/footer";
 import { motion } from "framer-motion";
 import { Type, Download, Copy, Check, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -161,11 +162,8 @@ export default function FontPage() {
         </section>
       </main>
 
-      <footer className="py-12 border-t bg-zinc-50 dark:bg-zinc-950">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} CalMeet Font Foundry. All characters reserved.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
+
