@@ -6,129 +6,123 @@ import {
   Video, 
   CreditCard, 
   Webhook, 
-  ShieldCheck, 
   Zap,
-  CheckCircle2
+  Globe,
+  Lock,
+  Clock
 } from "lucide-react";
 
-const integrations = [
+const stackItems = [
   {
     name: "Google Calendar",
-    category: "Calendar Sync",
     icon: (
-      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-        <path d="M19 4H18V2H16V4H8V2H6V4H5C3.89 4 3.01 4.9 3.01 6L3 20C3 21.1 3.89 22 5 22H19C20.1 22 21 21.1 21 20V6C21 4.9 20.1 4H19ZM19 20H5V9H19V20Z" fill="currentColor" />
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19 4H18V2H16V4H8V2H6V4H5C3.89 4 3.01 4.9 3.01 6L3 20C3 21.1 3.89 22 5 22H19C20.1 22 21 21.1 21 20V6C21 4.9 20.1 4H19ZM19 20H5V9H19V20Z" />
       </svg>
-    ),
+    )
   },
   {
     name: "Google Meet",
-    category: "Video Calls",
-    icon: <Video className="w-4 h-4 text-emerald-500" />,
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" />
+      </svg>
+    )
   },
   {
     name: "Zoom Video",
-    category: "Conferencing",
     icon: (
-      <svg className="w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
         <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h7A2.5 2.5 0 0 1 16 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 4 17.5v-11ZM17.5 9.5l4-3v11l-4-3v-5Z" />
       </svg>
-    ),
+    )
   },
   {
-    name: "Razorpay & Stripe",
-    category: "Payments",
-    icon: <CreditCard className="w-4 h-4 text-indigo-500" />,
+    name: "Stripe",
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697.5 12.608.5 7.58.5 4.013 3.167 4.013 7.856c0 6.643 9.143 5.638 9.143 8.523 0 .99-.8 1.458-2.28 1.458-2.508 0-5.46-1.199-7.391-2.298l-.941 5.568c1.921 1.053 5.096 1.893 8.574 1.893 5.378 0 9.074-2.584 9.074-7.581 0-7.05-9.216-5.836-9.216-8.27z" />
+      </svg>
+    )
   },
   {
-    name: "Developer Webhooks",
-    category: "HMAC-SHA256",
-    icon: <Webhook className="w-4 h-4 text-amber-500" />,
+    name: "Razorpay",
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+      </svg>
+    )
   },
   {
-    name: "REST API & Zapier",
-    category: "Automation",
-    icon: <Zap className="w-4 h-4 text-violet-500" />,
+    name: "Webhooks",
+    icon: <Webhook className="w-4 h-4" />
   },
   {
-    name: "Cal Video Built-in",
-    category: "Native Video",
-    icon: <Video className="w-4 h-4 text-zinc-400" />,
+    name: "Zapier",
+    icon: <Zap className="w-4 h-4" />
   },
   {
-    name: "NextAuth OAuth 2.0",
-    category: "Authentication",
-    icon: <ShieldCheck className="w-4 h-4 text-teal-500" />,
-  },
+    name: "REST API",
+    icon: <Globe className="w-4 h-4" />
+  }
 ];
 
-const doubled = [...integrations, ...integrations];
+const doubled = [...stackItems, ...stackItems, ...stackItems];
 
 export function TrustedBy() {
   return (
-    <section className="py-10 border-y border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/60 overflow-hidden text-zinc-900 dark:text-zinc-100">
-      <div className="container mx-auto px-4 mb-6 text-center">
-        <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
-          Works seamlessly with your entire tech stack
-        </p>
-      </div>
+    <section className="py-12 border-y border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/40 dark:bg-[#0f0f0f] text-zinc-900 dark:text-zinc-100 overflow-hidden">
+      <div className="container mx-auto px-4 max-w-5xl">
+        <div className="text-center mb-6">
+          <p className="text-[11px] font-semibold tracking-wider text-zinc-400 dark:text-zinc-500 uppercase">
+            Seamlessly integrates with your daily workflow
+          </p>
+        </div>
 
-      {/* Infinite Seamless Marquee */}
-      <div className="relative w-full flex overflow-hidden">
-        {/* Left & Right gradient fade */}
-        <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-28 z-10 bg-gradient-to-r from-white dark:from-[#0c0c0c] to-transparent pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-28 z-10 bg-gradient-to-l from-white dark:from-[#0c0c0c] to-transparent pointer-events-none" />
+        {/* Minimal Monochrome Continuous Marquee */}
+        <div className="relative w-full flex overflow-hidden py-1">
+          {/* Edge Gradients */}
+          <div className="absolute left-0 top-0 bottom-0 w-20 z-10 bg-gradient-to-r from-zinc-50 dark:from-[#0f0f0f] to-transparent pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-20 z-10 bg-gradient-to-l from-zinc-50 dark:from-[#0f0f0f] to-transparent pointer-events-none" />
 
-        <motion.div
-          className="flex gap-3 items-center"
-          animate={{ x: ["0%", "-50%"] }}
-          transition={{
-            repeat: Infinity,
-            repeatType: "loop",
-            ease: "linear",
-            duration: 25,
-          }}
-        >
-          {doubled.map((item, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex-shrink-0 shadow-2xs hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
-            >
-              <div className="w-6 h-6 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-400 flex-shrink-0">
-                {item.icon}
-              </div>
-              <div className="text-left">
-                <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
+          <motion.div
+            className="flex gap-10 sm:gap-14 items-center"
+            animate={{ x: ["0%", "-33.333%"] }}
+            transition={{
+              repeat: Infinity,
+              repeatType: "loop",
+              ease: "linear",
+              duration: 25,
+            }}
+          >
+            {doubled.map((item, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-2 text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors flex-shrink-0 cursor-default"
+              >
+                <span className="opacity-80">{item.icon}</span>
+                <span className="text-xs font-medium tracking-tight whitespace-nowrap">
                   {item.name}
-                </div>
-                <div className="text-[10px] text-zinc-400 whitespace-nowrap">
-                  {item.category}
-                </div>
+                </span>
               </div>
-            </div>
-          ))}
-        </motion.div>
-      </div>
+            ))}
+          </motion.div>
+        </div>
 
-      {/* 4 Trust & Reliability Badges */}
-      <div className="container mx-auto px-4 mt-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl mx-auto text-center">
-          {[
-            { label: "Zero Conflicts", desc: "Real-time calendar verification" },
-            { label: "99.9% Reliability", desc: "Edge-hosted on Vercel" },
-            { label: "Encrypted & Private", desc: "TLS 1.3 + AES-256 data at rest" },
-            { label: "Self-Hostable", desc: "100% Open source codebase" },
-          ].map((badge, idx) => (
-            <div key={idx} className="p-3 rounded-lg border border-zinc-200/80 dark:border-zinc-800/80 bg-white/60 dark:bg-zinc-900/40">
-              <div className="text-xs font-bold text-zinc-900 dark:text-zinc-100 flex items-center justify-center gap-1">
-                <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                {badge.label}
-              </div>
-              <div className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
-                {badge.desc}
-              </div>
-            </div>
-          ))}
+        {/* Minimal 3-Item Trust Pill Strip */}
+        <div className="mt-8 pt-6 border-t border-zinc-200/60 dark:border-zinc-800/60 flex flex-wrap items-center justify-center gap-6 sm:gap-12 text-xs text-zinc-500 dark:text-zinc-400">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span className="font-medium">Real-time 2-way sync</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-zinc-600" />
+            <span className="font-medium">Zero double-bookings</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-zinc-600" />
+            <span className="font-medium">End-to-end encrypted</span>
+          </div>
         </div>
       </div>
     </section>
