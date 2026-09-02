@@ -1,41 +1,134 @@
 "use client";
 
 import { Navbar } from "@/components/landing/navbar";
-import { Zap, CheckCircle2 } from "lucide-react";
+import { Footer } from "@/components/landing/footer";
+import { 
+  Zap, 
+  GitMerge, 
+  TrendingUp, 
+  Clock, 
+  CheckCircle2, 
+  ArrowRight,
+  Webhook,
+  Sparkles
+} from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-export default function SalesPage() {
+const features = [
+  {
+    title: "Routing Forms for Instant Qualification",
+    description: "Ask deal size, company size, and budget before booking. Route qualified high-intent leads straight to Account Executives.",
+    icon: GitMerge,
+  },
+  {
+    title: "Round-Robin Lead Distribution",
+    description: "Evenly assign incoming discovery calls across your sales reps based on quota weighting, timezone, or availability.",
+    icon: Zap,
+  },
+  {
+    title: "CRM Sync & Real-time Webhooks",
+    description: "Sync newly booked demos directly to HubSpot, Salesforce, or your custom CRM via webhook payloads with HMAC signatures.",
+    icon: Webhook,
+  },
+  {
+    title: "Automated Reminders & No-Show Reduction",
+    description: "Send automated email & SMS reminders with one-click reschedule options to slash no-show rates by up to 40%.",
+    icon: Clock,
+  },
+];
+
+export default function SalesSolutionPage() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
       <Navbar />
-      <main className="flex-grow pt-32 pb-24">
-        <section className="container mx-auto px-4 max-w-4xl text-center">
-          <div className="mx-auto h-16 w-16 rounded-2xl bg-yellow-500/10 flex items-center justify-center mb-6 text-yellow-600 border border-yellow-500/20">
-            <Zap className="h-8 w-8" />
+
+      <main className="flex-grow pt-28 pb-20">
+        <div className="container mx-auto px-4 max-w-4xl">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1.5 text-xs text-zinc-400 mb-6">
+            <Link href="/solutions" className="hover:text-zinc-600 dark:hover:text-zinc-200">Solutions</Link>
+            <span>/</span>
+            <span className="text-zinc-800 dark:text-zinc-200 font-medium">Sales</span>
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 italic font-serif">CalMeet for Sales</h1>
-          <p className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto">
-            Speed to lead is everything. Make it effortless for prospects to book a meeting right when their interest is highest.
-          </p>
-          <Button size="lg" className="rounded-full bg-yellow-600 hover:bg-yellow-700 px-10">Boost Your Pipeline</Button>
-          
-          <div className="mt-24 grid md:grid-cols-2 gap-8 text-left">
-             <div className="p-8 rounded-3xl border bg-card">
-                <h4 className="text-xl font-bold mb-4">Instant Lead Routing</h4>
-                <p className="text-muted-foreground text-sm">Routes leads to the right AE based on territory, size, or industry automatically.</p>
-             </div>
-             <div className="p-8 rounded-3xl border bg-card">
-                <h4 className="text-xl font-bold mb-4">CRM Power Sync</h4>
-                <p className="text-muted-foreground text-sm">Automatically log meetings and prospect data directly into Salesforce or HubSpot.</p>
-             </div>
+
+          {/* Hero Header */}
+          <div className="mb-12 border-b border-zinc-200 dark:border-zinc-800 pb-8">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-semibold mb-3 border border-zinc-200 dark:border-zinc-700">
+              <Zap className="h-3.5 w-3.5" />
+              <span>For SDRs, AEs & Revenue Teams</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">
+              Accelerate pipeline velocity and book demos instantly
+            </h1>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xl mb-6">
+              Turn website visitors into closed-won deals. Qualify prospects in real-time, route inbound leads, and eliminate scheduling lag.
+            </p>
+            <div className="flex gap-3">
+              <Button render={<Link href="/signup" />} size="sm" className="h-9 px-4 text-xs font-semibold">
+                Start Free Trial <ArrowRight className="h-3.5 w-3.5 ml-1" />
+              </Button>
+              <Button render={<Link href="/pricing" />} variant="outline" size="sm" className="h-9 px-4 text-xs font-semibold border-zinc-200 dark:border-zinc-800">
+                View Pricing
+              </Button>
+            </div>
           </div>
-        </section>
-      </main>
-      <footer className="py-12 border-t bg-muted/50">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} CalMeet Inc. Sales Velocity.
+
+          {/* 4 Feature Cards */}
+          <div className="grid sm:grid-cols-2 gap-3 mb-12">
+            {features.map((f) => {
+              const Icon = f.icon;
+              return (
+                <div
+                  key={f.title}
+                  className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs space-y-2"
+                >
+                  <div className="w-7 h-7 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-700 dark:text-zinc-300">
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{f.title}</h3>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">{f.description}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Checklist Box */}
+          <div className="mb-12 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-zinc-50/50 dark:bg-zinc-900/50 p-6 shadow-2xs">
+            <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide mb-4">
+              Sales-Ready Capabilities
+            </h3>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {[
+                "Routing forms with conditional lead logic",
+                "Round-robin distribution by territory & quota",
+                "Multi-host collective sales demos",
+                "Automated reminder sequences & calendar invites",
+                "Instant video meeting link generation (Google Meet/Zoom)",
+                "Full REST API & webhook integrations",
+              ].map((item) => (
+                <div key={item} className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-0.5">Ready to supercharge your inbound sales pipeline?</div>
+              <div className="text-xs text-zinc-500 dark:text-zinc-400">Setup your team’s routing and booking links in 2 minutes.</div>
+            </div>
+            <Button render={<Link href="/signup" />} size="sm" className="h-9 px-4 text-xs font-semibold">
+              Get Started Free
+            </Button>
+          </div>
         </div>
-      </footer>
+      </main>
+
+      <Footer />
     </div>
   );
 }
