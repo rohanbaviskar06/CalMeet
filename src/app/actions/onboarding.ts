@@ -149,8 +149,10 @@ export async function saveOnboardingData(data: {
       }
     }
 
-    revalidatePath("/dashboard");
-    revalidatePath("/onboarding");
+    if (data.complete) {
+      revalidatePath("/dashboard");
+      revalidatePath("/onboarding");
+    }
 
     return { success: true, user: updatedUser };
   } catch (error: any) {

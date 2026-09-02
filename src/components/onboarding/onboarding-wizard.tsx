@@ -26,7 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { saveOnboardingData } from "@/app/actions/onboarding";
 import { signIn, signOut } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -42,16 +42,30 @@ interface InitialUserData {
   connectedZoom?: boolean;
 }
 
-export function OnboardingWizard({ initialUser }: { initialUser: InitialUserData | null }) {
+export function OnboardingWizard({ 
+  initialUser, 
+  initialStep = 1 
+}: { 
+  initialUser: InitialUserData | null;
+  initialStep?: number;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   
   // Step: 1 = plan, 2 = details, 3 = calendar
-  const initialStepParam = searchParams.get("step");
-  const [step, setStep] = useState<number>(
-    initialStepParam === "calendar" || initialStepParam === "3" ? 3 :
-    initialStepParam === "settings" || initialStepParam === "2" ? 2 : 1
-  );
+  const resolveCurrentStep = () => {
+    if (searchParams.get("step") === "3" || searchParams.get("step") === "calendar" || pathname?.includes("calendar")) return 3;
+    if (searchParams.get("step") === "2" || searchParams.get("step") === "settings" || pathname?.includes("settings")) return 2;
+    if (searchParams.get("step") === "1" || pathname?.includes("getting-started")) return 1;
+    return initialStep || 1;
+  };
+
+  const [step, setStep] = useState<number>(resolveCurrentStep());
+
+  React.useEffect(() => {
+    setStep(resolveCurrentStep());
+  }, [pathname, searchParams]);
 
   const [loading, setLoading] = useState(false);
 
@@ -120,7 +134,7 @@ export function OnboardingWizard({ initialUser }: { initialUser: InitialUserData
     try {
       await saveOnboardingData({ plan: selectedPlan });
       setStep(2);
-      window.history.pushState({}, "", "/onboarding/personal/settings");
+      router.push("/onboarding/personal/settings");
     } catch (err) {
       toast.error("Failed to save plan selection");
     } finally {
@@ -147,7 +161,7 @@ export function OnboardingWizard({ initialUser }: { initialUser: InitialUserData
         image
       });
       setStep(3);
-      window.history.pushState({}, "", "/onboarding/personal/calendar");
+      router.push("/onboarding/personal/calendar");
     } catch (err) {
       toast.error("Failed to save details");
     } finally {
@@ -493,7 +507,10 @@ export function OnboardingWizard({ initialUser }: { initialUser: InitialUserData
                 <div className="pt-6 flex items-center justify-between border-t border-border">
                   <Button
                     variant="ghost"
-                    onClick={() => setStep(1)}
+                    onClick={() => {
+                      setStep(1);
+                      router.push("/onboarding/getting-started");
+                    }}
                     className="rounded-full gap-1.5 text-sm"
                   >
                     <ArrowLeft className="w-4 h-4" /> Back
@@ -688,7 +705,10 @@ export function OnboardingWizard({ initialUser }: { initialUser: InitialUserData
                 <div className="pt-6 flex items-center justify-between border-t border-border">
                   <Button
                     variant="ghost"
-                    onClick={() => setStep(2)}
+                    onClick={() => {
+                      setStep(2);
+                      router.push("/onboarding/personal/settings");
+                    }}
                     className="rounded-full gap-1.5 text-sm"
                   >
                     <ArrowLeft className="w-4 h-4" /> Back

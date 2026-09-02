@@ -53,5 +53,5 @@ export default async function GettingStartedOnboardingPage() {
         image: session.user.image,
       };
 
-  return <OnboardingWizard initialUser={initialUser} />;
+  return <OnboardingWizard initialUser={initialUser} initialStep={1} />;
 }
