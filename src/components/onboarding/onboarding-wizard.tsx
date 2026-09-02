@@ -185,32 +185,26 @@ export function OnboardingWizard({ initialUser }: { initialUser: InitialUserData
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-background text-foreground flex flex-col justify-between p-4 sm:p-6 md:p-8 font-sans select-none">
-      {/* Background Decorative Ambient Blobs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[45%] h-[45%] bg-primary/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[45%] h-[45%] bg-violet-500/10 rounded-full blur-[140px] pointer-events-none" />
-
+    <div className="min-h-screen bg-white dark:bg-[#0c0c0c] text-zinc-900 dark:text-zinc-100 flex flex-col justify-between p-4 sm:p-6 md:p-8 font-sans select-none">
       {/* Top Brand Header & Progress */}
       <header className="w-full max-w-5xl mx-auto flex items-center justify-between z-10 pt-2 pb-6">
-        <Link href="/" className="inline-flex items-center gap-2 font-bold text-xl tracking-tight text-foreground hover:opacity-90 transition">
-          <div className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-md">
-            <CalendarDays className="h-5 w-5" />
-          </div>
-          <span className="font-extrabold text-xl">CalMeet</span>
+        <Link href="/" className="inline-flex items-center gap-2 font-bold text-lg tracking-tight hover:opacity-90 transition">
+          <CalendarDays className="h-5 w-5 text-zinc-900 dark:text-zinc-100" />
+          <span>CalMeet</span>
         </Link>
 
         {/* Step Indicator Pill */}
-        <div className="flex items-center gap-2 bg-muted/60 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-border/80 text-xs font-semibold text-muted-foreground">
-          <span className="text-primary font-bold">Step {step} of 3</span>
-          <span className="text-border">•</span>
-          <span className="text-foreground">
+        <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800 px-3.5 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+          <span className="text-zinc-900 dark:text-zinc-100 font-bold">Step {step} of 3</span>
+          <span className="text-zinc-300 dark:text-zinc-600">•</span>
+          <span className="text-zinc-800 dark:text-zinc-200">
             {step === 1 ? "Choose Plan" : step === 2 ? "Profile & Booking" : "Integrations"}
           </span>
         </div>
       </header>
 
       {/* Main Glass Card Container */}
-      <main className="w-full max-w-5xl mx-auto bg-card/85 backdrop-blur-xl border border-border/80 shadow-2xl rounded-3xl overflow-hidden flex flex-col z-10 my-auto min-h-[580px]">
+      <main className="w-full max-w-5xl mx-auto bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl rounded-2xl overflow-hidden flex flex-col z-10 my-auto min-h-[580px]">
         <AnimatePresence mode="wait">
           {/* ========================================================================= */}
           {/* STEP 1: SELECT PLAN                                                      */}
