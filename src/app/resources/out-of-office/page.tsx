@@ -2,131 +2,118 @@
 
 import { Navbar } from "@/components/landing/navbar";
 import { Footer } from "@/components/landing/footer";
-import { motion } from "framer-motion";
-import { Moon, Calendar, Zap, Bell, CheckCircle2 } from "lucide-react";
+import { Moon, Calendar, Bell, CheckCircle2, ArrowRight, ShieldCheck, Sparkles, Clock, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
+const features = [
+  {
+    title: "Automated Calendar Date Blocking",
+    description: "Select vacation or conference dates once. CalMeet automatically closes public booking slots across all your active event types.",
+    icon: Calendar,
+  },
+  {
+    title: "Teammate Rerouting & Delegation",
+    description: "Forward urgent booking requests to available team members while you're away so client momentum never stops.",
+    icon: Globe,
+  },
+  {
+    title: "Custom OOO Auto-Responder",
+    description: "Display personalized out-of-office messages on your public booking page with exact return dates.",
+    icon: Bell,
+  },
+  {
+    title: "Return Buffers & Ramp-up",
+    description: "Add a 24-48 hour buffer after returning from leave to clear your inbox before meetings resume.",
+    icon: Clock,
+  },
+];
+
 export default function OutOfOfficePage() {
   return (
-    <div className="flex flex-col min-h-screen bg-white dark:bg-black">
+    <div className="flex flex-col min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
       <Navbar />
-      <main className="flex-grow pt-32 pb-24">
-        {/* Hero */}
-        <section className="container mx-auto px-4 mb-24 text-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="mb-8 flex justify-center"
-          >
-            <div className="p-6 rounded-full bg-indigo-500/10 text-indigo-500">
-              <Moon className="h-12 w-12" />
+
+      <main className="flex-grow pt-28 pb-20">
+        <div className="container mx-auto px-4 max-w-4xl">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1.5 text-xs text-zinc-400 mb-6">
+            <Link href="/resources" className="hover:text-zinc-600 dark:hover:text-zinc-200">Resources</Link>
+            <span>/</span>
+            <span className="text-zinc-800 dark:text-zinc-200 font-medium">Out of Office</span>
+          </div>
+
+          {/* Hero */}
+          <div className="mb-10 border-b border-zinc-200 dark:border-zinc-800 pb-8">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-semibold mb-3 border border-zinc-200 dark:border-zinc-700">
+              <Moon className="h-3.5 w-3.5" />
+              <span>Availability & Time-Off Management</span>
             </div>
-          </motion.div>
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-5xl md:text-7xl font-bold mb-6 tracking-tight"
-          >
-            Protect your <span className="text-indigo-500 italic">personal time.</span>
-          </motion.h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-            Our Out of Office tool automatically handles your scheduling while you&apos;re away. 
-            No more manual adjustments or double bookings.
-          </p>
-          <Link href="/dashboard/settings?tab=out-of-office">
-            <Button size="lg" className="h-16 px-10 rounded-full text-lg font-bold bg-indigo-600 hover:bg-indigo-700 cursor-pointer">
-              Set Your Vacation Dates
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">
+              Protect your time off with Out of Office
+            </h1>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xl mb-6">
+              Set your vacation dates once. CalMeet automatically blocks booking slots, notifies visitors, and routes urgent requests to teammates.
+            </p>
+            <div className="flex gap-3">
+              <Button render={<Link href="/dashboard/settings" />} size="sm" className="h-9 px-4 text-xs font-semibold">
+                Configure Out of Office <ArrowRight className="h-3.5 w-3.5 ml-1" />
+              </Button>
+            </div>
+          </div>
+
+          {/* 4 Feature Cards */}
+          <div className="grid sm:grid-cols-2 gap-3 mb-12">
+            {features.map((f) => {
+              const Icon = f.icon;
+              return (
+                <div
+                  key={f.title}
+                  className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs space-y-2"
+                >
+                  <div className="w-7 h-7 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-700 dark:text-zinc-300">
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{f.title}</h3>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">{f.description}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Checklist Box */}
+          <div className="mb-12 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-zinc-50/50 dark:bg-zinc-900/50 p-6 shadow-2xs">
+            <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide mb-4">
+              Vacation & Leave Safeguards
+            </h3>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {[
+                "Instant slot blocking across all active event types",
+                "Google Calendar vacation entry detection",
+                "Optional teammate fallback routing",
+                "Custom return date announcement banner",
+                "Automatic recovery buffer after leave ends",
+                "Works with individual and team schedules",
+              ].map((item) => (
+                <div key={item} className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-0.5">Planning upcoming time off?</div>
+              <div className="text-xs text-zinc-500 dark:text-zinc-400">Set your dates in Settings to keep your calendar protected.</div>
+            </div>
+            <Button render={<Link href="/dashboard/settings" />} size="sm" className="h-9 px-4 text-xs font-semibold">
+              Open Settings
             </Button>
-          </Link>
-        </section>
-
-        {/* Features Section */}
-        <section className="container mx-auto px-4 mb-32 max-w-5xl">
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-zinc-50 dark:bg-zinc-900 p-10 rounded-[3rem] border">
-              <div className="mb-6 p-4 bg-indigo-500/10 w-fit rounded-2xl text-indigo-500">
-                <Calendar className="h-8 w-8" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">Smart Blocking</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Connect your personal and work calendars. When you add a &apos;Vacation&apos; event, 
-                CalMeet instantly blocks all your event types across all accounts.
-              </p>
-            </div>
-            <div className="bg-zinc-50 dark:bg-zinc-900 p-10 rounded-[3rem] border">
-              <div className="mb-6 p-4 bg-indigo-500/10 w-fit rounded-2xl text-indigo-500">
-                <Bell className="h-8 w-8" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">Auto-Notifications</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Automatically notify anyone who tries to book with you or has an existing 
-                meeting during your time off. Customizable templates included.
-              </p>
-            </div>
           </div>
-        </section>
-
-        {/* Visual Showcase */}
-        <section className="py-24 bg-zinc-950 text-white overflow-hidden">
-          <div className="container mx-auto px-4">
-             <div className="grid md:grid-cols-2 gap-16 items-center">
-                <div className="relative">
-                   <div className="absolute inset-0 bg-indigo-500/20 rounded-full blur-[120px]" />
-                   <div className="relative bg-zinc-900 border border-zinc-800 p-8 rounded-[2.5rem]">
-                      <div className="space-y-6">
-                         {[
-                           { label: "Status", value: "Away", color: "text-indigo-400" },
-                           { label: "Duration", value: "May 12 - May 19", color: "text-white" },
-                           { label: "Handling", value: "Block all bookings", color: "text-white" }
-                         ].map(item => (
-                           <div key={item.label} className="flex justify-between items-center border-b border-zinc-800 pb-4">
-                              <span className="text-zinc-500 font-medium">{item.label}</span>
-                              <span className={`font-bold ${item.color}`}>{item.value}</span>
-                           </div>
-                         ))}
-                      </div>
-                      <div className="mt-8 p-4 bg-indigo-500/10 rounded-2xl border border-indigo-500/20 text-xs text-indigo-300">
-                         &quot;Hi there! I&apos;m currently out of the office and will return on May 20th. 
-                         All scheduling is temporarily disabled.&quot;
-                      </div>
-                   </div>
-                </div>
-                <div>
-                   <h2 className="text-4xl font-bold mb-8 italic font-serif leading-tight">Peace of mind, <br/>guaranteed.</h2>
-                   <div className="space-y-6">
-                      {[
-                        "Zero configuration required",
-                        "Syncs across all linked calendars",
-                        "Custom response messages",
-                        "Emergency bypass links available"
-                      ].map(text => (
-                        <div key={text} className="flex items-center gap-3">
-                           <CheckCircle2 className="h-5 w-5 text-indigo-400" />
-                           <span className="font-bold">{text}</span>
-                        </div>
-                      ))}
-                   </div>
-                </div>
-             </div>
-          </div>
-        </section>
-
-        {/* CTA */}
-        <section className="container mx-auto px-4 mt-32 text-center">
-           <div className="max-w-2xl mx-auto bg-zinc-50 dark:bg-zinc-900 border p-16 rounded-[4rem]">
-              <h2 className="text-3xl font-bold mb-6 italic">Ready for your break?</h2>
-              <p className="text-muted-foreground mb-10 leading-relaxed">
-                 Start protecting your time today. It takes less than 30 seconds to set up 
-                 your first out-of-office block.
-              </p>
-              <Link href="/dashboard/settings?tab=out-of-office">
-                <Button size="lg" className="rounded-full px-12 h-14 font-bold bg-indigo-600 hover:bg-indigo-700 cursor-pointer">
-                   Get Started
-                </Button>
-              </Link>
-           </div>
-        </section>
+        </div>
       </main>
 
       <Footer />

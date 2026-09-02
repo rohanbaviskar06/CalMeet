@@ -2,130 +2,118 @@
 
 import { Navbar } from "@/components/landing/navbar";
 import { Footer } from "@/components/landing/footer";
-import { motion } from "framer-motion";
-import { CreditCard, Shield, Zap, DollarSign, CheckCircle, ArrowUpRight } from "lucide-react";
+import { CreditCard, ShieldCheck, DollarSign, CheckCircle2, ArrowRight, Sparkles, Globe, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
+const features = [
+  {
+    title: "Upfront Consultation Payments",
+    description: "Require payments before meeting slots are confirmed. Slash client no-show rates to virtually zero.",
+    icon: CreditCard,
+  },
+  {
+    title: "Razorpay & Stripe Gateways",
+    description: "Accept payments globally in USD, EUR, GBP via Stripe, or in INR via UPI, NetBanking, and RuPay cards via Razorpay.",
+    icon: Globe,
+  },
+  {
+    title: "Automated Refunds & Invoicing",
+    description: "Automatic receipt generation and one-click refund processing if meetings are canceled within your allowed policy window.",
+    icon: DollarSign,
+  },
+  {
+    title: "Secure PCI-DSS Compliant Checkout",
+    description: "All payment credentials are processed directly through certified PCI-DSS Level 1 compliant processors — zero card data touches your servers.",
+    icon: Lock,
+  },
+];
+
 export default function PaymentsPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-white dark:bg-black">
+    <div className="flex flex-col min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
       <Navbar />
-      <main className="flex-grow pt-32 pb-24">
-        {/* Hero */}
-        <section className="container mx-auto px-4 mb-24 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider mb-6">
-              <CreditCard className="h-3.5 w-3.5" /> Paid Appointments
+
+      <main className="flex-grow pt-28 pb-20">
+        <div className="container mx-auto px-4 max-w-4xl">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1.5 text-xs text-zinc-400 mb-6">
+            <Link href="/resources" className="hover:text-zinc-600 dark:hover:text-zinc-200">Resources</Link>
+            <span>/</span>
+            <span className="text-zinc-800 dark:text-zinc-200 font-medium">Payments</span>
+          </div>
+
+          {/* Hero */}
+          <div className="mb-10 border-b border-zinc-200 dark:border-zinc-800 pb-8">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-semibold mb-3 border border-zinc-200 dark:border-zinc-700">
+              <CreditCard className="h-3.5 w-3.5" />
+              <span>Paid Bookings & Consultations</span>
             </div>
-            <h1 className="text-5xl md:text-8xl font-black mb-8 tracking-tighter italic">
-              GET PAID <br/> <span className="text-blue-500 underline decoration-blue-500/20">FOR YOUR TIME.</span>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">
+              Monetize your time with integrated payments
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-12 leading-relaxed">
-              Accept payments directly through your booking flow. Connect with Stripe 
-              to secure your revenue and reduce no-shows.
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xl mb-6">
+              Charge for consultations, legal advice, coaching, and expert sessions upfront. Connect Razorpay or Stripe in minutes.
             </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Link href="/dashboard/integrations">
-                <Button size="lg" className="h-16 px-10 rounded-full text-lg font-bold bg-blue-600 hover:bg-blue-700 cursor-pointer">
-                  Connect Stripe
-                </Button>
-              </Link>
-              <Link href="/pricing">
-                <Button size="lg" variant="outline" className="h-16 px-10 rounded-full text-lg font-bold border-blue-500/20">
-                  View Pricing
-                </Button>
-              </Link>
+            <div className="flex gap-3">
+              <Button render={<Link href="/signup" />} size="sm" className="h-9 px-4 text-xs font-semibold">
+                Start Accepting Payments <ArrowRight className="h-3.5 w-3.5 ml-1" />
+              </Button>
             </div>
-          </motion.div>
-        </section>
+          </div>
 
-        {/* Integration Showcase */}
-        <section className="container mx-auto px-4 mb-32">
-           <div className="bg-zinc-50 dark:bg-zinc-900 border rounded-[4rem] p-8 md:p-20">
-              <div className="grid md:grid-cols-2 gap-16 items-center">
-                 <div className="relative">
-                    <div className="absolute inset-0 bg-blue-500/10 rounded-full blur-[100px]" />
-                    <div className="relative space-y-4">
-                       <div className="p-8 bg-white dark:bg-zinc-800 rounded-[2.5rem] border shadow-2xl">
-                          <div className="flex justify-between items-center mb-10">
-                             <div className="h-12 w-12 rounded-xl bg-blue-500 flex items-center justify-center text-white">
-                                <DollarSign className="h-6 w-6" />
-                             </div>
-                             <div className="text-right">
-                                <div className="text-2xl font-black">$150.00</div>
-                                <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Session Fee</div>
-                             </div>
-                          </div>
-                          <div className="space-y-4">
-                             <div className="h-10 w-full bg-zinc-100 dark:bg-zinc-700 rounded-lg animate-pulse" />
-                             <div className="h-10 w-full bg-zinc-100 dark:bg-zinc-700 rounded-lg animate-pulse" />
-                             <Button className="w-full h-12 rounded-xl bg-blue-600 font-bold">Pay & Book Now</Button>
-                          </div>
-                       </div>
-                    </div>
-                 </div>
-                 <div>
-                    <h2 className="text-4xl font-bold mb-8 italic tracking-tight">Seamless checkout, <br/>zero friction.</h2>
-                    <div className="space-y-8">
-                       {[
-                         { title: "Reduce No-Shows", desc: "Requiring payment upfront ensures that clients are committed to the meeting time.", icon: <Zap className="h-5 w-5" /> },
-                         { title: "Secure Transactions", desc: "All payments are processed securely through Stripe with industry-standard encryption.", icon: <Shield className="h-5 w-5" /> },
-                         { title: "Instant Payouts", desc: "Revenue is transferred directly to your bank account on your preferred schedule.", icon: <ArrowUpRight className="h-5 w-5" /> }
-                       ].map(item => (
-                         <div key={item.title} className="flex gap-4">
-                            <div className="p-3 rounded-xl bg-blue-500/10 text-blue-500 h-fit">
-                               {item.icon}
-                            </div>
-                            <div>
-                               <h4 className="font-bold mb-1">{item.title}</h4>
-                               <p className="text-muted-foreground text-sm leading-relaxed">{item.desc}</p>
-                            </div>
-                         </div>
-                       ))}
-                    </div>
-                 </div>
-              </div>
-           </div>
-        </section>
+          {/* 4 Feature Cards */}
+          <div className="grid sm:grid-cols-2 gap-3 mb-12">
+            {features.map((f) => {
+              const Icon = f.icon;
+              return (
+                <div
+                  key={f.title}
+                  className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs space-y-2"
+                >
+                  <div className="w-7 h-7 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-700 dark:text-zinc-300">
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{f.title}</h3>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">{f.description}</p>
+                </div>
+              );
+            })}
+          </div>
 
-        {/* Benefits Section */}
-        <section className="py-24 bg-zinc-950 text-white border-y border-zinc-800">
-           <div className="container mx-auto px-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                 {[
-                   { title: "Global Payments", desc: "Accept 135+ currencies from customers all over the world." },
-                   { title: "Automated Invoicing", desc: "CalMeet handles receipt generation and email confirmations automatically." },
-                   { title: "Refund Management", desc: "Cancel meetings and issue refunds directly from your dashboard." }
-                 ].map(benefit => (
-                   <div key={benefit.title} className="space-y-4">
-                      <div className="h-1 w-12 bg-blue-500" />
-                      <h3 className="text-xl font-bold">{benefit.title}</h3>
-                      <p className="text-zinc-400 text-sm leading-relaxed">{benefit.desc}</p>
-                   </div>
-                 ))}
-              </div>
-           </div>
-        </section>
+          {/* Checklist Box */}
+          <div className="mb-12 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-zinc-50/50 dark:bg-zinc-900/50 p-6 shadow-2xs">
+            <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide mb-4">
+              Payment Gateway Features
+            </h3>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {[
+                "Custom pricing per event type (INR / USD)",
+                "Instant UPI, Card, NetBanking & International support",
+                "Automated booking confirmation on payment success",
+                "Custom cancellation and refund windows",
+                "Real-time revenue tracking in dashboard analytics",
+                "Zero hidden transaction platform fees",
+              ].map((item) => (
+                <div key={item} className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
-        {/* CTA */}
-        <section className="container mx-auto px-4 mt-32 text-center">
-           <div className="max-w-2xl mx-auto py-16">
-              <h2 className="text-4xl font-bold mb-6 italic">Stop chasing invoices.</h2>
-              <p className="text-muted-foreground text-lg mb-10">
-                 Connect your Stripe account in minutes and start monetizing your expertise 
-                 with every booking.
-              </p>
-              <Link href="/signup">
-                <Button size="lg" className="rounded-full px-12 h-16 font-bold bg-blue-600 hover:bg-blue-700 text-lg">
-                   Get Started for Free
-                </Button>
-              </Link>
-           </div>
-        </section>
+          {/* CTA */}
+          <div className="p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-0.5">Ready to charge for your expertise?</div>
+              <div className="text-xs text-zinc-500 dark:text-zinc-400">Connect your Razorpay or Stripe account in Settings to get started.</div>
+            </div>
+            <Button render={<Link href="/signup" />} size="sm" className="h-9 px-4 text-xs font-semibold">
+              Get Started Free
+            </Button>
+          </div>
+        </div>
       </main>
 
       <Footer />
