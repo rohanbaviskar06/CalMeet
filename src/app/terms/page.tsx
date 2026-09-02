@@ -98,7 +98,7 @@ function Section({ section, index }: { section: typeof sections[0]; index: numbe
       </button>
       {open && (
         <div className="border-t border-zinc-200 dark:border-zinc-800 divide-y divide-zinc-200 dark:divide-zinc-800">
-          {section.subsections.map((sub, i) => (
+          {section.subsections.map((sub: any, i: number) => (
             <div key={i} className="px-4 py-3">
               {sub.title && <div className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">{sub.title}</div>}
               <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">{sub.text}</p>
