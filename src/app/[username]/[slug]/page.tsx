@@ -83,13 +83,13 @@ export default async function BookingPage({
 
     return (
       <div className={cn(
-        "min-h-screen flex items-center justify-center",
-        !isEmbed && "bg-muted/30 p-4"
+        "min-h-screen flex flex-col items-center justify-center bg-[#0c0c0c] text-white",
+        !isEmbed && "p-2 sm:p-6 lg:p-10"
       )}>
-        <div className={cn("w-full", !isEmbed && "max-w-6xl")}>
-          <Card className={cn(
-            "shadow-2xl border-none overflow-hidden",
-            isEmbed && "shadow-none rounded-none"
+        <div className={cn("w-full", !isEmbed && "max-w-5xl lg:max-w-[1060px]")}>
+          <div className={cn(
+            "border border-zinc-800/90 bg-[#111111] shadow-2xl rounded-2xl overflow-hidden",
+            isEmbed && "border-none rounded-none bg-transparent shadow-none"
           )}>
             <BookingForm 
               user={user as any} 
@@ -97,16 +97,19 @@ export default async function BookingPage({
               availability={availability}
               bookings={bookings}
             />
-          </Card>
+          </div>
           
-          {/* Watermark (Hidden only if paid plan and watermark is disabled) */}
-          {!isWhiteLabeled && (
-            <div className="mt-8 text-center text-muted-foreground text-sm flex items-center justify-center gap-2">
-              <span>Powered by</span>
-              <div className="flex items-center gap-1 font-bold text-foreground">
-                 <div className="w-5 h-5 rounded bg-primary flex items-center justify-center text-[10px] text-primary-foreground">M</div>
-                 CalMeet
-              </div>
+          {/* Cal.com style Watermark */}
+          {!isWhiteLabeled && !isEmbed && (
+            <div className="mt-8 text-center">
+              <a 
+                href="/" 
+                target="_blank" 
+                rel="noreferrer" 
+                className="text-xs font-semibold text-zinc-500 hover:text-zinc-300 transition-colors inline-block"
+              >
+                CalMeet.com
+              </a>
             </div>
           )}
         </div>

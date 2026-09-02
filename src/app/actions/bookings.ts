@@ -134,7 +134,33 @@ export async function sendBookingNotifications(bookingId: string) {
       console.error("Failed to trigger Zapier webhook:", zapierError);
     }
 
-    // 4. Send rich confirmation emails to Guest (no account required) & Host
+    // 4. Trigger Developer Custom Webhooks
+    try {
+      await dispatchCustomWebhooks(eventType.userId, "booking.created", {
+        bookingId: booking.id,
+        eventTypeId: eventType.id,
+        eventTitle: eventType.title,
+        duration: eventType.duration,
+        host: {
+          id: eventType.user.id,
+          name: eventType.user.name,
+          email: eventType.user.email,
+        },
+        guest: {
+          name: guestName,
+          email: guestEmail,
+        },
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        meetLink: meetLink || null,
+        status: booking.status,
+        notes: notes || null,
+      });
+    } catch (whErr) {
+      console.error("Failed to dispatch developer webhooks:", whErr);
+    }
+
+    // 5. Send rich confirmation emails to Guest (no account required) & Host
     try {
       console.log(`Sending booking confirmation email to guest (${guestEmail}) and host (${eventType.user.email})...`);
       const { generateGuestConfirmationEmail } = await import("@/lib/email-templates");
@@ -318,11 +344,29 @@ export async function cancelBooking(id: string) {
           targetUserId,
           "Meeting Cancelled",
           `Meeting "${booking.eventType.title}" with ${booking.guestName} on ${formattedDateForNotify} was cancelled`,
-          "BOOKING_CREATED" // Note: can keep as BOOKING_CREATED or customize if needed
+          "BOOKING_CREATED"
         );
       }
     } catch (notifyErr) {
       console.error("Failed to trigger internal notification for booking cancellation:", notifyErr);
+    }
+
+    // Trigger Developer Custom Webhooks on booking cancellation
+    try {
+      await dispatchCustomWebhooks(booking.eventType.userId, "booking.canceled", {
+        bookingId: booking.id,
+        eventTypeId: booking.eventType.id,
+        eventTitle: booking.eventType.title,
+        guest: {
+          name: booking.guestName,
+          email: booking.guestEmail,
+        },
+        startTime: booking.startTime.toISOString(),
+        endTime: booking.endTime.toISOString(),
+        status: "CANCELLED",
+      });
+    } catch (whErr) {
+      console.error("Failed to dispatch developer webhooks on cancel:", whErr);
     }
   }
 
@@ -346,6 +390,70 @@ export async function deletePendingBooking(id: string) {
   } catch (error) {
     console.error("Failed to delete pending booking:", error);
     return { success: false, error: "Database error" };
+  }
+}
+
+/**
+ * Dispatches a payload to all active registered developer webhooks for a user
+ */
+async function dispatchCustomWebhooks(
+  userId: string,
+  eventName: "booking.created" | "booking.canceled",
+  data: any
+) {
+  try {
+    const webhooks = await (prisma as any).webhook.findMany({
+      where: {
+        userId,
+        isActive: true,
+      },
+    });
+
+    if (!webhooks || webhooks.length === 0) return;
+
+    const payload = {
+      event: eventName,
+      timestamp: new Date().toISOString(),
+      data,
+    };
+
+    const payloadString = JSON.stringify(payload);
+
+    await Promise.allSettled(
+      webhooks.map(async (wh: any) => {
+        try {
+          const events: string[] = JSON.parse(wh.events || "[]");
+          if (!events.includes(eventName)) return;
+
+          const headers: Record<string, string> = {
+            "Content-Type": "application/json",
+            "User-Agent": "CalMeet-Webhook/1.0",
+          };
+
+          if (wh.secret) {
+            const signature = crypto
+              .createHmac("sha256", wh.secret)
+              .update(payloadString)
+              .digest("hex");
+            headers["X-CalMeet-Signature"] = `sha256=${signature}`;
+          }
+
+          console.log(`Dispatching webhook ${wh.id} (${eventName}) to ${wh.url}...`);
+          const res = await fetch(wh.url, {
+            method: "POST",
+            headers,
+            body: payloadString,
+            signal: AbortSignal.timeout(8000), // 8s timeout
+          });
+
+          console.log(`Webhook ${wh.id} responded with status: ${res.status}`);
+        } catch (dispatchErr: any) {
+          console.error(`Error sending webhook to ${wh.url}:`, dispatchErr.message || dispatchErr);
+        }
+      })
+    );
+  } catch (err: any) {
+    console.error("Error in dispatchCustomWebhooks:", err.message || err);
   }
 }
 

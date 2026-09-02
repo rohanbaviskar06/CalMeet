@@ -47,6 +47,13 @@ import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { updateProfile, uploadAvatarToCloudinary, updateBrandingSettings } from "@/app/actions/settings";
+import { 
+  createWebhook, 
+  deleteWebhook, 
+  toggleWebhook, 
+  createApiKey, 
+  deleteApiKey 
+} from "@/app/actions/developers";
 import { setUserPlan, PlanType } from "@/app/actions/plan";
 import { usePricingModal } from "@/components/dashboard/pricing-modal";
 import { useTheme } from "next-themes";
@@ -56,9 +63,11 @@ import { cn } from "@/lib/utils";
 
 interface SettingsClientProps {
   user: any;
+  initialWebhooks?: any[];
+  initialApiKeys?: any[];
 }
 
-export function SettingsForm({ user }: SettingsClientProps) {
+export function SettingsForm({ user, initialWebhooks = [], initialApiKeys = [] }: SettingsClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const activeTab = searchParams.get("tab") || "overview";
@@ -96,17 +105,17 @@ export function SettingsForm({ user }: SettingsClientProps) {
   const [showPass, setShowPass] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // Webhooks state
-  const [webhooks, setWebhooks] = useState([
-    { id: "wh-1", url: "https://api.example.com/calmeet-webhook", events: ["booking.created", "booking.canceled"], active: true }
-  ]);
+  // Real Webhooks state
+  const [webhooks, setWebhooks] = useState<any[]>(initialWebhooks);
   const [newWebhookUrl, setNewWebhookUrl] = useState("");
+  const [isAddingWebhook, setIsAddingWebhook] = useState(false);
+  const [deletingWebhookId, setDeletingWebhookId] = useState<string | null>(null);
 
-  // API Keys state
-  const [apiKeys, setApiKeys] = useState([
-    { id: "key-1", name: "Default Production Key", key: "cal_live_8f7b2a9e4c1d6e3f", created: "Sep 1, 2026", lastUsed: "Just now" }
-  ]);
+  // Real API Keys state
+  const [apiKeys, setApiKeys] = useState<any[]>(initialApiKeys);
   const [newKeyName, setNewKeyName] = useState("");
+  const [isCreatingKey, setIsCreatingKey] = useState(false);
+  const [deletingKeyId, setDeletingKeyId] = useState<string | null>(null);
 
   const { openPricingModal } = usePricingModal();
   const { theme, setTheme } = useTheme();
@@ -167,39 +176,94 @@ export function SettingsForm({ user }: SettingsClientProps) {
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  const handleAddWebhook = (e: React.FormEvent) => {
+  const handleAddWebhook = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newWebhookUrl) return;
-    setWebhooks([
-      ...webhooks,
-      {
-        id: "wh-" + Date.now(),
-        url: newWebhookUrl,
-        events: ["booking.created", "booking.canceled"],
-        active: true,
-      },
-    ]);
-    setNewWebhookUrl("");
-    toast.success("Webhook endpoint added!");
+    if (!newWebhookUrl.trim()) return;
+    setIsAddingWebhook(true);
+    try {
+      const result = await createWebhook({ url: newWebhookUrl.trim() });
+      if (result.error) {
+        toast.error(result.error);
+      } else if (result.webhook) {
+        setWebhooks([result.webhook, ...webhooks]);
+        setNewWebhookUrl("");
+        toast.success("Webhook endpoint registered successfully!");
+      }
+    } catch (err: any) {
+      toast.error("Failed to add webhook");
+    } finally {
+      setIsAddingWebhook(false);
+    }
   };
 
-  const handleCreateApiKey = (e: React.FormEvent) => {
+  const handleDeleteWebhook = async (id: string) => {
+    setDeletingWebhookId(id);
+    try {
+      const result = await deleteWebhook(id);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        setWebhooks(webhooks.filter((w) => w.id !== id));
+        toast.success("Webhook endpoint removed.");
+      }
+    } catch (err: any) {
+      toast.error("Failed to delete webhook");
+    } finally {
+      setDeletingWebhookId(null);
+    }
+  };
+
+  const handleToggleWebhook = async (id: string, currentActive: boolean) => {
+    const newActive = !currentActive;
+    setWebhooks(webhooks.map((w) => (w.id === id ? { ...w, active: newActive } : w)));
+    try {
+      const result = await toggleWebhook(id, newActive);
+      if (result.error) {
+        toast.error(result.error);
+        setWebhooks(webhooks.map((w) => (w.id === id ? { ...w, active: currentActive } : w)));
+      } else {
+        toast.success(newActive ? "Webhook activated" : "Webhook paused");
+      }
+    } catch {
+      setWebhooks(webhooks.map((w) => (w.id === id ? { ...w, active: currentActive } : w)));
+      toast.error("Failed to update webhook");
+    }
+  };
+
+  const handleCreateApiKey = async (e: React.FormEvent) => {
     e.preventDefault();
-    const name = newKeyName.trim() || "Secret API Key";
-    const randomHex = Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
-    const newKey = `cal_live_${randomHex}`;
-    setApiKeys([
-      ...apiKeys,
-      {
-        id: "key-" + Date.now(),
-        name,
-        key: newKey,
-        created: "Today",
-        lastUsed: "Never",
-      },
-    ]);
-    setNewKeyName("");
-    toast.success(`API Key "${name}" generated!`);
+    setIsCreatingKey(true);
+    try {
+      const result = await createApiKey(newKeyName);
+      if (result.error) {
+        toast.error(result.error);
+      } else if (result.apiKey) {
+        setApiKeys([result.apiKey, ...apiKeys]);
+        setNewKeyName("");
+        toast.success(`API Key generated successfully!`);
+      }
+    } catch (err: any) {
+      toast.error("Failed to generate API Key");
+    } finally {
+      setIsCreatingKey(false);
+    }
+  };
+
+  const handleDeleteApiKey = async (id: string) => {
+    setDeletingKeyId(id);
+    try {
+      const result = await deleteApiKey(id);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        setApiKeys(apiKeys.filter((k) => k.id !== id));
+        toast.success("API Key revoked.");
+      }
+    } catch (err: any) {
+      toast.error("Failed to revoke API Key");
+    } finally {
+      setDeletingKeyId(null);
+    }
   };
 
   // Sections config for Overview grid
@@ -1529,12 +1593,12 @@ export function SettingsForm({ user }: SettingsClientProps) {
                 <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Developer Webhooks</h2>
                 {user.plan === "FREE" && (
                   <span className="text-[10px] font-bold text-amber-600 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
-                    Teams Plan
+                    Pro & Teams Plan
                   </span>
                 )}
               </div>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Send real-time HTTP POST notifications when meetings are booked or canceled.
+                Send real-time HTTP POST notifications to your endpoints when meetings are booked or canceled.
               </p>
             </div>
             <Link href="/dashboard/settings" className="text-xs font-semibold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 flex items-center gap-1">
@@ -1548,16 +1612,16 @@ export function SettingsForm({ user }: SettingsClientProps) {
                 <Webhook className="h-6 w-6" />
               </div>
               <div className="space-y-1.5">
-                <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Webhooks require a Teams or Organization Plan</h3>
+                <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Webhooks require a Pro or Teams Plan</h3>
                 <p className="text-xs text-zinc-500 max-w-md mx-auto leading-relaxed">
-                  Trigger automated workflows in your CRM, Slack, or webhook endpoints whenever a booking is created or canceled.
+                  Trigger automated workflows in your CRM, backend API, or server whenever a booking is created or canceled.
                 </p>
               </div>
               <Button 
                 onClick={() => openPricingModal()}
                 className="h-10 px-5 text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
               >
-                <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Upgrade to Teams
+                <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Upgrade Plan
               </Button>
             </div>
           ) : (
@@ -1569,62 +1633,97 @@ export function SettingsForm({ user }: SettingsClientProps) {
                   onChange={(e) => setNewWebhookUrl(e.target.value)}
                   className="h-9 text-xs"
                   required
+                  disabled={isAddingWebhook}
                 />
-                <Button type="submit" size="sm" className="h-9 px-3.5 text-xs gap-1.5 shrink-0 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900">
-                  <Plus className="h-3.5 w-3.5" /> Add Webhook
+                <Button 
+                  type="submit" 
+                  size="sm" 
+                  disabled={isAddingWebhook}
+                  className="h-9 px-3.5 text-xs gap-1.5 shrink-0 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
+                >
+                  {isAddingWebhook ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                  Add Webhook
                 </Button>
               </form>
 
-              <div className="divide-y divide-zinc-200 dark:divide-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden text-xs">
-                {webhooks.map((wh) => (
-                  <div key={wh.id} className="p-3.5 flex items-center justify-between bg-card hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30 transition-colors">
-                    <div className="space-y-1.5 min-w-0 pr-4">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold px-1.5 py-0.5 rounded text-[10px]">
-                          POST
-                        </span>
-                        <span className="font-mono text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
-                          {wh.url}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {wh.events.map((ev) => (
-                          <span key={ev} className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200/60 dark:border-zinc-700/60 px-2 py-0.5 rounded-md text-[10px] font-mono">
-                            {ev}
+              {webhooks.length === 0 ? (
+                <div className="border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl p-8 text-center text-xs text-zinc-500 space-y-1">
+                  <p className="font-semibold text-zinc-700 dark:text-zinc-300">No Webhook Endpoints Configured</p>
+                  <p>Add a URL above to start receiving live webhook payloads on booking events.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-zinc-200 dark:divide-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden text-xs">
+                  {webhooks.map((wh) => (
+                    <div key={wh.id} className="p-3.5 flex items-center justify-between bg-card hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30 transition-colors">
+                      <div className="space-y-1.5 min-w-0 pr-4">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={cn(
+                            "font-bold px-1.5 py-0.5 rounded text-[10px]",
+                            wh.active 
+                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" 
+                              : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400"
+                          )}>
+                            POST {wh.active ? "• LIVE" : "• PAUSED"}
                           </span>
-                        ))}
+                          <span className="font-mono text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                            {wh.url}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 flex-wrap text-[11px] text-zinc-500">
+                          <div className="flex items-center gap-1">
+                            {wh.events?.map((ev: string) => (
+                              <span key={ev} className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200/60 dark:border-zinc-700/60 px-2 py-0.5 rounded-md text-[10px] font-mono">
+                                {ev}
+                              </span>
+                            ))}
+                          </div>
+                          {wh.secret && (
+                            <span className="font-mono text-[10px] text-zinc-400 bg-zinc-50 dark:bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-200/50 dark:border-zinc-800">
+                              Signing Secret: {wh.secret.slice(0, 10)}...
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleWebhook(wh.id, wh.active)}
+                          className="px-2 py-1 text-[11px] font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors cursor-pointer"
+                        >
+                          {wh.active ? "Pause" : "Resume"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(wh.url, wh.id)}
+                          className="p-1.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                          title="Copy Webhook URL"
+                        >
+                          {copiedKey === wh.id ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={deletingWebhookId === wh.id}
+                          onClick={() => handleDeleteWebhook(wh.id)}
+                          className="p-1.5 text-zinc-400 hover:text-red-500 rounded-md hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer disabled:opacity-50"
+                          title="Delete Webhook"
+                        >
+                          {deletingWebhookId === wh.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin text-red-500" />
+                          ) : (
+                            <Trash2 className="h-3.5 w-3.5" />
+                          )}
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard(wh.url, wh.id)}
-                        className="p-1.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                        title="Copy Webhook URL"
-                      >
-                        {copiedKey === wh.id ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setWebhooks(webhooks.filter((w) => w.id !== wh.id));
-                          toast.success("Webhook endpoint removed.");
-                        }}
-                        className="p-1.5 text-zinc-400 hover:text-red-500 rounded-md hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
-                        title="Delete Webhook"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
+                  ))}
+                </div>
+              )}
             </>
           )}
         </div>
       )}
-
 
       {/* 15. API KEYS */}
       {activeTab === "api-keys" && (
@@ -1633,50 +1732,95 @@ export function SettingsForm({ user }: SettingsClientProps) {
             <div>
               <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">API Access Tokens</h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Manage personal API keys for automated scripts and integrations.
+                Manage personal API keys for custom scripts, SDKs, and REST API integrations.
               </p>
             </div>
-            <Link href="/dashboard/settings" className="text-xs font-semibold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 flex items-center gap-1">
-              <ArrowLeft className="h-3 w-3" /> Back to Overview
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link 
+                href="/resources/api-docs" 
+                target="_blank"
+                className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
+              >
+                API Docs <ExternalLink className="h-3 w-3" />
+              </Link>
+              <Link href="/dashboard/settings" className="text-xs font-semibold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 flex items-center gap-1">
+                <ArrowLeft className="h-3 w-3" /> Back
+              </Link>
+            </div>
           </div>
 
           <form onSubmit={handleCreateApiKey} className="flex gap-2">
             <Input
-              placeholder="Key Name (e.g. Zapier Integration)"
+              placeholder="Key Name (e.g. Zapier Integration, Mobile App)"
               value={newKeyName}
               onChange={(e) => setNewKeyName(e.target.value)}
               className="h-9 text-xs"
+              disabled={isCreatingKey}
             />
-            <Button type="submit" size="sm" className="h-9 px-3.5 text-xs gap-1.5 shrink-0 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900">
-              <Plus className="h-3.5 w-3.5" /> Generate Key
+            <Button 
+              type="submit" 
+              size="sm" 
+              disabled={isCreatingKey}
+              className="h-9 px-3.5 text-xs gap-1.5 shrink-0 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
+            >
+              {isCreatingKey ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+              Generate Key
             </Button>
           </form>
 
-          <div className="divide-y divide-zinc-200 dark:divide-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden text-xs">
-            {apiKeys.map((k) => (
-              <div key={k.id} className="p-3 flex items-center justify-between bg-card">
-                <div className="space-y-0.5">
-                  <span className="font-semibold text-zinc-900 dark:text-zinc-100">{k.name}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-[11px] text-zinc-400">{k.key}</span>
-                    <button
-                      onClick={() => copyToClipboard(k.key, k.id)}
-                      className="text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-                    >
-                      {copiedKey === k.id ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
-                    </button>
+          {apiKeys.length === 0 ? (
+            <div className="border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl p-8 text-center text-xs text-zinc-500 space-y-1">
+              <p className="font-semibold text-zinc-700 dark:text-zinc-300">No API Keys Generated</p>
+              <p>Generate a key above to access the CalMeet REST API programmatically.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-zinc-200 dark:divide-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden text-xs">
+              {apiKeys.map((k) => (
+                <div key={k.id} className="p-3.5 flex items-center justify-between bg-card hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30 transition-colors">
+                  <div className="space-y-1 min-w-0 pr-4">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-100">{k.name}</span>
+                      <span className="text-[10px] text-zinc-400">
+                        • Created {new Date(k.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded">
+                        {k.key}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(k.key, k.id)}
+                        className="p-1 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 cursor-pointer"
+                        title="Copy Key"
+                      >
+                        {copiedKey === k.id ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+                    {k.lastUsed && (
+                      <p className="text-[10px] text-zinc-400">
+                        Last used: {new Date(k.lastUsed).toLocaleString()}
+                      </p>
+                    )}
                   </div>
+                  
+                  <button
+                    type="button"
+                    disabled={deletingKeyId === k.id}
+                    onClick={() => handleDeleteApiKey(k.id)}
+                    className="p-1.5 text-zinc-400 hover:text-red-500 rounded-md hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer disabled:opacity-50"
+                    title="Revoke API Key"
+                  >
+                    {deletingKeyId === k.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-red-500" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                  </button>
                 </div>
-                <button
-                  onClick={() => setApiKeys(apiKeys.filter((item) => item.id !== k.id))}
-                  className="p-1 text-zinc-400 hover:text-red-500"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

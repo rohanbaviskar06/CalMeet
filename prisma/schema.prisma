@@ -61,6 +61,8 @@ model User {
   notifications Notification[]
   ownedTeams      Team[]       @relation("TeamOwner")
   teamMemberships TeamMember[]
+  webhooks        Webhook[]
+  apiKeys         ApiKey[]
 }
 
 model Notification {
@@ -224,5 +226,32 @@ model TeamInvitation {
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@unique([teamId, email])
+}
+
+model Webhook {
+  id        String   @id @default(cuid())
+  userId    String
+  url       String
+  secret    String?
+  events    String   @default("[\"booking.created\",\"booking.canceled\"]")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model ApiKey {
+  id        String    @id @default(cuid())
+  userId    String
+  name      String
+  key       String    @unique
+  lastUsed  DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([key])
 }
 
