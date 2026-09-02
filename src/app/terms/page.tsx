@@ -2,98 +2,200 @@
 
 import { Navbar } from "@/components/landing/navbar";
 import { motion } from "framer-motion";
-import { FileText, ShieldCheck, Scale, Clock } from "lucide-react";
+import { FileText, Users, CreditCard, Scale, AlertTriangle, RefreshCw, Globe, Mail } from "lucide-react";
+
+const lastUpdated = "September 2, 2025";
+
+const sections = [
+  {
+    icon: <Users className="h-5 w-5" />,
+    title: "Acceptance of Terms",
+    content: "By accessing or using CalMeet (cal-meet.vercel.app), you agree to be bound by these Terms of Service and our Privacy Policy. If you do not agree to these terms, please do not use the service. These terms apply to all users, including free, pro, and enterprise plan holders."
+  },
+  {
+    icon: <FileText className="h-5 w-5" />,
+    title: "Use of the Service",
+    subsections: [
+      { title: "Permitted Use", text: "CalMeet is a scheduling and meeting management platform. You may use CalMeet for personal, professional, or business scheduling purposes in compliance with these Terms and all applicable laws." },
+      { title: "Prohibited Conduct", text: "You may not use CalMeet to send spam or unsolicited messages; impersonate any person or entity; distribute malware or harmful code; scrape or harvest user data without permission; use the service to violate any applicable laws; or attempt to gain unauthorized access to any system." },
+      { title: "Account Responsibility", text: "You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. Notify us immediately at support@calmeet.com if you suspect unauthorized access." },
+    ]
+  },
+  {
+    icon: <CreditCard className="h-5 w-5" />,
+    title: "Billing & Subscriptions",
+    subsections: [
+      { title: "Plans", text: "CalMeet offers Free, Pro, Teams, and Enterprise plans. Plan features and pricing are described on our Pricing page. Features may change with reasonable notice." },
+      { title: "Payment", text: "Paid plans are billed monthly or annually in advance. We accept major credit/debit cards and UPI for Indian customers, processed securely via Razorpay." },
+      { title: "Refunds", text: "We offer a 14-day money-back guarantee for new paid subscriptions. To request a refund, contact support@calmeet.com within 14 days of your first payment. Annual plans upgraded mid-cycle receive prorated credit." },
+      { title: "Cancellation", text: "You may cancel your subscription at any time from Settings → Billing. Your plan remains active until the end of the current billing period. We do not charge cancellation fees." },
+    ]
+  },
+  {
+    icon: <Scale className="h-5 w-5" />,
+    title: "Intellectual Property",
+    content: "CalMeet and its original content, features, and functionality are owned by CalMeet and protected by applicable intellectual property laws. You retain ownership of all content you create through the service (event types, booking pages, etc.). By using the service, you grant CalMeet a limited license to host, display, and process your content solely to operate the service."
+  },
+  {
+    icon: <AlertTriangle className="h-5 w-5" />,
+    title: "Disclaimer of Warranties",
+    content: "CalMeet is provided \"as is\" and \"as available\" without warranties of any kind, either express or implied. We do not warrant that the service will be uninterrupted, error-free, or free of viruses. We do not warrant the accuracy, completeness, or usefulness of any content on the service."
+  },
+  {
+    icon: <Scale className="h-5 w-5" />,
+    title: "Limitation of Liability",
+    content: "To the maximum extent permitted by applicable law, CalMeet shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including loss of profits, data, or goodwill, arising from your use or inability to use the service. Our total liability to you for any claim arising from these Terms shall not exceed the amount you paid us in the 12 months preceding the claim."
+  },
+  {
+    icon: <RefreshCw className="h-5 w-5" />,
+    title: "Termination",
+    content: "We reserve the right to suspend or terminate your account at any time for violation of these Terms, fraudulent activity, or at our discretion with reasonable notice. Upon termination, your right to use the service ceases and we may delete your data after 30 days (excluding any legally required retention)."
+  },
+  {
+    icon: <Globe className="h-5 w-5" />,
+    title: "Governing Law",
+    content: "These Terms are governed by the laws of India, without regard to conflict of law principles. Any disputes arising from these Terms shall be subject to the exclusive jurisdiction of the courts in Mumbai, Maharashtra, India."
+  },
+  {
+    icon: <RefreshCw className="h-5 w-5" />,
+    title: "Changes to Terms",
+    content: "We may update these Terms from time to time. We will notify you of significant changes via email or a prominent notice on the service at least 14 days before the changes take effect. Continued use of the service after the effective date constitutes your acceptance of the updated Terms."
+  }
+];
 
 export default function TermsPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-white dark:bg-black">
+    <div className="flex flex-col min-h-screen bg-[#0a0a0a] text-white">
       <Navbar />
-      <main className="flex-grow pt-32 pb-24">
-        <section className="container mx-auto px-4 max-w-4xl">
+
+      {/* Hero */}
+      <section className="relative pt-36 pb-20 px-4 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-indigo-950/20 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-indigo-600/8 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="container mx-auto max-w-4xl relative z-10">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-16"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-sm font-medium mb-8"
           >
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight italic font-serif">Terms of <span className="text-primary">Service.</span></h1>
-            <div className="flex items-center gap-6 text-sm text-muted-foreground border-b pb-8">
-               <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" /> Last Updated: May 12, 2024
-               </div>
-               <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4" /> Secure & Compliant
-               </div>
-            </div>
+            <FileText className="h-4 w-4" />
+            Terms of Service
           </motion.div>
 
-          <div className="prose prose-zinc dark:prose-invert max-w-none">
-             <div className="p-8 bg-zinc-50 dark:bg-zinc-900 rounded-[2.5rem] border mb-12">
-                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                   <Scale className="h-5 w-5 text-primary" /> The TL;DR (Simplified)
-                </h3>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                   <li>• You own your data and your brand.</li>
-                   <li>• Don&apos;t use CalMeet for illegal activities or spam.</li>
-                   <li>• We promise a 99.9% uptime for our services.</li>
-                   <li>• You can cancel your subscription at any time.</li>
-                </ul>
-             </div>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-5xl md:text-6xl font-bold tracking-tight mb-6"
+          >
+            Clear terms,{" "}
+            <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
+              no surprises.
+            </span>
+          </motion.h1>
 
-             <section className="mb-12">
-                <h2 className="text-2xl font-bold mb-6">1. Acceptance of Terms</h2>
-                <p className="text-muted-foreground leading-relaxed mb-4">
-                   By accessing or using the CalMeet platform, you agree to be bound by these Terms of Service 
-                   and all applicable laws and regulations. If you do not agree with any of these terms, 
-                   you are prohibited from using or accessing this site.
-                </p>
-             </section>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-lg text-zinc-400 mb-8 max-w-2xl leading-relaxed"
+          >
+            We&apos;ve written these terms in plain language so you know exactly what you&apos;re agreeing to.
+            No legalese. No hidden clauses.
+          </motion.p>
 
-             <section className="mb-12">
-                <h2 className="text-2xl font-bold mb-6">2. Use License</h2>
-                <p className="text-muted-foreground leading-relaxed mb-4">
-                   Permission is granted to temporarily download one copy of the materials on CalMeet&apos;s 
-                   website for personal, non-commercial transitory viewing only. This is the grant of 
-                   a license, not a transfer of title.
-                </p>
-             </section>
-
-             <section className="mb-12">
-                <h2 className="text-2xl font-bold mb-6">3. User Obligations</h2>
-                <p className="text-muted-foreground leading-relaxed mb-4">
-                   You are responsible for maintaining the confidentiality of your account and password. 
-                   You agree to notify us immediately of any unauthorized use of your account. CalMeet 
-                   is not liable for any loss that you may incur as a result of someone else using your 
-                   password or account.
-                </p>
-             </section>
-
-             <section className="mb-12">
-                <h2 className="text-2xl font-bold mb-6">4. Intellectual Property</h2>
-                <p className="text-muted-foreground leading-relaxed mb-4">
-                   The service and its original content, features, and functionality are and will remain 
-                   the exclusive property of CalMeet and its licensors. Our trademarks and trade dress 
-                   may not be used in connection with any product or service without our prior written consent.
-                </p>
-             </section>
-
-             <section className="mb-12">
-                <h2 className="text-2xl font-bold mb-6">5. Limitation of Liability</h2>
-                <p className="text-muted-foreground leading-relaxed mb-4">
-                   In no event shall CalMeet, nor its directors, employees, partners, agents, suppliers, 
-                   or affiliates, be liable for any indirect, incidental, special, consequential or 
-                   punitive damages, including without limitation, loss of profits, data, use, goodwill, 
-                   or other intangible losses.
-                </p>
-             </section>
-          </div>
-        </section>
-      </main>
-
-      <footer className="py-12 border-t bg-zinc-50 dark:bg-zinc-950 mt-24">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} CalMeet Legal Department.
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex flex-wrap gap-6 text-sm text-zinc-500 border-t border-zinc-800 pt-6"
+          >
+            <span>Last updated: {lastUpdated}</span>
+            <span>Effective immediately for new users</span>
+            <span>14-day notice for existing users on changes</span>
+          </motion.div>
         </div>
-      </footer>
+      </section>
+
+      {/* Table of Contents */}
+      <div className="container mx-auto px-4 max-w-4xl mb-12">
+        <div className="p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800">
+          <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-widest mb-4">Table of Contents</h2>
+          <div className="grid sm:grid-cols-2 gap-2">
+            {sections.map((s, i) => (
+              <a
+                key={s.title}
+                href={`#terms-${i}`}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+              >
+                <span className="text-zinc-600 w-5 text-right">{i + 1}.</span>
+                {s.title}
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Sections */}
+      <div className="container mx-auto px-4 max-w-4xl mb-24 space-y-12">
+        {sections.map((section, i) => (
+          <motion.section
+            key={section.title}
+            id={`terms-${i}`}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4 }}
+          >
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                {section.icon}
+              </div>
+              <h2 className="text-xl font-bold text-white">
+                <span className="text-zinc-600 mr-2 font-normal">{i + 1}.</span>
+                {section.title}
+              </h2>
+            </div>
+
+            <div className="pl-0 md:pl-12">
+              {"content" in section ? (
+                <p className="text-sm text-zinc-400 leading-relaxed border-l-2 border-zinc-800 pl-5">{section.content as string}</p>
+              ) : (
+                <div className="space-y-5">
+                  {(section as any).subsections.map((sub: any) => (
+                    <div key={sub.title} className="border-l-2 border-zinc-800 pl-5">
+                      <h3 className="font-semibold text-zinc-200 mb-2">{sub.title}</h3>
+                      <p className="text-sm text-zinc-400 leading-relaxed">{sub.text}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.section>
+        ))}
+      </div>
+
+      {/* Contact */}
+      <section className="container mx-auto px-4 max-w-3xl mb-24">
+        <div className="p-8 rounded-3xl bg-zinc-900 border border-zinc-800 text-center">
+          <Mail className="h-8 w-8 text-indigo-400 mx-auto mb-3" />
+          <h2 className="text-xl font-bold text-white mb-2">Questions about our Terms?</h2>
+          <p className="text-zinc-400 mb-6 text-sm max-w-md mx-auto">
+            If you have questions about these Terms of Service or need a custom agreement for enterprise use, we&apos;re here to help.
+          </p>
+          <a
+            href="mailto:legal@calmeet.com"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full font-semibold transition-colors text-sm"
+          >
+            <Mail className="h-4 w-4" /> legal@calmeet.com
+          </a>
+        </div>
+      </section>
+
+      <div className="text-center text-zinc-700 text-xs pb-10">
+        CalMeet · Terms of Service · Effective {lastUpdated}
+      </div>
     </div>
   );
 }
