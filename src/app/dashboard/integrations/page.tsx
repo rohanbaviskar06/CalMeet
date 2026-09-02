@@ -19,7 +19,6 @@ import { ConnectGoogleButton } from "@/components/dashboard/connect-google-butto
 import { ConnectZoomButton } from "@/components/dashboard/connect-zoom-button";
 import { ConnectSlackButton } from "@/components/dashboard/connect-slack-button";
 import { ConnectZapierButton } from "@/components/dashboard/connect-zapier-button";
-import { ConnectICloudModal } from "@/components/dashboard/connect-icloud-modal";
 import { DisconnectAccountButton } from "@/components/dashboard/disconnect-account-button";
 import { RequestIntegrationBanner } from "@/components/dashboard/request-integration-banner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -43,7 +42,6 @@ export default async function IntegrationsPage() {
 
   const googleAccount = accounts.find(a => a.provider === "google");
   const zoomAccount = accounts.find(a => a.provider === "zoom");
-  const icloudIntegration = integrationsList.find(i => i.type === "icloud");
   const slackIntegration = integrationsList.find(i => i.type === "slack");
   const zapierIntegration = integrationsList.find(i => i.type === "zapier");
 
@@ -83,15 +81,6 @@ export default async function IntegrationsPage() {
       ) : (
         <ConnectGoogleButton />
       )
-    },
-    {
-      id: "icloud",
-      name: "Apple iCloud Calendar",
-      description: "Sync your Apple Calendar directly using secure CalDAV protocol.",
-      logo: "/logos/apple.svg",
-      category: "calendars",
-      isConnected: !!icloudIntegration,
-      component: <ConnectICloudModal isConnected={!!icloudIntegration} />
     },
     {
       id: "zoom",
