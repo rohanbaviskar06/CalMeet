@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   Timer,
   ShieldCheck,
@@ -90,7 +90,7 @@ const testimonials = [
   {
     quote: "My close rate improved because prospects could book demos instantly. The friction was killing my pipeline.",
     name: "Marcus T.",
-    role: "Head of Sales, TechFlow",
+    role: "B2B Sales Leader",
     initials: "MT",
     stars: 5,
   },
@@ -104,13 +104,15 @@ const testimonials = [
 ];
 
 export function Benefits() {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
     <section id="benefits" className="py-24 bg-white dark:bg-black border-t">
       <div className="container mx-auto px-4">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
+          whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="text-center mb-16 max-w-3xl mx-auto"
         >

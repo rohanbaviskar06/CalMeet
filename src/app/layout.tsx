@@ -23,6 +23,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://calmeet.app"),
   title: "CalMeet - Modern Scheduling for Teams",
   description: "CalMeet helps you connect with people when it matters. Automate your meetings, sync your calendars, and reclaim your time.",
 };

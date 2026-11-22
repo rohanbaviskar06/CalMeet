@@ -37,6 +37,7 @@ import {
 } from "date-fns";
 import { createBooking } from "@/app/actions/bookings";
 import { toast } from "sonner";
+import { sanitizeHtml } from "@/lib/sanitize";
 import { cn } from "@/lib/utils";
 
 interface BookingFormProps {
@@ -84,10 +85,11 @@ const COMMON_TIMEZONES = [
 
 function FormattedDescription({ text }: { text: string }) {
   if (!text) return null;
+  const cleanHtml = sanitizeHtml(text);
   return (
     <div 
       className="text-xs text-zinc-400 leading-relaxed prose prose-invert max-w-none break-words"
-      dangerouslySetInnerHTML={{ __html: text }}
+      dangerouslySetInnerHTML={{ __html: cleanHtml }}
     />
   );
 }
@@ -109,6 +111,7 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
     user.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Kolkata"
   );
   const [isTzOpen, setIsTzOpen] = useState(false);
+  const [bookedBookingId, setBookedBookingId] = useState<string | null>(null);
 
   const [utmSource, setUtmSource] = useState<string | undefined>(undefined);
   const [utmMedium, setUtmMedium] = useState<string | undefined>(undefined);
@@ -270,6 +273,9 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
 
       if (result.success) {
         toast.success("Meeting booked successfully!");
+        if (result.booking?.id) {
+          setBookedBookingId(result.booking.id);
+        }
         setStep(3);
       } else {
         toast.error(result.error || "Failed to book meeting");
@@ -414,12 +420,22 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
           </div>
         </div>
 
-        <Button 
-          className="mt-6 sm:mt-8 rounded-xl h-10 px-5 text-xs font-semibold bg-white text-black hover:bg-zinc-200 transition cursor-pointer" 
-          onClick={() => window.location.reload()}
-        >
-          Book another meeting
-        </Button>
+        <div className="flex flex-col sm:flex-row items-center gap-3 mt-6 sm:mt-8">
+          {bookedBookingId && (
+            <a 
+              href={`/booking/${bookedBookingId}/manage`}
+              className="rounded-xl h-10 px-5 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center transition border border-zinc-700 w-full sm:w-auto"
+            >
+              Manage / Reschedule Booking
+            </a>
+          )}
+          <Button 
+            className="rounded-xl h-10 px-5 text-xs font-semibold bg-white text-black hover:bg-zinc-200 transition cursor-pointer w-full sm:w-auto" 
+            onClick={() => window.location.reload()}
+          >
+            Book another meeting
+          </Button>
+        </div>
       </div>
     );
   }

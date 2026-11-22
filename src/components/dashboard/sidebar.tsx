@@ -61,6 +61,7 @@ const mainNav = [
   { title: "Bookings", icon: CalendarDays, href: "/dashboard/bookings", badge: null },
   { title: "Availability", icon: Clock, href: "/dashboard/availability", badge: null },
   { title: "Teams", icon: Users, href: "/dashboard/team", badge: null },
+  { title: "Contacts", icon: UserIcon, href: "/dashboard/contacts", badge: null },
   { title: "Apps", icon: Grid2X2, href: "/dashboard/integrations", badge: null },
   { title: "Routing Forms", icon: GitMerge, href: "/dashboard/routing", badge: "Pro" },
   { title: "Workflows", icon: Zap, href: "/dashboard/workflows", badge: "Pro" },
@@ -302,7 +303,8 @@ export function AppSidebar({
               <SidebarGroupContent>
                 <SidebarMenu className="space-y-0.5">
                   {mainNav.map((item) => {
-                    const isGated = item.badge === "Pro" && plan !== "PRO";
+                    const isPaidPlan = plan === "PRO" || plan === "ORGANIZATION" || plan === "ENTERPRISE";
+                    const isGated = item.badge === "Pro" && !isPaidPlan;
                     const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
 
                     const buttonContent = (
@@ -312,7 +314,7 @@ export function AppSidebar({
                         {item.badge && (
                           <span className={cn(
                             "ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider",
-                            plan === "PRO" 
+                            isPaidPlan 
                               ? "bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
                               : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
                           )}>

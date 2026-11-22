@@ -59,7 +59,7 @@ export default function Home() {
                 </Button>
               ) : (
                 <Button render={<Link href="/signup" />} size="lg" className="h-11 px-6 text-sm font-semibold rounded-lg">
-                  Get Started for Free <ArrowRight className="h-4 w-4 ml-1.5" />
+                  Create a booking link <ArrowRight className="h-4 w-4 ml-1.5" />
                 </Button>
               )}
               <Button render={<Link href="/pricing" />} variant="outline" size="lg" className="h-11 px-6 text-sm font-semibold rounded-lg border-zinc-200 dark:border-zinc-800">

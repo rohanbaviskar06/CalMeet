@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Navbar } from "@/components/landing/navbar";
+import { Footer } from "@/components/landing/footer";
 import { Button } from "@/components/ui/button";
 import { 
   Check, 
@@ -50,10 +51,10 @@ const plans: PlanTier[] = [
     features: [
       "Unlimited Event Types & Bookings",
       "Google Calendar & Conflict Check",
-      "Google Meet, Zoom & Cal Video",
+      "Google Meet & Zoom Video Rooms",
       "Standard Email Confirmations",
       "Embeddable Booking Widgets",
-      "Accept Payments (Razorpay / Stripe)",
+      "Accept Payments (Razorpay)",
       "Standard CalMeet Watermark"
     ],
     ctaText: "Get Started Free",
@@ -94,12 +95,12 @@ const plans: PlanTier[] = [
     features: [
       "Everything in Teams, plus:",
       "Unlimited Sub-Teams & Departments",
-      "Company Subdomain (e.g. company.calmeet.com)",
+      "Company Subdomain (e.g. company.calmeet.app)",
       "SAML SSO & SCIM Directory Sync",
       "Role-Based Access Control (RBAC)",
       "CRM Routing & Weighted Distribution",
       "Audit Logs & Security Compliance",
-      "24/7 Priority SLA Support"
+      "Priority SLA & Email Support"
     ],
     ctaText: "Get Started with Org",
     ctaHref: "/signup?plan=organizations",
@@ -116,13 +117,13 @@ const plans: PlanTier[] = [
       "Everything in Organizations, plus:",
       "Dedicated Account Manager & CSM",
       "99.99% Uptime SLA Guarantee",
-      "SOC2 Type II, HIPAA BAA & GDPR Pack",
-      "Private Cloud & Self-Hosting Options",
+      "Enterprise Security Pack & Custom DPA",
+      "Private Cloud & Dedicated Infrastructure",
       "Custom Invoicing, PO & Master Service Agreement",
-      "Dedicated Slack Connect Channel"
+      "Direct Technical Onboarding Support"
     ],
     ctaText: "Contact Enterprise Sales",
-    ctaHref: "/enterprise",
+    ctaHref: "/support?topic=enterprise-sales",
     popular: false,
     isEnterprise: true
   }
@@ -178,7 +179,7 @@ const comparisonData: ComparisonCategory[] = [
     features: [
       { title: "Remove CalMeet Watermark", free: false, teams: true, org: true, enterprise: true },
       { title: "Custom Brand Accent Color", free: true, teams: true, org: true, enterprise: true },
-      { title: "Company Subdomain (company.calmeet.com)", free: false, teams: false, org: true, enterprise: true },
+      { title: "Company Subdomain (company.calmeet.app)", free: false, teams: false, org: true, enterprise: true },
       { title: "Custom CNAME Domain", free: false, teams: false, org: true, enterprise: true },
       { title: "Custom Email Notification Templates", free: false, teams: true, org: true, enterprise: true }
     ]
@@ -489,11 +490,7 @@ export default function PricingPage() {
         </div>
       </main>
 
-      <footer className="py-12 border-t bg-muted/40">
-        <div className="container mx-auto px-4 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} CalMeet Inc. All rights reserved.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

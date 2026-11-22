@@ -30,6 +30,7 @@ import {
   DialogHeader, 
   DialogTitle 
 } from "@/components/ui/dialog";
+import { FeedbackButton } from "@/components/dashboard/feedback-modal";
 import Link from "next/link";
 
 export function MeetingActions({ id, meetLink }: { id: string, meetLink?: string | null }) {
@@ -56,6 +57,7 @@ export function MeetingActions({ id, meetLink }: { id: string, meetLink?: string
         <Button
           size="sm"
           variant="outline"
+          aria-label={isCalMeetRoom ? "Join CalMeet Room" : "Join Video Call"}
           className="gap-1.5 text-xs h-7 px-2.5 rounded-lg border-zinc-200 dark:border-zinc-800 bg-background hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
           onClick={() => window.open(meetLink, isCalMeetRoom ? "_self" : "_blank")}
         >
@@ -65,10 +67,12 @@ export function MeetingActions({ id, meetLink }: { id: string, meetLink?: string
       )}
       <DropdownMenu>
         <DropdownMenuTrigger
+          aria-label="Meeting actions menu"
           render={
             <Button
               variant="ghost"
               size="icon"
+              aria-label="More options"
               className="h-7 w-7 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
             />
           }
@@ -147,6 +151,7 @@ export function ShareLinkBox({ username }: { username: string }) {
       <Button
         size="sm"
         onClick={copy}
+        aria-label="Copy booking link to clipboard"
         className="h-7 px-3 text-xs font-semibold gap-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 transition-opacity"
       >
         {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
@@ -175,10 +180,13 @@ export function DashboardHeaderActions({ username }: { username: string }) {
 
   return (
     <div className="flex items-center gap-2">
+      <FeedbackButton />
+
       <Button
         size="sm"
         variant="outline"
         onClick={copy}
+        aria-label="Copy public booking link"
         className="h-8 text-xs font-medium gap-1.5 rounded-lg border-zinc-200 dark:border-zinc-800 bg-background text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100"
       >
         {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
@@ -193,8 +201,10 @@ export function DashboardHeaderActions({ username }: { username: string }) {
             href={fullLink}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="View public page in new tab"
           />
         }
+        aria-label="View public booking page"
         className="h-8 text-xs font-medium gap-1.5 rounded-lg border-zinc-200 dark:border-zinc-800 bg-background text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100"
       >
         <ExternalLink className="h-3.5 w-3.5" />
@@ -204,6 +214,7 @@ export function DashboardHeaderActions({ username }: { username: string }) {
       <Button
         size="sm"
         render={<Link href="/dashboard/event-types" />}
+        aria-label="Create new event type"
         className="h-8 text-xs font-semibold gap-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 transition-opacity"
       >
         <Plus className="h-3.5 w-3.5" />

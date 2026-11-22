@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { Clock, ArrowRight, Video, GitMerge } from "lucide-react";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export const dynamic = "force-dynamic";
 
@@ -18,30 +19,80 @@ export default async function UserProfilePage({
   const isEmbed = embed === "true";
 
   const decodedUsername = decodeURIComponent(username).trim();
+  const isDemo = decodedUsername.toLowerCase() === "preview-user" || decodedUsername.toLowerCase() === "demo";
 
-  const user = await prisma.user.findFirst({
-    where: {
-      OR: [
-        { username: { equals: decodedUsername, mode: "insensitive" } },
-        { email: { equals: `${decodedUsername}@gmail.com`, mode: "insensitive" } },
-        { email: { startsWith: `${decodedUsername}@`, mode: "insensitive" } },
-        { id: decodedUsername },
+  let user: any = null;
+
+  if (isDemo) {
+    user = {
+      id: "demo-user-id",
+      name: "Alex User",
+      username: "preview-user",
+      image: null,
+      timezone: "Asia/Kolkata",
+      bio: "Product Specialist at CalMeet. This is an interactive demo profile showcasing active event types.",
+      plan: "PRO",
+      hideWatermark: false,
+      eventTypes: [
+        {
+          id: "demo-review-meeting",
+          title: "Product Review & Strategy",
+          slug: "review-meeting",
+          duration: 15,
+          description: "15-minute product walkthrough and scheduling strategy discussion.",
+          videoCallProvider: "GOOGLE_MEET",
+          isActive: true,
+        },
+        {
+          id: "demo-15min",
+          title: "15 Min Quick Sync",
+          slug: "15min",
+          duration: 15,
+          description: "Quick introductory sync to connect and discuss requirements.",
+          videoCallProvider: "GOOGLE_MEET",
+          isActive: true,
+        },
+        {
+          id: "demo-30min",
+          title: "30 Min Deep Dive",
+          slug: "30min",
+          duration: 30,
+          description: "Comprehensive product demonstration and team onboarding consultation.",
+          videoCallProvider: "GOOGLE_MEET",
+          isActive: true,
+        }
       ],
-    },
-    include: {
-      eventTypes: {
-        where: { isActive: true },
-        orderBy: { duration: "asc" }
-      },
-      routingForms: {
-        where: { isActive: true },
-        orderBy: { createdAt: "desc" }
-      }
+      routingForms: []
+    };
+  } else {
+    try {
+      user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { username: { equals: decodedUsername, mode: "insensitive" } },
+            { email: { equals: `${decodedUsername}@gmail.com`, mode: "insensitive" } },
+            { email: { startsWith: `${decodedUsername}@`, mode: "insensitive" } },
+            { id: decodedUsername },
+          ],
+        },
+        include: {
+          eventTypes: {
+            where: { isActive: true },
+            orderBy: { duration: "asc" }
+          },
+          routingForms: {
+            where: { isActive: true },
+            orderBy: { createdAt: "desc" }
+          }
+        }
+      });
+    } catch (e) {
+      console.warn("Database user lookup error:", e);
     }
-  });
 
-  if (!user) {
-    notFound();
+    if (!user) {
+      notFound();
+    }
   }
 
   const effectiveUsername = user.username || decodedUsername;
@@ -84,7 +135,7 @@ export default async function UserProfilePage({
           </div>
         ) : (
           <div className="rounded-2xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-950 divide-y divide-zinc-200/80 dark:divide-zinc-800 overflow-hidden shadow-2xs">
-            {user.eventTypes.map((type) => (
+            {user.eventTypes.map((type: any) => (
               <Link 
                 key={type.id} 
                 href={`/${effectiveUsername}/${type.slug}`}
@@ -98,7 +149,7 @@ export default async function UserProfilePage({
                   {type.description && (
                     <div 
                       className="text-xs text-zinc-500 line-clamp-1 prose prose-xs dark:prose-invert [&_*]:inline [&_*]:m-0"
-                      dangerouslySetInnerHTML={{ __html: type.description }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(type.description) }}
                     />
                   )}
 
@@ -134,7 +185,7 @@ export default async function UserProfilePage({
               Routing & Screening
             </h3>
             <div className="rounded-2xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-950 divide-y divide-zinc-200/80 dark:divide-zinc-800 overflow-hidden shadow-2xs">
-              {user.routingForms.map((form) => (
+              {user.routingForms.map((form: any) => (
                 <Link 
                   key={form.id} 
                   href={`/${effectiveUsername}/${form.slug}`}

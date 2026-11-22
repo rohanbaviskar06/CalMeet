@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   CalendarCheck2,
   Link2,
@@ -18,10 +18,10 @@ const steps = [
     step: "01",
     title: "Connect your calendar",
     description:
-      "Sync Google Calendar or Outlook in one click. CalMeet reads your busy times in real-time — no double bookings, no conflicts, ever.",
+      "Sync Google Calendar in one click. CalMeet checks your busy times in real-time — no double bookings, no scheduling conflicts, ever.",
     icon: CalendarCheck2,
     accent: "neutral",
-    tags: ["Google Calendar", "Outlook", "iCloud"],
+    tags: ["Google Calendar", "Conflict Check", "Google Meet & Zoom"],
     preview: (
       <div className="w-full h-full flex items-center justify-center p-6 lg:p-10">
         <div className="w-full max-w-sm space-y-3">
@@ -41,8 +41,8 @@ const steps = [
           {/* Calendar rows */}
           {[
             { name: "Google Calendar", email: "alex@gmail.com", active: true, color: "bg-zinc-900 dark:bg-zinc-100" },
-            { name: "Outlook Office 365", email: "alex@company.com", active: false, color: "bg-zinc-400" },
-            { name: "iCloud Calendar", email: "alex@icloud.com", active: false, color: "bg-zinc-200" },
+            { name: "Outlook Office 365", email: "Coming Soon", active: false, color: "bg-zinc-400" },
+            { name: "Zoom Conferencing", email: "Connected", active: true, color: "bg-zinc-800 dark:bg-zinc-200" },
           ].map((cal, i) => (
             <motion.div
               key={i}

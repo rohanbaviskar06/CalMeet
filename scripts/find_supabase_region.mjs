@@ -1,7 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 
-const projectRef = 'vpbbvxyleufhtoiyhprt';
-const password = 'dbcalmeet%40supabase06';
+const projectRef = process.env.SUPABASE_PROJECT_REF || 'vpbbvxyleufhtoiyhprt';
+const password = process.env.SUPABASE_DB_PASSWORD || '';
+if (!password) {
+  console.log('Please provide SUPABASE_DB_PASSWORD in environment to run this diagnostic.');
+  process.exit(1);
+}
 
 const regions = [
   'ap-south-1',

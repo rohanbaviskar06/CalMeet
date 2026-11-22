@@ -62,3 +62,84 @@ export async function createGoogleMeetEvent(userId: string, eventData: {
     return null;
   }
 }
+
+export async function getGoogleCalendarBusyTimes(
+  userId: string,
+  timeMin: Date,
+  timeMax: Date
+): Promise<{ start: Date; end: Date }[]> {
+  try {
+    const account = await prisma.account.findFirst({
+      where: {
+        userId,
+        provider: "google",
+      },
+    });
+
+    if (!account || !account.access_token) {
+      return [];
+    }
+
+    const calendar = await getGoogleCalendarClient(
+      account.access_token,
+      account.refresh_token ?? undefined,
+      account.id
+    );
+
+    const res = await calendar.freebusy.query({
+      requestBody: {
+        timeMin: timeMin.toISOString(),
+        timeMax: timeMax.toISOString(),
+        items: [{ id: "primary" }],
+      },
+    });
+
+    const busyList = res.data.calendars?.primary?.busy || [];
+    return busyList
+      .map((b) => ({
+        start: new Date(b.start || ""),
+        end: new Date(b.end || ""),
+      }))
+      .filter((b) => !isNaN(b.start.getTime()) && !isNaN(b.end.getTime()));
+  } catch (error) {
+    console.error("Error querying Google Calendar free/busy times:", error);
+    return [];
+  }
+}
+
+export async function deleteGoogleCalendarEvent(
+  userId: string,
+  eventId: string
+): Promise<boolean> {
+  try {
+    const account = await prisma.account.findFirst({
+      where: {
+        userId,
+        provider: "google",
+      },
+    });
+
+    if (!account || !account.access_token) {
+      console.log("No Google account found for user", userId);
+      return false;
+    }
+
+    const calendar = await getGoogleCalendarClient(
+      account.access_token,
+      account.refresh_token ?? undefined,
+      account.id
+    );
+
+    await calendar.events.delete({
+      calendarId: "primary",
+      eventId,
+      sendUpdates: "all",
+    });
+
+    console.log(`Successfully deleted Google Calendar event ${eventId} for user ${userId}`);
+    return true;
+  } catch (error) {
+    console.error(`Error deleting Google Calendar event ${eventId}:`, error);
+    return false;
+  }
+}

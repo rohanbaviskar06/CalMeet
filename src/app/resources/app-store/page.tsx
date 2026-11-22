@@ -8,16 +8,16 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 const apps = [
-  { name: "Google Calendar", category: "Calendar", desc: "Two-way real-time calendar synchronization", status: "Installed", href: "/dashboard/settings" },
-  { name: "Google Meet", category: "Video", desc: "Automated instant video room generation", status: "Installed", href: "/dashboard/settings" },
-  { name: "Zoom Video", category: "Video", desc: "Dynamic Zoom meeting URLs for booked slots", status: "Connect", href: "/dashboard/settings" },
-  { name: "Stripe", category: "Payments", desc: "Accept international card payments upfront", status: "Connect", href: "/dashboard/settings" },
-  { name: "Razorpay", category: "Payments", desc: "Accept UPI, Cards & Net Banking in INR", status: "Installed", href: "/dashboard/settings" },
-  { name: "Developer Webhooks", category: "Automation", desc: "Signed HMAC-SHA256 event listeners", status: "Installed", href: "/dashboard/settings?tab=webhooks" },
-  { name: "Zapier", category: "Automation", desc: "Connect with 5,000+ business applications", status: "Connect", href: "/dashboard/settings" },
-  { name: "Slack", category: "Notifications", desc: "Instant team channel alerts for new bookings", status: "Connect", href: "/dashboard/settings" },
-  { name: "Microsoft Teams", category: "Video", desc: "Enterprise video conferencing integration", status: "Coming Soon", href: "#" },
-  { name: "HubSpot CRM", category: "CRM", desc: "Log meeting notes and contact info to CRM", status: "Coming Soon", href: "#" },
+  { name: "Google Calendar", category: "Calendar", desc: "Two-way real-time calendar synchronization and busy slot conflict checking", status: "Available", href: "/dashboard/settings" },
+  { name: "Google Meet", category: "Video", desc: "Automated instant Google Meet room generation for every booked appointment", status: "Available", href: "/dashboard/settings" },
+  { name: "Zoom Video", category: "Video", desc: "Dynamic Zoom meeting URLs generated automatically for booked slots", status: "Available", href: "/dashboard/settings" },
+  { name: "Developer Webhooks", category: "Automation", desc: "Signed HMAC-SHA256 event listeners for booking creation, rescheduling, and cancellation", status: "Available", href: "/dashboard/settings?tab=webhooks" },
+  { name: "Razorpay", category: "Payments", desc: "Accept UPI, Cards & Net Banking in INR for verified paid bookings", status: "Available", href: "/dashboard/settings" },
+  { name: "Stripe", category: "Payments", desc: "Accept international card payments upfront with webhook settlement", status: "Coming Soon", href: "#" },
+  { name: "Microsoft Outlook", category: "Calendar", desc: "Office 365 and Outlook calendar synchronization", status: "Coming Soon", href: "#" },
+  { name: "Microsoft Teams", category: "Video", desc: "Enterprise Teams video conferencing links", status: "Coming Soon", href: "#" },
+  { name: "Slack", category: "Notifications", desc: "Instant team channel alerts for new and rescheduled bookings", status: "Coming Soon", href: "#" },
+  { name: "Zapier", category: "Automation", desc: "Connect with 5,000+ business applications via triggers", status: "Coming Soon", href: "#" },
 ];
 
 const categories = ["All Apps", "Calendar", "Video", "Payments", "Automation", "CRM", "Notifications"];
@@ -101,11 +101,9 @@ export default function AppStorePage() {
                       {app.category}
                     </span>
                     <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
-                      app.status === "Installed"
+                      app.status === "Available"
                         ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                        : app.status === "Coming Soon"
-                        ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-400"
-                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300"
+                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400"
                     }`}>
                       {app.status}
                     </span>

@@ -1,6 +1,7 @@
 "use client";
 
 import { Navbar } from "@/components/landing/navbar";
+import { Footer } from "@/components/landing/footer";
 import { useState } from "react";
 import { Shield, Eye, Database, UserCheck, Globe, Bell, Lock, ChevronDown } from "lucide-react";
 
@@ -41,7 +42,7 @@ const sections = [
     subsections: [
       { title: "Access & Export", text: "You can access and export all your data from Settings → Account at any time. Data is provided in JSON format." },
       { title: "Deletion", text: "You can delete your account from Settings → Account → Delete Account. Deletion is permanent. We process deletion requests within 30 days." },
-      { title: "GDPR & CCPA", text: "EU/UK residents have rights to access, correct, delete, and port their data under GDPR. California residents have similar rights under CCPA. Contact privacy@calmeet.com to exercise these rights." },
+      { title: "GDPR & CCPA", text: "EU/UK residents have rights to access, correct, delete, and port their data under GDPR. California residents have similar rights under CCPA. Contact privacy@calmeet.app to exercise these rights." },
     ]
   },
   {
@@ -156,10 +157,10 @@ export default function PrivacyPage() {
               <div className="text-xs text-zinc-500 dark:text-zinc-400">Our Data Protection Officer will respond within 48 hours.</div>
             </div>
             <a
-              href="mailto:privacy@calmeet.com"
+              href="mailto:privacy@calmeet.app"
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-lg text-xs font-semibold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors whitespace-nowrap"
             >
-              privacy@calmeet.com
+              privacy@calmeet.app
             </a>
           </div>
 
@@ -168,6 +169,8 @@ export default function PrivacyPage() {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

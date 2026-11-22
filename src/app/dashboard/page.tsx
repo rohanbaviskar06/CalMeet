@@ -19,6 +19,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { MeetingActions, ShareLinkBox, DashboardHeaderActions } from "@/components/dashboard/dashboard-client";
 import { RealtimeDashboardListener } from "@/components/dashboard/realtime-dashboard";
+import { OnboardingWizard } from "@/components/dashboard/onboarding-wizard";
 import { format } from "date-fns";
 import Link from "next/link";
 
@@ -32,7 +33,7 @@ export default async function DashboardPage() {
   const userId = (session.user as any).id;
 
   // Fetch data in parallel
-  const [user, totalBookingsCount, upcomingBookings, eventTypes, paidBookings] = await Promise.all([
+  const [user, totalBookingsCount, totalUpcomingCount, upcomingBookings, eventTypes, paidBookings] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -41,13 +42,29 @@ export default async function DashboardPage() {
     }),
     prisma.booking.count({
       where: { 
-        eventType: { userId },
+        OR: [
+          { eventType: { userId } },
+          { userId }
+        ],
+        status: "CONFIRMED"
+      }
+    }),
+    prisma.booking.count({
+      where: { 
+        OR: [
+          { eventType: { userId } },
+          { userId }
+        ],
+        startTime: { gte: new Date() },
         status: "CONFIRMED"
       }
     }),
     prisma.booking.findMany({
       where: { 
-        eventType: { userId },
+        OR: [
+          { eventType: { userId } },
+          { userId }
+        ],
         startTime: { gte: new Date() },
         status: "CONFIRMED"
       },
@@ -107,7 +124,7 @@ export default async function DashboardPage() {
 
   const stats = [
     { title: "Total Bookings", value: totalBookingsCount.toString(), desc: "All time scheduled", icon: Users },
-    { title: "Upcoming", value: upcomingBookings.length.toString(), desc: "In your queue", icon: CalendarIcon },
+    { title: "Upcoming", value: totalUpcomingCount.toString(), desc: "In your queue", icon: CalendarIcon },
     { title: "Avg. Duration", value: `${avgDuration || 30}m`, desc: "Per event type", icon: Clock },
     { title: "Revenue", value: earningsLabel, desc: "Collected earnings", icon: CreditCard },
   ];
@@ -124,13 +141,20 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
             Welcome back, {user.name?.split(" ")[0] || "there"}
           </h1>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+          <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
             Here's an overview of your schedule and booking activity today.
           </p>
         </div>
 
         <DashboardHeaderActions username={username} />
       </div>
+
+      {/* Interactive Onboarding Checklist */}
+      <OnboardingWizard
+        user={user}
+        eventTypesCount={eventTypes.length}
+        bookingsCount={totalBookingsCount}
+      />
 
       {/* Minimal 4-Column Stat Cards (Cal.com style) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -142,10 +166,10 @@ export default async function DashboardPage() {
               className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-card hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors shadow-2xs space-y-2"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">
                   {stat.title}
                 </span>
-                <div className="w-6 h-6 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500">
+                <div className="w-6 h-6 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-400">
                   <Icon className="h-3.5 w-3.5" />
                 </div>
               </div>
@@ -153,7 +177,7 @@ export default async function DashboardPage() {
                 <div className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
                   {stat.value}
                 </div>
-                <p className="text-[11px] text-zinc-400 mt-0.5">
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 font-medium">
                   {stat.desc}
                 </p>
               </div>
@@ -170,13 +194,14 @@ export default async function DashboardPage() {
             <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Upcoming Meetings</h2>
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Your scheduled calls for the coming days.</p>
+                <p className="text-[11px] text-zinc-600 dark:text-zinc-400">Your scheduled calls for the coming days.</p>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 render={<Link href="/dashboard/bookings" />}
-                className="h-7 text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                aria-label="View all scheduled bookings"
+                className="h-7 text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
               >
                 View all bookings →
               </Button>
@@ -190,13 +215,14 @@ export default async function DashboardPage() {
                   </div>
                   <div>
                     <h3 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">No upcoming meetings</h3>
-                    <p className="text-[11px] text-zinc-400 mt-0.5">Your schedule is completely clear.</p>
+                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">Your schedule is completely clear.</p>
                   </div>
                   <Button
                     size="sm"
                     variant="outline"
                     render={<Link href="/dashboard/event-types" />}
-                    className="h-7 text-xs border-zinc-200 dark:border-zinc-800"
+                    aria-label="Share an event link"
+                    className="h-7 text-xs border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300"
                   >
                     Share an Event Link
                   </Button>
@@ -210,11 +236,11 @@ export default async function DashboardPage() {
                           <span className="font-semibold text-xs text-zinc-900 dark:text-zinc-100 truncate">
                             {booking.guestName}
                           </span>
-                          <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 px-2 py-0.5 rounded-full font-medium">
+                          <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 py-0.5 rounded-full font-medium">
                             {booking.eventType?.title || "Meeting"}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3 text-[11px] text-zinc-400">
+                        <div className="flex items-center gap-3 text-[11px] text-zinc-600 dark:text-zinc-400">
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             {format(new Date(booking.startTime), "EEE, MMM d · h:mm a")}
@@ -237,10 +263,10 @@ export default async function DashboardPage() {
           {/* Share Link Card */}
           <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl bg-card p-4 shadow-2xs space-y-3">
             <div>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                 Share your public link
               </h2>
-              <p className="text-[11px] text-zinc-500 mt-0.5">
+              <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5">
                 Copy your profile link to share with clients or embed on social media.
               </p>
             </div>
@@ -251,12 +277,13 @@ export default async function DashboardPage() {
           {/* Active Event Types Preview */}
           <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl bg-card p-4 shadow-2xs space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                 Event Types ({eventTypes.length})
               </h2>
               <Link
                 href="/dashboard/event-types"
-                className="text-[11px] font-semibold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                aria-label="Manage event types"
+                className="text-[11px] font-semibold text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
               >
                 Manage →
               </Link>
@@ -267,13 +294,14 @@ export default async function DashboardPage() {
                 <Link
                   key={et.id}
                   href={`/dashboard/event-types`}
+                  aria-label={`Configure event type ${et.title}`}
                   className="p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/40 dark:bg-zinc-900/30 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors flex items-center justify-between text-xs group"
                 >
                   <div className="min-w-0 pr-2">
                     <span className="font-semibold text-zinc-900 dark:text-zinc-100 block truncate group-hover:text-zinc-600 dark:group-hover:text-zinc-200">
                       {et.title}
                     </span>
-                    <span className="text-[10px] text-zinc-400">
+                    <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
                       /{username}/{et.slug} · {et.duration}m
                     </span>
                   </div>
@@ -286,7 +314,7 @@ export default async function DashboardPage() {
           {/* Google Calendar Sync Card */}
           <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl bg-card p-4 shadow-2xs space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                 Calendar Sync
               </h2>
               <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
@@ -303,7 +331,7 @@ export default async function DashboardPage() {
                 <span className="font-medium text-zinc-900 dark:text-zinc-100 block truncate">
                   {user.email}
                 </span>
-                <span className="text-[10px] text-zinc-400">
+                <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
                   Google Calendar 2-way sync
                 </span>
               </div>

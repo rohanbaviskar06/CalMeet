@@ -4,6 +4,7 @@ import GoogleProvider from "next-auth/providers/google";
 import ZoomProvider from "next-auth/providers/zoom";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
+import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 import { supabase } from "./supabase";
 import { sendWelcomeEmail } from "./resend";
@@ -38,7 +39,7 @@ export const authOptions: NextAuthOptions = {
           prompt: "consent",
         },
       },
-      allowDangerousEmailAccountLinking: true,
+      allowDangerousEmailAccountLinking: false,
     }),
     ZoomProvider({
       clientId: process.env.ZOOM_CLIENT_ID || "",
@@ -48,12 +49,12 @@ export const authOptions: NextAuthOptions = {
           scope: "user:read:user meeting:write:meeting",
         },
       },
-      allowDangerousEmailAccountLinking: true,
+      allowDangerousEmailAccountLinking: false,
     }),
     GitHubProvider({
       clientId: process.env.GITHUB_ID || "",
       clientSecret: process.env.GITHUB_SECRET || "",
-      allowDangerousEmailAccountLinking: true,
+      allowDangerousEmailAccountLinking: false,
     }),
     CredentialsProvider({
       name: "credentials",
@@ -67,34 +68,27 @@ export const authOptions: NextAuthOptions = {
         }
 
         const email = credentials.email.toLowerCase().trim();
-        console.log("Authorize attempt via Supabase for email:", email);
+        console.log("Authorize attempt for email:", email);
 
-        // Bypass Supabase authentication for the admin user
-        if (email === "rbgaming116@gmail.com") {
-          let user = await prisma.user.findUnique({
-            where: { email },
-          });
-          if (!user) {
-            user = await prisma.user.create({
-              data: {
-                id: "admin-user-id",
-                email: "rbgaming116@gmail.com",
-                name: "CalMeet Admin",
-                username: "admin",
-                plan: "ENTERPRISE",
-              },
-            });
+        // Check local database for user with password hash first
+        const localUser = await prisma.user.findUnique({
+          where: { email },
+        });
+
+        if (localUser?.password) {
+          const isMatch = await bcrypt.compare(credentials.password, localUser.password);
+          if (isMatch) {
+            return {
+              id: localUser.id,
+              email: localUser.email,
+              name: localUser.name,
+              image: localUser.image,
+            };
           }
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            image: user.image,
-          };
         }
 
         try {
-          // 1. Authenticate with Supabase Auth
+          // Fall back to Supabase Auth verification
           const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
             email,
             password: credentials.password,
@@ -112,7 +106,7 @@ export const authOptions: NextAuthOptions = {
 
           console.log("Supabase authentication successful for user:", authData.user.id);
 
-          // 2. Fetch or create local user record in Prisma
+          // Fetch or create local user record in Prisma
           let user = await prisma.user.findUnique({
             where: { email },
           });

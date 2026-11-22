@@ -12,9 +12,18 @@ export async function signup(data: any) {
   }
 
   try {
-    console.log("Starting Supabase signup for email:", email);
+    console.log("Starting signup for email:", email);
+
+    // 1. Check if user already exists in local database
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      return { error: "An account with this email address already exists. Please sign in instead." };
+    }
     
-    // 1. Sign up the user in Supabase Auth
+    // 2. Sign up the user in Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -36,22 +45,10 @@ export async function signup(data: any) {
 
     console.log("Supabase signup successful. Syncing to Prisma.");
 
-    // 2. Check if user already exists in local database and delete to avoid ID mismatch
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (existingUser) {
-      console.log("User already exists in local database. Deleting old record to align with Supabase ID.");
-      await prisma.user.delete({
-        where: { email },
-      });
-    }
-
     // 3. Create the user in the local Prisma database
     const user = await prisma.user.create({
       data: {
-        id: authData.user.id, // Align the local ID with Supabase User ID!
+        id: authData.user.id,
         name,
         email,
         username: email.split("@")[0] + Math.floor(Math.random() * 1000),

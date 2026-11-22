@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { sanitizeHtml } from "@/lib/sanitize";
+import { getPlanLimits } from "@/lib/plans";
 
 export async function toggleEventTypeStatus(id: string, currentStatus: boolean) {
   const session = await getServerSession(authOptions);
@@ -44,6 +46,28 @@ export async function createEventType(data: { title: string, description: string
   }
   const userId = (session.user as any).id;
 
+  // Enforce plan limits
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { plan: true },
+  });
+
+  const limits = getPlanLimits(user?.plan);
+
+  if (data.requiresPayment && !limits.allowPaidBookings) {
+    throw new Error("Accepting payments for bookings requires a Pro, Organization, or Enterprise plan.");
+  }
+
+  const activeEventTypesCount = await prisma.eventType.count({
+    where: { userId, isActive: true },
+  });
+
+  if (activeEventTypesCount >= limits.maxActiveEventTypes) {
+    throw new Error(
+      `Your current plan allows up to ${limits.maxActiveEventTypes} active event type. Please upgrade your plan for unlimited scheduling links.`
+    );
+  }
+
   let finalSlug = "";
   if (data.slug) {
     finalSlug = data.slug.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
@@ -61,11 +85,13 @@ export async function createEventType(data: { title: string, description: string
     finalSlug = `${finalSlug}-${Math.floor(Math.random() * 1000)}`;
   }
 
+  const cleanDescription = data.description ? sanitizeHtml(data.description) : "";
+
   // Use standard Prisma create to ensure cross-database compatibility
   await prisma.eventType.create({
     data: {
       title: data.title,
-      description: data.description,
+      description: cleanDescription,
       duration: data.duration,
       videoCallProvider: data.videoCallProvider || "GOOGLE_MEET",
       slug: finalSlug,
@@ -89,6 +115,20 @@ export async function updateEventType(id: string, data: { title: string, descrip
   }
   const userId = (session.user as any).id;
 
+  // Enforce plan limits
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { plan: true },
+  });
+
+  const limits = getPlanLimits(user?.plan);
+
+  if (data.requiresPayment && !limits.allowPaidBookings) {
+    throw new Error("Accepting payments for bookings requires a Pro, Organization, or Enterprise plan.");
+  }
+
+  const cleanDescription = data.description !== undefined ? sanitizeHtml(data.description) : undefined;
+
   let slugUpdate = "";
   if (data.slug) {
     let finalSlug = data.slug.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
@@ -107,7 +147,7 @@ export async function updateEventType(id: string, data: { title: string, descrip
       where: { id, userId },
       data: {
         title: data.title,
-        description: data.description,
+        ...(cleanDescription !== undefined ? { description: cleanDescription } : {}),
         duration: data.duration,
         videoCallProvider: data.videoCallProvider,
         slug: finalSlug,
@@ -122,7 +162,7 @@ export async function updateEventType(id: string, data: { title: string, descrip
       where: { id, userId },
       data: {
         title: data.title,
-        description: data.description,
+        ...(cleanDescription !== undefined ? { description: cleanDescription } : {}),
         duration: data.duration,
         videoCallProvider: data.videoCallProvider,
         requiresPayment: data.requiresPayment ?? false,

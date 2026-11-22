@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Lock, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { checkAdminStatus } from "@/app/actions/admin";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -19,26 +20,31 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setLoading(true);
 
-    if (email !== "rbgaming116@gmail.com") {
-      toast.error("Unauthorized: Invalid Admin Email");
-      setLoading(false);
-      return;
-    }
-
     try {
       const result = await signIn("credentials", {
-        email,
+        email: email.trim().toLowerCase(),
         password,
         redirect: false,
       });
 
       if (result?.error) {
-        toast.error("Invalid credentials");
-      } else {
-        toast.success("Welcome back, Admin!");
-        router.push("/admin");
-        router.refresh();
+        toast.error("Invalid email or password");
+        setLoading(false);
+        return;
       }
+
+      // Verify administrator status on the server
+      const { isAdmin } = await checkAdminStatus();
+      if (!isAdmin) {
+        await signOut({ redirect: false });
+        toast.error("Access denied: You do not have administrator privileges.");
+        setLoading(false);
+        return;
+      }
+
+      toast.success("Welcome back, Admin!");
+      router.push("/admin");
+      router.refresh();
     } catch (error) {
       toast.error("An error occurred during login");
     } finally {

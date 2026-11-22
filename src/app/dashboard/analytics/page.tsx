@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { TrendingUp, Users, CalendarDays, MousePointerClick, ArrowUpRight, ArrowDownRight, Zap, Clock, XCircle, Filter, Globe, Sparkles } from "lucide-react";
+import { TrendingUp, Users, CalendarDays, MousePointerClick, ArrowUpRight, ArrowDownRight, Zap, Clock, XCircle, Filter, Globe, Sparkles, Info } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { ProGatedPage } from "@/components/dashboard/pro-gated-page";
@@ -107,11 +107,6 @@ export default async function AnalyticsPage() {
     totalViews += Number(form.views || 0);
   });
 
-  // Fallback to totalBookingsAllTime if views are somehow less (to avoid weird funnel representation)
-  if (totalViews < totalBookingsAllTime) {
-    totalViews = totalBookingsAllTime + 10; 
-  }
-
   mappedBookings.forEach(b => {
     if (b.status !== "CONFIRMED") return;
     const bDate = new Date(b.createdAt);
@@ -123,7 +118,9 @@ export default async function AnalyticsPage() {
     ? (totalBookingsThisMonth > 0 ? 100 : 0)
     : Math.round(((totalBookingsThisMonth - totalBookingsLastMonth) / totalBookingsLastMonth) * 100);
 
-  const conversionRate = totalViews === 0 ? 0 : Math.round((totalBookingsAllTime / totalViews) * 100);
+  const conversionRate = totalViews === 0 
+    ? (totalBookingsAllTime > 0 ? 100 : 0) 
+    : Math.min(100, Math.round((totalBookingsAllTime / totalViews) * 100));
   const recentActivity = mappedBookings.slice(0, 5);
 
   // 1. Average Booking Lead Time calculation
@@ -221,6 +218,16 @@ export default async function AnalyticsPage() {
         <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-full text-xs font-bold border border-emerald-500/20">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
           Live
+        </div>
+      </div>
+
+      {/* Metric Calculation Explanation Banner */}
+      <div className="p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 text-xs text-zinc-600 dark:text-zinc-400 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Info className="h-4 w-4 text-primary shrink-0" />
+          <span>
+            <strong>Metrics Guide:</strong> Page views reflect actual visits to your public booking and routing links. Conversion rate is calculated as (Total Confirmed Bookings ÷ Tracked Views) × 100%. Lead time is the average duration between scheduling and meeting start.
+          </span>
         </div>
       </div>
 

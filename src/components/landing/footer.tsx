@@ -13,7 +13,7 @@ export function Footer() {
           {/* Brand Column */}
           <div className="col-span-2 lg:col-span-2 space-y-6">
             <Link href="/" className="flex items-center gap-2 font-bold text-2xl">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground">M</div>
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black">C</div>
               <span>CalMeet</span>
             </Link>
             <p className="text-muted-foreground text-sm max-w-xs leading-relaxed">
@@ -81,10 +81,13 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-muted-foreground font-medium">
           <p>© {currentYear} CalMeet Inc. All rights reserved.</p>
-          <div className="flex gap-8">
-            <Link href="#" className="hover:text-primary">Twitter</Link>
-            <Link href="#" className="hover:text-primary">LinkedIn</Link>
-            <Link href="#" className="hover:text-primary">GitHub</Link>
+          <div className="flex flex-wrap items-center gap-6 text-xs">
+            <Link href="/api/health" className="hover:text-primary transition-colors flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> System Status
+            </Link>
+            <Link href="/developers" className="hover:text-primary transition-colors">Developers</Link>
+            <Link href="/enterprise" className="hover:text-primary transition-colors">Enterprise</Link>
+            <Link href="/blog" className="hover:text-primary transition-colors">Changelog</Link>
           </div>
         </div>
       </div>

@@ -8,23 +8,23 @@ import Link from "next/link";
 
 const features = [
   {
-    title: "On-Demand Video Room Generation",
-    description: "Launch instant Google Meet, Zoom, or Cal Video rooms with a single click — no pre-scheduling or calendar invites required.",
+    title: "Instant Video Room Generation",
+    description: "Generate unique Google Meet and Zoom room links automatically with every scheduled appointment.",
     icon: Video,
   },
   {
     title: "1-Click Meeting Link Sharing",
-    description: "Share your dedicated instant meeting room URL across Slack, WhatsApp, or email for immediate ad-hoc discussions.",
+    description: "Share your dedicated booking and meeting URLs across Slack, WhatsApp, or email for seamless scheduling.",
     icon: Zap,
   },
   {
-    title: "Automated Host Notifications",
-    description: "Receive instant push and browser alerts as soon as a participant joins your waiting room.",
+    title: "Automated Calendar Invites",
+    description: "Both host and guest receive direct calendar invites with the exact video link embedded in the location field.",
     icon: Clock,
   },
   {
-    title: "Encrypted HD In-Browser Video",
-    description: "Experience peer-to-peer, low-latency video and audio streaming built directly into CalMeet without extra downloads.",
+    title: "Reliable HD Video Conferencing",
+    description: "Direct integration with Google Meet and Zoom ensures high-definition video, audio, and screen sharing across devices.",
     icon: ShieldCheck,
   },
 ];

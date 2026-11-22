@@ -46,7 +46,15 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { updateProfile, uploadAvatarToCloudinary, updateBrandingSettings } from "@/app/actions/settings";
+import { 
+  updateProfile, 
+  uploadAvatarToCloudinary, 
+  updateBrandingSettings, 
+  changePassword, 
+  toggleTwoFactorAuth, 
+  saveUserPreferences, 
+  exportFullUserData 
+} from "@/app/actions/settings";
 import { 
   createWebhook, 
   deleteWebhook, 
@@ -55,6 +63,7 @@ import {
   deleteApiKey 
 } from "@/app/actions/developers";
 import { setUserPlan, PlanType } from "@/app/actions/plan";
+import { getBillingOverview, cancelSubscription, getInvoiceHtml } from "@/app/actions/billing";
 import { usePricingModal } from "@/components/dashboard/pricing-modal";
 import { useTheme } from "next-themes";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -65,9 +74,19 @@ interface SettingsClientProps {
   user: any;
   initialWebhooks?: any[];
   initialApiKeys?: any[];
+  initialTwoFactor?: boolean;
+  initialPreferences?: Record<string, any>;
+  connectedAccounts?: string[];
 }
 
-export function SettingsForm({ user, initialWebhooks = [], initialApiKeys = [] }: SettingsClientProps) {
+export function SettingsForm({ 
+  user, 
+  initialWebhooks = [], 
+  initialApiKeys = [],
+  initialTwoFactor = false,
+  initialPreferences = {},
+  connectedAccounts = [],
+}: SettingsClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const activeTab = searchParams.get("tab") || "overview";
@@ -77,27 +96,30 @@ export function SettingsForm({ user, initialWebhooks = [], initialApiKeys = [] }
   const [isUploading, setIsUploading] = useState(false);
   const [isUpdatingBranding, setIsUpdatingBranding] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(user.image || "");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isToggling2FA, setIsToggling2FA] = useState(false);
+  const [isExportingData, setIsExportingData] = useState(false);
   const [formData, setFormData] = useState({
     name: user.name || "",
     username: user.username || user.email?.split("@")[0] || "user",
     bio: user.bio || "",
-    timezone: user.timezone || "Asia/Kolkata",
-    weekStart: "Monday",
-    timeFormat: "12h",
-    dateFormat: "DD/MM/YYYY",
-    language: "en",
-    defaultConferencing: "GOOGLE_MEET",
-    brandColor: "#18181b",
+    timezone: user.timezone || initialPreferences?.timezone || "Asia/Kolkata",
+    weekStart: initialPreferences?.weekStart || "Monday",
+    timeFormat: initialPreferences?.timeFormat || "12h",
+    dateFormat: initialPreferences?.dateFormat || "DD/MM/YYYY",
+    language: initialPreferences?.language || "en",
+    defaultConferencing: initialPreferences?.defaultConferencing || "GOOGLE_MEET",
+    brandColor: initialPreferences?.brandColor || "#18181b",
     hideBranding: user.hideWatermark ?? false,
-    outOfOfficeEnabled: false,
-    outOfOfficeStart: "",
-    outOfOfficeEnd: "",
-    outOfOfficeRedirect: "",
-    notifyBookings: true,
-    notifyCancellations: true,
-    notifyReschedules: true,
-    notifyDailyDigest: false,
-    twoFactorEnabled: false,
+    outOfOfficeEnabled: Boolean(initialPreferences?.outOfOfficeEnabled),
+    outOfOfficeStart: initialPreferences?.outOfOfficeStart || "",
+    outOfOfficeEnd: initialPreferences?.outOfOfficeEnd || "",
+    outOfOfficeRedirect: initialPreferences?.outOfOfficeRedirect || "",
+    notifyBookings: initialPreferences?.notifyBookings ?? true,
+    notifyCancellations: initialPreferences?.notifyCancellations ?? true,
+    notifyReschedules: initialPreferences?.notifyReschedules ?? true,
+    notifyDailyDigest: Boolean(initialPreferences?.notifyDailyDigest),
+    twoFactorEnabled: initialTwoFactor,
   });
 
 
@@ -116,6 +138,21 @@ export function SettingsForm({ user, initialWebhooks = [], initialApiKeys = [] }
   const [newKeyName, setNewKeyName] = useState("");
   const [isCreatingKey, setIsCreatingKey] = useState(false);
   const [deletingKeyId, setDeletingKeyId] = useState<string | null>(null);
+
+  // Real Billing state
+  const [billingData, setBillingData] = useState<any>(null);
+  const [loadingBilling, setLoadingBilling] = useState(false);
+  const [cancellingSub, setCancellingSub] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === "billing") {
+      setLoadingBilling(true);
+      getBillingOverview()
+        .then((data) => setBillingData(data))
+        .catch((err) => console.error("Failed to load billing:", err))
+        .finally(() => setLoadingBilling(false));
+    }
+  }, [activeTab]);
 
   const { openPricingModal } = usePricingModal();
   const { theme, setTheme } = useTheme();
@@ -164,6 +201,19 @@ export function SettingsForm({ user, initialWebhooks = [], initialApiKeys = [] }
       }
     } catch (error) {
       toast.error("Failed to update settings");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSavePreferences = async (customMessage?: string) => {
+    setIsSubmitting(true);
+    try {
+      await saveUserPreferences(formData);
+      toast.success(customMessage || "Preferences updated successfully!");
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save preferences.");
     } finally {
       setIsSubmitting(false);
     }
@@ -646,7 +696,8 @@ export function SettingsForm({ user, initialWebhooks = [], initialApiKeys = [] }
                   <Button 
                     type="button" 
                     size="sm" 
-                    onClick={() => toast.success("Company subdomain updated successfully!")}
+                    disabled={isSubmitting}
+                    onClick={() => handleSavePreferences("Company subdomain configuration saved!")}
                     className="h-9 text-xs"
                   >
                     Save Subdomain
@@ -664,11 +715,12 @@ export function SettingsForm({ user, initialWebhooks = [], initialApiKeys = [] }
 
           <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800 flex justify-end">
             <Button
-              onClick={() => toast.success("General preferences updated!")}
+              onClick={() => handleSavePreferences("General preferences updated successfully!")}
+              disabled={isSubmitting}
               size="sm"
-              className="h-9 px-4 text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
+              className="h-9 px-4 text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 cursor-pointer"
             >
-              Save Preferences
+              {isSubmitting ? "Saving..." : "Save Preferences"}
             </Button>
           </div>
         </div>
@@ -693,9 +745,18 @@ export function SettingsForm({ user, initialWebhooks = [], initialApiKeys = [] }
             <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 space-y-3">
               <Label className="text-xs font-bold text-zinc-900 dark:text-zinc-100">Add to calendar</Label>
               <p className="text-[11px] text-zinc-500">Select where to add events when you're booked.</p>
-              <select className="w-full h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-background text-xs">
-                <option>{user.email} (Google Calendar)</option>
-              </select>
+              {connectedAccounts.includes("google") ? (
+                <select className="w-full h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-background text-xs">
+                  <option>{user.email} (Google Calendar)</option>
+                </select>
+              ) : (
+                <div className="flex items-center justify-between p-3 rounded-lg border border-dashed border-zinc-200 dark:border-zinc-800 text-xs">
+                  <span className="text-muted-foreground">No Google account connected.</span>
+                  <Button size="sm" variant="outline" onClick={() => router.push("/dashboard/integrations")} className="h-7 text-xs">
+                    Connect Google
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-card space-y-3">
@@ -714,18 +775,24 @@ export function SettingsForm({ user, initialWebhooks = [], initialApiKeys = [] }
                 </Button>
               </div>
 
-              <div className="flex items-center justify-between p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-900/30 text-xs">
-                <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold text-xs">
-                    📅
+              {connectedAccounts.includes("google") ? (
+                <div className="flex items-center justify-between p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-900/30 text-xs">
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold text-xs">
+                      📅
+                    </div>
+                    <div>
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-100 block">Google Calendar</span>
+                      <span className="text-[11px] text-zinc-400">{user.email}</span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-semibold text-zinc-900 dark:text-zinc-100 block">Google Calendar</span>
-                    <span className="text-[11px] text-zinc-400">{user.email}</span>
-                  </div>
+                  <Switch defaultChecked className="scale-90" />
                 </div>
-                <Switch defaultChecked className="scale-90" />
-              </div>
+              ) : (
+                <div className="p-4 text-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-lg text-xs text-muted-foreground">
+                  Connect your calendar integration in Integrations to enable real-time conflict checking.
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -748,9 +815,24 @@ export function SettingsForm({ user, initialWebhooks = [], initialApiKeys = [] }
 
           <div className="space-y-3">
             {[
-              { id: "GOOGLE_MEET", name: "Google Meet", desc: "Built-in with Google Workspace & Gmail accounts", connected: true },
-              { id: "ZOOM", name: "Zoom Video", desc: "Connect your Zoom personal meeting room or dynamic links", connected: false },
-              { id: "CAL_VIDEO", name: "Cal Video", desc: "CalMeet native in-browser WebRTC video room", connected: true },
+              { 
+                id: "GOOGLE_MEET", 
+                name: "Google Meet", 
+                desc: "Built-in with Google Workspace & Gmail accounts", 
+                connected: connectedAccounts.includes("google") 
+              },
+              { 
+                id: "ZOOM", 
+                name: "Zoom Video", 
+                desc: "Connect your Zoom personal meeting room or dynamic links", 
+                connected: connectedAccounts.includes("zoom") 
+              },
+              { 
+                id: "CAL_VIDEO", 
+                name: "Cal Video", 
+                desc: "CalMeet native in-browser WebRTC video room", 
+                connected: true 
+              },
             ].map((app) => (
               <div
                 key={app.id}
@@ -936,11 +1018,12 @@ export function SettingsForm({ user, initialWebhooks = [], initialApiKeys = [] }
 
           <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800 flex justify-end">
             <Button
-              onClick={() => toast.success("Out of office settings saved!")}
+              onClick={() => handleSavePreferences("Out of office settings saved successfully!")}
+              disabled={isSubmitting}
               size="sm"
-              className="h-9 px-4 text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
+              className="h-9 px-4 text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 cursor-pointer"
             >
-              Save Out of Office
+              {isSubmitting ? "Saving..." : "Save Out of Office"}
             </Button>
           </div>
         </div>
@@ -961,27 +1044,51 @@ export function SettingsForm({ user, initialWebhooks = [], initialApiKeys = [] }
             </Link>
           </div>
 
-          <div className="divide-y divide-zinc-200 dark:divide-zinc-800 text-xs">
+          <div className="divide-y divide-zinc-200 dark:border-zinc-800 text-xs">
             <div className="py-3 flex items-center justify-between">
               <div>
                 <span className="font-semibold text-zinc-900 dark:text-zinc-100 block">New Bookings</span>
                 <span className="text-[11px] text-zinc-400">Receive an email when someone books a new meeting</span>
               </div>
-              <Switch defaultChecked className="scale-90" />
+              <Switch
+                checked={formData.notifyBookings}
+                onCheckedChange={(c) => {
+                  setFormData({ ...formData, notifyBookings: c });
+                  saveUserPreferences({ ...formData, notifyBookings: c });
+                  toast.success(c ? "Booking alerts enabled" : "Booking alerts muted");
+                }}
+                className="scale-90"
+              />
             </div>
             <div className="py-3 flex items-center justify-between">
               <div>
                 <span className="font-semibold text-zinc-900 dark:text-zinc-100 block">Cancellations</span>
                 <span className="text-[11px] text-zinc-400">Receive an email when an attendee cancels a meeting</span>
               </div>
-              <Switch defaultChecked className="scale-90" />
+              <Switch
+                checked={formData.notifyCancellations}
+                onCheckedChange={(c) => {
+                  setFormData({ ...formData, notifyCancellations: c });
+                  saveUserPreferences({ ...formData, notifyCancellations: c });
+                  toast.success(c ? "Cancellation alerts enabled" : "Cancellation alerts muted");
+                }}
+                className="scale-90"
+              />
             </div>
             <div className="py-3 flex items-center justify-between">
               <div>
                 <span className="font-semibold text-zinc-900 dark:text-zinc-100 block">Reschedules</span>
                 <span className="text-[11px] text-zinc-400">Receive an email when a meeting is moved to a new time</span>
               </div>
-              <Switch defaultChecked className="scale-90" />
+              <Switch
+                checked={formData.notifyReschedules}
+                onCheckedChange={(c) => {
+                  setFormData({ ...formData, notifyReschedules: c });
+                  saveUserPreferences({ ...formData, notifyReschedules: c });
+                  toast.success(c ? "Reschedule alerts enabled" : "Reschedule alerts muted");
+                }}
+                className="scale-90"
+              />
             </div>
           </div>
         </div>
@@ -1072,18 +1179,39 @@ export function SettingsForm({ user, initialWebhooks = [], initialApiKeys = [] }
 
           <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800 flex justify-end">
             <Button
-              onClick={() => {
+              onClick={async () => {
                 if (!passwords.newPass || passwords.newPass !== passwords.confirmPass) {
-                  toast.error("Passwords do not match");
+                  toast.error("New passwords do not match.");
                   return;
                 }
-                toast.success("Password changed successfully!");
-                setPasswords({ current: "", newPass: "", confirmPass: "" });
+                if (passwords.newPass.length < 8) {
+                  toast.error("Password must be at least 8 characters long.");
+                  return;
+                }
+                setIsChangingPassword(true);
+                try {
+                  const res = await changePassword({
+                    currentPassword: passwords.current || undefined,
+                    newPassword: passwords.newPass,
+                    confirmPassword: passwords.confirmPass,
+                  });
+                  if (res.error) {
+                    toast.error(res.error);
+                  } else {
+                    toast.success(res.message || "Password updated successfully!");
+                    setPasswords({ current: "", newPass: "", confirmPass: "" });
+                  }
+                } catch (err: any) {
+                  toast.error(err.message || "Failed to update password.");
+                } finally {
+                  setIsChangingPassword(false);
+                }
               }}
+              disabled={isChangingPassword}
               size="sm"
               className="h-9 px-4 text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
             >
-              Update Password
+              {isChangingPassword ? "Updating..." : "Update Password"}
             </Button>
           </div>
         </div>
@@ -1117,9 +1245,22 @@ export function SettingsForm({ user, initialWebhooks = [], initialApiKeys = [] }
               </div>
               <Switch
                 checked={formData.twoFactorEnabled}
-                onCheckedChange={(c) => {
-                  setFormData({ ...formData, twoFactorEnabled: c });
-                  toast.success(c ? "Two-Factor Auth Enabled" : "Two-Factor Auth Disabled");
+                disabled={isToggling2FA}
+                onCheckedChange={async (checked) => {
+                  setIsToggling2FA(true);
+                  try {
+                    const res = await toggleTwoFactorAuth(checked);
+                    if (res.success) {
+                      setFormData({ ...formData, twoFactorEnabled: checked });
+                      toast.success(checked ? "Two-Factor Auth Enabled & Saved" : "Two-Factor Auth Disabled");
+                    } else {
+                      toast.error("Failed to update 2FA status.");
+                    }
+                  } catch (err: any) {
+                    toast.error(err.message || "Error updating 2FA.");
+                  } finally {
+                    setIsToggling2FA(false);
+                  }
                 }}
                 className="scale-90"
               />
@@ -1204,17 +1345,26 @@ export function SettingsForm({ user, initialWebhooks = [], initialApiKeys = [] }
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(user, null, 2));
-                  const dlAnchor = document.createElement("a");
-                  dlAnchor.setAttribute("href", dataStr);
-                  dlAnchor.setAttribute("download", `calmeet-data-${formData.username}.json`);
-                  dlAnchor.click();
-                  toast.success("Data export downloaded!");
+                disabled={isExportingData}
+                onClick={async () => {
+                  setIsExportingData(true);
+                  try {
+                    const fullData = await exportFullUserData();
+                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullData, null, 2));
+                    const dlAnchor = document.createElement("a");
+                    dlAnchor.setAttribute("href", dataStr);
+                    dlAnchor.setAttribute("download", `calmeet-full-archive-${formData.username}.json`);
+                    dlAnchor.click();
+                    toast.success("Complete archive downloaded (profile, bookings, event types, availability)!");
+                  } catch (err: any) {
+                    toast.error(err.message || "Failed to export data.");
+                  } finally {
+                    setIsExportingData(false);
+                  }
                 }}
-                className="h-8 text-xs gap-1 border-zinc-200 dark:border-zinc-800"
+                className="h-8 text-xs gap-1 border-zinc-200 dark:border-zinc-800 cursor-pointer"
               >
-                <Download className="h-3.5 w-3.5" /> Export Data
+                <Download className="h-3.5 w-3.5" /> {isExportingData ? "Exporting..." : "Export Full Data (JSON)"}
               </Button>
             </div>
 
@@ -1499,15 +1649,20 @@ export function SettingsForm({ user, initialWebhooks = [], initialApiKeys = [] }
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-zinc-400">Current Plan:</span>
                   <span className="text-base font-extrabold text-zinc-900 dark:text-zinc-100">
-                    {user.plan || "FREE"} Plan
+                    {billingData?.plan || user.plan || "FREE"} Plan
                   </span>
                   <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold border border-emerald-500/20">
                     Active
                   </span>
                 </div>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                  Next renewal: <strong className="text-zinc-700 dark:text-zinc-300">October 1, 2026</strong> • Auto-renew enabled
+                  Next renewal: <strong className="text-zinc-700 dark:text-zinc-300">{billingData?.nextRenewal || "First of next month"}</strong> • Auto-renew enabled
                 </p>
+                {billingData?.usage && (
+                  <p className="text-[11px] text-zinc-400 mt-2">
+                    Usage: <strong>{billingData.usage.activeEventTypes}</strong> / {billingData.usage.maxActiveEventTypes > 100 ? "Unlimited" : billingData.usage.maxActiveEventTypes} active links • <strong>{billingData.usage.ownedTeams}</strong> / {billingData.usage.maxTeams} teams
+                  </p>
+                )}
               </div>
 
               <div className="flex items-center gap-2">
@@ -1519,66 +1674,87 @@ export function SettingsForm({ user, initialWebhooks = [], initialApiKeys = [] }
                 >
                   Change Plan
                 </Button>
-                <Button
-                  onClick={openPricingModal}
-                  size="sm"
-                  className="h-9 px-4 text-xs font-semibold bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
-                >
-                  Upgrade Tier
-                </Button>
+                {user.plan !== "FREE" ? (
+                  <Button
+                    onClick={async () => {
+                      if (confirm("Are you sure you want to cancel your subscription? You will transition to the Free tier.")) {
+                        setCancellingSub(true);
+                        try {
+                          const res = await cancelSubscription();
+                          if (res.success) {
+                            toast.success(res.message);
+                            window.location.reload();
+                          } else {
+                            toast.error(res.error || "Failed to cancel subscription");
+                          }
+                        } catch (err: any) {
+                          toast.error(err.message || "Error cancelling subscription");
+                        } finally {
+                          setCancellingSub(false);
+                        }
+                      }
+                    }}
+                    disabled={cancellingSub}
+                    size="sm"
+                    variant="destructive"
+                    className="h-9 px-4 text-xs font-semibold"
+                  >
+                    {cancellingSub ? "Cancelling..." : "Cancel Subscription"}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={openPricingModal}
+                    size="sm"
+                    className="h-9 px-4 text-xs font-semibold bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
+                  >
+                    Upgrade Tier
+                  </Button>
+                )}
               </div>
-            </div>
-
-            {/* Payment Method Simulator */}
-            <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-7 rounded bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 flex items-center justify-center font-bold text-[10px]">
-                  VISA
-                </div>
-                <div>
-                  <span className="font-semibold text-zinc-900 dark:text-zinc-100 block">Visa ending in 4242</span>
-                  <span className="text-[11px] text-zinc-400">Expires 12/28 • Default payment method</span>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toast.info("Payment method updater simulator")}
-                className="text-xs text-primary hover:underline"
-              >
-                Update Card
-              </Button>
             </div>
 
             {/* Invoices Table */}
             <div className="space-y-3 pt-2">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Billing History</h3>
-              <div className="divide-y divide-zinc-200 dark:divide-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden text-xs">
-                {[
-                  { id: "INV-2026-0901", date: "Sep 1, 2026", amount: user.plan === "FREE" ? "$0.00" : "$12.00", status: "Paid" },
-                  { id: "INV-2026-0801", date: "Aug 1, 2026", amount: user.plan === "FREE" ? "$0.00" : "$12.00", status: "Paid" },
-                  { id: "INV-2026-0701", date: "Jul 1, 2026", amount: user.plan === "FREE" ? "$0.00" : "$12.00", status: "Paid" },
-                ].map((inv) => (
-                  <div key={inv.id} className="p-3.5 flex items-center justify-between bg-card hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors">
-                    <div className="space-y-0.5">
-                      <span className="font-mono font-semibold text-zinc-900 dark:text-zinc-100 block">{inv.id}</span>
-                      <span className="text-[11px] text-zinc-400">{inv.date} • {inv.amount}</span>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Billing History & Invoices</h3>
+              {loadingBilling ? (
+                <div className="p-8 text-center text-xs text-muted-foreground">Loading invoices...</div>
+              ) : !billingData?.invoices || billingData.invoices.length === 0 ? (
+                <div className="p-8 text-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl text-xs text-muted-foreground">
+                  No invoices on file yet. Invoices for paid plans and paid booking receipts will appear here.
+                </div>
+              ) : (
+                <div className="divide-y divide-zinc-200 dark:divide-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden text-xs">
+                  {billingData.invoices.map((inv: any) => (
+                    <div key={inv.id} className="p-3.5 flex items-center justify-between bg-card hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors">
+                      <div className="space-y-0.5">
+                        <span className="font-mono font-semibold text-zinc-900 dark:text-zinc-100 block">{inv.invoiceNumber}</span>
+                        <span className="text-[11px] text-zinc-400">{inv.date} • {inv.description} • {inv.currency} {inv.amount}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                          {inv.status}
+                        </span>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const html = await getInvoiceHtml(inv.invoiceNumber);
+                              const blob = new Blob([html], { type: "text/html" });
+                              const url = URL.createObjectURL(blob);
+                              window.open(url, "_blank");
+                            } catch {
+                              toast.error("Failed to generate invoice receipt");
+                            }
+                          }}
+                          className="text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 p-1 cursor-pointer"
+                          title="View / Download Receipt"
+                        >
+                          <Download className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                        {inv.status}
-                      </span>
-                      <button
-                        onClick={() => toast.success(`Receipt for ${inv.id} downloaded!`)}
-                        className="text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 p-1"
-                        title="Download Receipt"
-                      >
-                        <Download className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

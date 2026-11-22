@@ -43,12 +43,12 @@ export function PricingModalProvider({
       try {
         const res = await setUserPlan(targetPlan);
         if (res.success) {
-          toast.success(`Sandbox: Active plan switched to ${targetPlan}!`);
+          toast.success(`Active plan updated to ${targetPlan}!`);
           setIsOpen(false);
           window.location.reload();
         }
       } catch (err: any) {
-        toast.error(err.message || "Something went wrong changing plan.");
+        toast.error(err.message || "Paid plan upgrades require verified subscription billing. Please complete payment checkout.");
       }
     });
   };
@@ -154,34 +154,6 @@ export function PricingModalProvider({
               >
                 <X className="h-5 w-5" />
               </button>
-
-              {/* Developer Sandbox Plan Quick-Switcher */}
-              <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 p-3.5 text-xs text-amber-700 dark:text-amber-300">
-                <div className="flex items-center gap-2.5">
-                  <ShieldAlert className="h-4 w-4 shrink-0 animate-pulse text-amber-600 dark:text-amber-400" />
-                  <div>
-                    <span className="font-bold">Sandbox Plan Simulator:</span> Test feature-gating restrictions. Current plan is <strong className="uppercase font-mono bg-amber-500/20 px-2 py-0.5 rounded text-amber-900 dark:text-amber-200">{currentPlan}</strong>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {(["FREE", "PRO", "ORGANIZATION", "ENTERPRISE"] as PlanType[]).map((p) => (
-                    <Button
-                      key={p}
-                      size="sm"
-                      variant={currentPlan === p ? "default" : "outline"}
-                      onClick={() => handleSelectPlan(p)}
-                      disabled={isPending || currentPlan === p}
-                      className={cn(
-                        "h-7 text-[10px] px-2.5 font-bold uppercase",
-                        currentPlan === p && "bg-amber-600 hover:bg-amber-700 text-white border-transparent"
-                      )}
-                    >
-                      {isPending && currentPlan === p && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
-                      {p === "PRO" ? "Teams" : p === "ORGANIZATION" ? "Org" : p}
-                    </Button>
-                  ))}
-                </div>
-              </div>
 
               {/* Title & Header */}
               <div className="text-center mb-8">

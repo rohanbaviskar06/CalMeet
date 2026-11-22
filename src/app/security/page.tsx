@@ -1,6 +1,7 @@
 "use client";
 
 import { Navbar } from "@/components/landing/navbar";
+import { Footer } from "@/components/landing/footer";
 import {
   ShieldCheck, Lock, KeyRound, Server, Eye,
   RefreshCw, CheckCircle2, AlertTriangle, FileText, Globe
@@ -10,48 +11,48 @@ const pillars = [
   {
     icon: <Lock className="h-4 w-4" />,
     title: "Encryption in Transit & at Rest",
-    desc: "All data in transit uses TLS 1.3. Data at rest is encrypted with AES-256. Nothing is transmitted unencrypted."
+    desc: "All data in transit uses TLS 1.3. Data at rest is encrypted with AES-256 on enterprise-grade infrastructure. Nothing is transmitted unencrypted."
   },
   {
     icon: <KeyRound className="h-4 w-4" />,
-    title: "Authentication & API Keys",
-    desc: "OAuth 2.0 via Google and GitHub. JWT sessions with short-lived tokens. API keys are bcrypt-hashed — never stored in plain text."
+    title: "Authentication & Cryptographic Keys",
+    desc: "OAuth 2.0 via Google, session tokens, and bcrypt-hashed passwords. API keys are SHA-256 hashed and never displayed again after generation."
   },
   {
     icon: <Eye className="h-4 w-4" />,
     title: "Privacy by Design",
-    desc: "We collect only what's strictly necessary. No ad trackers, no third-party marketing pixels, no behavioral profiling."
+    desc: "We collect only what is strictly necessary to schedule meetings. No third-party ad pixels, no cross-site trackers, and no behavioral profiling."
   },
   {
     icon: <Server className="h-4 w-4" />,
-    title: "Infrastructure",
-    desc: "Hosted on Vercel's edge network with automatic DDoS mitigation. Database on Supabase with row-level security and automated backups."
+    title: "Compliant Cloud Infrastructure",
+    desc: "Hosted on AWS, Vercel, and Supabase cloud infrastructure that maintains SOC 2 Type II and HIPAA certifications, automated backups, and DDoS protection."
   },
   {
     icon: <RefreshCw className="h-4 w-4" />,
-    title: "Monitoring & Response",
-    desc: "24/7 uptime monitoring and anomaly detection. Security patches applied within hours. Incident response SLA under 1 hour."
+    title: "Monitoring & SSRF Protection",
+    desc: "Continuous uptime monitoring, automated error logging, rate limiting on sensitive routes, and private IP filtering on all outbound webhooks."
   },
   {
     icon: <Globe className="h-4 w-4" />,
-    title: "Compliance",
-    desc: "GDPR and CCPA compliant. Data Processing Agreements available for enterprise customers. Regular third-party security audits."
+    title: "Compliance & DPA",
+    desc: "GDPR and CCPA compliant data handling. Data Processing Agreements (DPA) and data export tools available for all users."
   },
 ];
 
 const checklist = [
   "TLS 1.3 in transit, AES-256 at rest",
-  "API keys bcrypt-hashed before storage",
+  "API keys SHA-256 hashed before storage",
   "HMAC-SHA256 signed webhook payloads",
-  "Row-Level Security on all database tables",
-  "Automated nightly database backups",
-  "Zero-trust network architecture",
-  "JWT session management",
-  "GDPR & CCPA compliant data handling",
-  "Regular third-party penetration tests",
-  "CSP, HSTS, X-Frame-Options headers enforced",
-  "Dependency vulnerability scanning on every deploy",
-  "Incident response SLA under 1 hour",
+  "Server-side SSRF validation on webhook endpoints",
+  "Automated cloud database backups",
+  "Multi-factor authentication (2FA) support",
+  "Secure session token management",
+  "GDPR & CCPA compliant data controls",
+  "Security headers (CSP, HSTS, X-Frame-Options)",
+  "Dependency vulnerability scanning on build",
+  "Hosted on SOC 2 and HIPAA compliant providers",
+  "Incident response SLA under 4 hours",
 ];
 
 export default function SecurityPage() {
@@ -138,16 +139,18 @@ export default function SecurityPage() {
                 If you discover a security issue, please report it responsibly. We take all reports seriously and respond within 48 hours.
               </p>
               <a
-                href="mailto:security@calmeet.com"
+                href="mailto:security@calmeet.app"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-lg text-xs font-semibold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
               >
-                <FileText className="h-3.5 w-3.5" /> security@calmeet.com
+                <FileText className="h-3.5 w-3.5" /> security@calmeet.app
               </a>
             </div>
           </div>
 
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

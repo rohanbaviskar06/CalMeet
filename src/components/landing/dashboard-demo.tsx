@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { 
   BarChart3, 
   Calendar, 
@@ -18,13 +18,15 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export function DashboardDemo() {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
     <section className="py-24 bg-white dark:bg-[#0c0c0c] text-zinc-900 dark:text-zinc-100 overflow-hidden">
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="text-center mb-16 max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-semibold mb-3 border border-zinc-200 dark:border-zinc-700">
             <BarChart3 className="h-3.5 w-3.5 text-zinc-500" />
-            <span>Intuitive Command Center</span>
+            <span>Interactive Command Center Preview</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">
             Manage your entire schedule in one place
@@ -35,8 +37,8 @@ export function DashboardDemo() {
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 30 }}
+          whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
           className="relative max-w-5xl mx-auto rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/80 p-3 sm:p-6 shadow-xl"
@@ -56,7 +58,7 @@ export function DashboardDemo() {
 
               <div className="flex items-center gap-2">
                 <span className="text-xs px-2.5 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-mono text-zinc-600 dark:text-zinc-400">
-                  calmeet.com/alex
+                  calmeet.app/alex
                 </span>
                 <div className="px-3 py-1 rounded-md bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-bold flex items-center gap-1">
                   <Plus className="h-3 w-3" /> New Event

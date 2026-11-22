@@ -45,19 +45,24 @@ export default function DynamicGroupLinksPage() {
 
           {/* Hero */}
           <div className="mb-10 border-b border-zinc-200 dark:border-zinc-800 pb-8">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-semibold mb-3 border border-zinc-200 dark:border-zinc-700">
-              <Link2 className="h-3.5 w-3.5" />
-              <span>Ad-Hoc Multi-Host Links</span>
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-semibold border border-zinc-200 dark:border-zinc-700">
+                <Link2 className="h-3.5 w-3.5" />
+                <span>Ad-Hoc Multi-Host Links</span>
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                Roadmap Preview
+              </span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">
               Dynamic group booking links on the fly
             </h1>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xl mb-6">
-              Combine any usernames in a single link with a <code className="font-mono bg-zinc-100 dark:bg-zinc-800 px-1 py-0.5 rounded text-zinc-900 dark:text-zinc-100">+</code> symbol. CalMeet intersects their availability instantly.
+              Combine any usernames in a single link with a <code className="font-mono bg-zinc-100 dark:bg-zinc-800 px-1 py-0.5 rounded text-zinc-900 dark:text-zinc-100">+</code> symbol. This upcoming capability will dynamically intersect availability across all listed team members.
             </p>
             <div className="flex gap-3">
-              <Button render={<Link href="/signup" />} size="sm" className="h-9 px-4 text-xs font-semibold">
-                Try Dynamic Links <ArrowRight className="h-3.5 w-3.5 ml-1" />
+              <Button render={<Link href="/solutions/teams" />} size="sm" className="h-9 px-4 text-xs font-semibold">
+                View Team Solutions <ArrowRight className="h-3.5 w-3.5 ml-1" />
               </Button>
             </div>
           </div>
@@ -65,10 +70,10 @@ export default function DynamicGroupLinksPage() {
           {/* Interactive URL Demo Box */}
           <div className="mb-10 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 p-6 shadow-2xs space-y-3">
             <div className="text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide">
-              How Dynamic Group URLs Work
+              How Dynamic Group URLs Work (Preview)
             </div>
             <pre className="p-3.5 rounded-lg bg-zinc-900 text-zinc-100 font-mono text-xs overflow-x-auto border border-zinc-800 text-emerald-400">
-              {`https://calmeet.com/alex+sarah+elena/30min`}
+              {`https://calmeet.app/alex+sarah+elena/30min`}
             </pre>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               When a guest opens this URL, CalMeet scans the real-time Google Calendars of Alex, Sarah, and Elena to display only times where all three hosts can attend.

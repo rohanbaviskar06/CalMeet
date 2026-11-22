@@ -1,6 +1,7 @@
 "use client";
 
 import { Navbar } from "@/components/landing/navbar";
+import { Footer } from "@/components/landing/footer";
 import { Cookie, Shield, BarChart2, Settings, RefreshCw, Globe, CheckCircle2, XCircle } from "lucide-react";
 
 const lastUpdated = "September 2, 2025";
@@ -199,10 +200,12 @@ export default function CookiesPage() {
           </div>
 
           <div className="text-center text-[11px] text-zinc-400">
-            Questions? <a href="mailto:privacy@calmeet.com" className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">privacy@calmeet.com</a>
+            Questions? <a href="mailto:privacy@calmeet.app" className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">privacy@calmeet.app</a>
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

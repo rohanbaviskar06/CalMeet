@@ -107,6 +107,18 @@ export function TeamClient({
     setTimeout(() => setIsCopied(false), 2000);
   };
 
+  const handleAcceptInvite = async (invitationId: string, teamName: string) => {
+    try {
+      const res = await acceptInvitation(invitationId);
+      if (res.success) {
+        toast.success(`Joined ${teamName}!`);
+        router.refresh();
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to accept invitation");
+    }
+  };
+
   useEffect(() => {
     if (initialToken && invitationsReceived.length > 0) {
       const match = invitationsReceived.find(inv => inv.token === initialToken);
@@ -207,18 +219,6 @@ export function TeamClient({
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to cancel invitation");
-    }
-  };
-
-  const handleAcceptInvite = async (invitationId: string, teamName: string) => {
-    try {
-      const res = await acceptInvitation(invitationId);
-      if (res.success) {
-        toast.success(`Joined ${teamName}!`);
-        router.refresh();
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to accept invitation");
     }
   };
 
@@ -541,7 +541,7 @@ export function TeamClient({
                       </span>
                       {isOwnerOrAdmin && !isCurrentUser && (
                         <button
-                          onClick={() => handleRemoveMember(member.user.id, member.user.name)}
+                          onClick={() => handleRemoveMember(member.id, member.user.name)}
                           className="p-1 text-zinc-400 hover:text-red-500 rounded"
                         >
                           <Trash2 className="h-3.5 w-3.5" />

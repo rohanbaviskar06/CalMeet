@@ -27,12 +27,12 @@ export function Hero() {
           {/* Heading */}
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
             Scheduling simplified <br />
-            <span className="text-zinc-400 dark:text-zinc-500">for modern teams.</span>
+            <span className="text-zinc-400 dark:text-zinc-500">for solo pros and modern teams.</span>
           </h1>
 
           <p className="max-w-2xl mx-auto text-base sm:text-lg text-zinc-600 dark:text-zinc-400 mb-10 leading-relaxed">
             CalMeet gives you total control over your calendar. Share personalized booking links, 
-            automate follow-ups, trigger webhooks, and eliminate the back-and-forth forever.
+            automate follow-ups, trigger webhooks, and eliminate scheduling friction forever.
           </p>
 
           {/* Action CTAs */}
@@ -45,11 +45,11 @@ export function Hero() {
               </Button>
             ) : (
               <Button render={<Link href="/signup" />} size="lg" className="h-11 px-6 text-sm font-semibold rounded-lg">
-                Get Started for Free <ArrowRight className="h-4 w-4 ml-1.5" />
+                Create a booking link <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
             )}
-            <Button render={<Link href="/pricing" />} variant="outline" size="lg" className="h-11 px-6 text-sm font-semibold rounded-lg border-zinc-200 dark:border-zinc-800">
-              View Plans & Pricing
+            <Button render={<Link href="/preview-user/review-meeting" />} variant="outline" size="lg" className="h-11 px-6 text-sm font-semibold rounded-lg border-zinc-200 dark:border-zinc-800">
+              Try a sample booking
             </Button>
           </div>
 
@@ -83,7 +83,8 @@ export function Hero() {
             <div className="px-5 py-3 border-b border-zinc-200 dark:border-zinc-800/80 bg-zinc-50 dark:bg-zinc-900/60 flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full bg-zinc-300 dark:bg-zinc-700" />
-                <span className="font-mono font-medium text-[11px]">calmeet.com/alex/15min</span>
+                <span className="font-mono font-medium text-[11px]">calmeet.app/alex/15min</span>
+                <span className="text-[10px] text-zinc-400 font-sans ml-2 px-1.5 py-0.5 rounded bg-zinc-200/50 dark:bg-zinc-800">Interactive Preview</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="px-2 py-0.5 rounded-md bg-zinc-200/70 dark:bg-zinc-800 text-[10px] font-semibold text-zinc-700 dark:text-zinc-300">
@@ -116,7 +117,7 @@ export function Hero() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Video className="h-3.5 w-3.5 text-zinc-400" />
-                      <span>Cal Video (Google Meet)</span>
+                      <span>Google Meet & Zoom</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Globe className="h-3.5 w-3.5 text-zinc-400" />

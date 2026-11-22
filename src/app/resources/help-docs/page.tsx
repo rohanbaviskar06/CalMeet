@@ -48,7 +48,7 @@ const faqs: FAQItem[] = [
     category: "Team Management",
     question: "What are Routing Forms and how do they route attendees?",
     answer: "Routing forms let you ask qualifying questions before booking. Based on attendee answers (e.g. Company Size or Budget), CalMeet directs them to specific team members or event types.",
-    link: { label: "Manage Routing Forms", href: "/dashboard/routing-forms" }
+    link: { label: "Manage Routing Forms", href: "/dashboard/routing" }
   },
   {
     id: "paid-bookings",
@@ -202,7 +202,7 @@ export default function HelpDocsPage() {
           <div className="p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-0.5">Still have questions?</div>
-              <div className="text-xs text-zinc-500 dark:text-zinc-400">Our 24/7 support team is available via live chat.</div>
+              <div className="text-xs text-zinc-500 dark:text-zinc-400">Our team is available Mon–Fri (9 AM – 6 PM IST) with 24-hour response times.</div>
             </div>
             <Button render={<Link href="/support" />} size="sm" className="h-9 px-4 text-xs font-semibold">
               Contact Support

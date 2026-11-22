@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
-import { getAdminStats, updateUserPlan, deleteUser, toggleUserWatermark } from "@/app/actions/admin";
+import { getAdminStats, updateUserPlan, deleteUser, toggleUserWatermark, checkAdminStatus } from "@/app/actions/admin";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -42,37 +42,51 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/admin/login");
-    } else if (status === "authenticated" && session?.user?.email !== "rbgaming116@gmail.com") {
-      router.push("/");
+    async function verify() {
+      if (status === "unauthenticated") {
+        router.push("/admin/login");
+        return;
+      }
+      if (status === "authenticated") {
+        const { isAdmin } = await checkAdminStatus();
+        setIsAdmin(isAdmin);
+        if (!isAdmin) {
+          router.push("/");
+        }
+      }
     }
-  }, [status, session, router]);
+    verify();
+  }, [status, router]);
 
   useEffect(() => {
     async function fetchStats() {
-      if (status !== "authenticated" || session?.user?.email !== "rbgaming116@gmail.com") return;
+      if (status !== "authenticated" || isAdmin !== true) return;
       
       try {
         const data = await getAdminStats();
         setStats(data);
       } catch (error) {
         console.error("Failed to fetch admin stats:", error);
+        router.push("/admin/login");
       } finally {
         setLoading(false);
       }
     }
     
-    fetchStats();
-  }, [status, session]);
+    if (isAdmin === true) {
+      fetchStats();
+    }
+  }, [status, isAdmin, router]);
 
   const filteredUsers = stats?.recentUsers.filter((user: any) => 
     user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
 
-  if (status === "loading" || loading) {
+  if (status === "loading" || loading || isAdmin === null) {
     return (
       <div className="flex h-[80vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -80,7 +94,7 @@ export default function AdminPage() {
     );
   }
 
-  if (session?.user?.email !== "rbgaming116@gmail.com") {
+  if (!isAdmin) {
     return null;
   }
 
@@ -113,37 +127,59 @@ export default function AdminPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.totalUsers.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Real-time database count</p>
+            <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
+                Free: {stats?.planDistribution?.FREE || 0}
+              </span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                Pro: {stats?.planDistribution?.PRO || 0}
+              </span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                Org: {stats?.planDistribution?.ORGANIZATION || 0}
+              </span>
+            </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+            <CardTitle className="text-sm font-medium">Bookings & Success Rate</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.totalBookings.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Across all users</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              <strong className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                {stats?.metrics?.bookingSuccessRate || 0}%
+              </strong> confirmed ({stats?.metrics?.confirmedBookings || 0} meets)
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Event Views</CardTitle>
+            <CardTitle className="text-sm font-medium">Paid Booking Revenue</CardTitle>
+            <TrendingUp className="h-4 w-4 text-emerald-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+              ₹{(stats?.metrics?.totalRevenueINR || 0).toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              ${(stats?.metrics?.totalRevenueUSD || 0).toLocaleString()} USD • {stats?.metrics?.paidBookingsCount || 0} paid meets
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Signup-to-Booking Funnel</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalViews.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Total platform engagement</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Event Types</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalEventTypes.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Active scheduling types</p>
+            <div className="text-2xl font-bold">
+              {stats?.metrics?.signupToFirstBookingRate || 0}%
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              30d Host Retention: <strong className="text-zinc-700 dark:text-zinc-300 font-semibold">{stats?.metrics?.hostRetentionRate30d || 0}%</strong>
+            </p>
           </CardContent>
         </Card>
       </div>

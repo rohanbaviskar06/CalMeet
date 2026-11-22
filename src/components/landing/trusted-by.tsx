@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { 
   Calendar, 
   Video, 
@@ -70,6 +70,8 @@ const stackItems = [
 const doubled = [...stackItems, ...stackItems, ...stackItems];
 
 export function TrustedBy() {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
     <section className="py-12 border-y border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/40 dark:bg-[#0f0f0f] text-zinc-900 dark:text-zinc-100 overflow-hidden">
       <div className="container mx-auto px-4 max-w-5xl">
@@ -87,8 +89,8 @@ export function TrustedBy() {
 
           <motion.div
             className="flex gap-10 sm:gap-14 items-center"
-            animate={{ x: ["0%", "-33.333%"] }}
-            transition={{
+            animate={shouldReduceMotion ? { x: 0 } : { x: ["0%", "-33.333%"] }}
+            transition={shouldReduceMotion ? { duration: 0 } : {
               repeat: Infinity,
               repeatType: "loop",
               ease: "linear",

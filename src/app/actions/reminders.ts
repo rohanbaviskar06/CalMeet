@@ -6,7 +6,7 @@ import { generateMeetingReminderEmail } from "@/lib/email-templates";
 
 /**
  * Dispatch reminder emails for bookings starting in the next 24 hours.
- * Guests do NOT need to have an account on CalMeet — their guestEmail is used directly.
+ * Deduplicates dispatches to ensure guests are only reminded once per meeting.
  */
 export async function dispatchUpcomingReminders(windowHours = 24) {
   try {
@@ -15,6 +15,7 @@ export async function dispatchUpcomingReminders(windowHours = 24) {
 
     console.log(`Checking for upcoming bookings between ${now.toISOString()} and ${windowEnd.toISOString()}...`);
 
+    // Only select bookings that haven't already received a reminder
     const upcomingBookings = await prisma.booking.findMany({
       where: {
         startTime: {
@@ -22,6 +23,11 @@ export async function dispatchUpcomingReminders(windowHours = 24) {
           lte: windowEnd,
         },
         status: "CONFIRMED",
+        NOT: {
+          notes: {
+            contains: "[REMINDER_SENT]",
+          },
+        },
       },
       include: {
         eventType: {
@@ -32,7 +38,7 @@ export async function dispatchUpcomingReminders(windowHours = 24) {
       },
     });
 
-    console.log(`Found ${upcomingBookings.length} upcoming bookings needing reminder verification.`);
+    console.log(`Found ${upcomingBookings.length} upcoming bookings needing reminder.`);
 
     let sentCount = 0;
 
@@ -42,7 +48,7 @@ export async function dispatchUpcomingReminders(windowHours = 24) {
       const hostEmail = eventType.user.email || "";
 
       // Hours remaining
-      const hoursRemaining = Math.round((new Date(startTime).getTime() - now.getTime()) / (1000 * 60 * 60));
+      const hoursRemaining = Math.max(1, Math.round((new Date(startTime).getTime() - now.getTime()) / (1000 * 60 * 60)));
       const reminderNotice = hoursRemaining <= 1 ? "Meeting Starting in 1 Hour" : `Meeting in ${hoursRemaining} Hours`;
 
       const reminderHtml = generateMeetingReminderEmail({
@@ -55,13 +61,12 @@ export async function dispatchUpcomingReminders(windowHours = 24) {
         startTime,
         endTime,
         meetLink,
-        notes,
+        notes: notes?.replace("[REMINDER_SENT]", "").trim(),
         timezone: eventType.user.timezone || "UTC",
         bookingId: booking.id,
         reminderNotice,
       });
 
-      // Send to Guest (No account needed!)
       try {
         await sendEmail({
           to: guestEmail,
@@ -69,6 +74,17 @@ export async function dispatchUpcomingReminders(windowHours = 24) {
           html: reminderHtml,
           fromName: `${hostName} via CalMeet`,
         });
+
+        // Mark reminder as sent to prevent duplicate dispatch
+        const updatedNotes = notes
+          ? `${notes}\n[REMINDER_SENT]`
+          : "[REMINDER_SENT]";
+
+        await prisma.booking.update({
+          where: { id: booking.id },
+          data: { notes: updatedNotes },
+        });
+
         sentCount++;
         console.log(`Reminder successfully sent to guest: ${guestEmail}`);
       } catch (err) {

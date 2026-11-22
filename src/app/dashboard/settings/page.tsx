@@ -19,24 +19,62 @@ export default async function SettingsPage() {
   let user = null;
   let webhooks: any[] = [];
   let apiKeys: any[] = [];
+  let twoFactorEnabled = false;
+  let savedPreferences: Record<string, any> = {};
+  let connectedAccounts: string[] = [];
 
   try {
     const userId = (session.user as any).id;
-    const [fetchedUser, rawWebhooks, rawApiKeys] = await Promise.all([
-      prisma.user.findUnique({
-        where: { id: userId },
-      }),
-      (prisma as any).webhook.findMany({
-        where: { userId },
-        orderBy: { createdAt: "desc" },
-      }),
-      (prisma as any).apiKey.findMany({
-        where: { userId },
-        orderBy: { createdAt: "desc" },
-      }),
-    ]);
+    const [fetchedUser, rawWebhooks, rawApiKeys, twoFactorRecord, prefRecord, accounts] =
+      await Promise.all([
+        prisma.user.findUnique({
+          where: { id: userId },
+        }),
+        (prisma as any).webhook.findMany({
+          where: { userId },
+          orderBy: { createdAt: "desc" },
+        }),
+        (prisma as any).apiKey.findMany({
+          where: { userId },
+          orderBy: { createdAt: "desc" },
+        }),
+        prisma.integration.findFirst({
+          where: { userId, type: "security_2fa" },
+        }),
+        prisma.integration.findFirst({
+          where: { userId, type: "user_preferences" },
+        }),
+        prisma.account.findMany({
+          where: { userId },
+          select: { provider: true },
+        }),
+      ]);
 
     user = fetchedUser;
+    connectedAccounts = accounts.map((a) => a.provider.toLowerCase());
+
+    if (twoFactorRecord) {
+      try {
+        const parsed =
+          typeof twoFactorRecord.credentials === "string"
+            ? JSON.parse(twoFactorRecord.credentials)
+            : twoFactorRecord.credentials;
+        twoFactorEnabled = Boolean((parsed as any)?.enabled);
+      } catch {
+        twoFactorEnabled = true;
+      }
+    }
+
+    if (prefRecord) {
+      try {
+        savedPreferences =
+          typeof prefRecord.credentials === "string"
+            ? JSON.parse(prefRecord.credentials)
+            : (prefRecord.credentials as Record<string, any>);
+      } catch {
+        savedPreferences = {};
+      }
+    }
 
     if (rawWebhooks && Array.isArray(rawWebhooks)) {
       webhooks = rawWebhooks.map((w: any) => ({
@@ -79,6 +117,9 @@ export default async function SettingsPage() {
       user={user}
       initialWebhooks={webhooks}
       initialApiKeys={apiKeys}
+      initialTwoFactor={twoFactorEnabled}
+      initialPreferences={savedPreferences}
+      connectedAccounts={connectedAccounts}
     />
   );
 }

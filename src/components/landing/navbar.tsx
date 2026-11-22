@@ -54,7 +54,7 @@ export function Navbar() {
             </Link>
             
             {/* Mega Menu Dropdown */}
-            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
+            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-300">
               <div className="bg-popover border rounded-3xl shadow-2xl p-8 w-[600px] grid grid-cols-2 gap-8">
                 <div>
                   <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-4">By team size</h4>
@@ -101,7 +101,7 @@ export function Navbar() {
             </Link>
             
             {/* Resources Dropdown */}
-            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
+            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-300">
               <div className="bg-popover border rounded-3xl shadow-2xl p-8 w-[700px] grid grid-cols-3 gap-8">
                 <div>
                   <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-4">Content</h4>
@@ -181,6 +181,8 @@ export function Navbar() {
             variant="ghost" 
             size="icon" 
             className="md:hidden"
+            aria-label="Toggle navigation menu"
+            aria-expanded={mobileMenuOpen}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -200,6 +202,7 @@ export function Navbar() {
           >
             <div className="px-6 py-8 space-y-6 flex flex-col">
               <Link href="/solutions" onClick={() => setMobileMenuOpen(false)} className="text-lg font-bold border-b pb-2">Solutions</Link>
+              <Link href="/resources" onClick={() => setMobileMenuOpen(false)} className="text-lg font-bold border-b pb-2">Resources</Link>
               <Link href="/blog" onClick={() => setMobileMenuOpen(false)} className="text-lg font-bold border-b pb-2">Blog</Link>
               <Link href="/pricing" onClick={() => setMobileMenuOpen(false)} className="text-lg font-bold border-b pb-2">Pricing</Link>
               <Link href="/support" onClick={() => setMobileMenuOpen(false)} className="text-lg font-bold border-b pb-2">Support</Link>

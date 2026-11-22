@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { 
   Calendar, 
   Check, 
@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 
 export function MobileDemo() {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
     <section className="py-24 bg-muted/20 border-t border-b overflow-hidden">
       <div className="container mx-auto px-4">
@@ -19,7 +21,7 @@ export function MobileDemo() {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest mb-6">
               <Smartphone className="h-3.5 w-3.5" />
-              Mobile First
+              Mobile First Design
             </div>
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
               Booking made easy <br />
@@ -48,8 +50,8 @@ export function MobileDemo() {
           </div>
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, x: 20 }}
-            whileInView={{ opacity: 1, scale: 1, x: 0 }}
+            initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.9, x: 20 }}
+            whileInView={shouldReduceMotion ? undefined : { opacity: 1, scale: 1, x: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
             className="relative flex justify-center"

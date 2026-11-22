@@ -71,7 +71,9 @@ export function RoutingQuestionnaire({ routingForm, username, hideWatermark }: {
             <GitMerge className="h-5 w-5" />
           </div>
           <div className="space-y-1">
-            <CardTitle className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">{routingForm.name}</CardTitle>
+            <CardTitle className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+              <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">{routingForm.name}</h1>
+            </CardTitle>
             <CardDescription className="text-xs text-zinc-450 dark:text-zinc-500">Please answer a few questions to help us route you to the right calendar.</CardDescription>
           </div>
         </CardHeader>

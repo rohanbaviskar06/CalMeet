@@ -1,9 +1,10 @@
 import { PrismaClient } from '@prisma/client';
 
+const url = process.env.DATABASE_URL || 'postgresql://localhost:5432/postgres';
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: 'postgresql://postgres.vpbbvxyleufhtoiyhprt:dbcalmeet%40supabase06@aws-1-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true'
+      url,
     }
   }
 });

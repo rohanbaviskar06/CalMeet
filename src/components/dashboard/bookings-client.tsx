@@ -97,14 +97,18 @@ export function BookingsClient({ initialBookings, teamMemberships, user }: Booki
 
   // Categorize by tabs
   const upcomingBookings = searchedBookings.filter(
-    (b) => new Date(b.startTime) >= now && b.status !== "CANCELLED" && b.status !== "UNCONFIRMED"
+    (b) => new Date(b.startTime) >= now && b.status === "CONFIRMED"
   );
-  const unconfirmedBookings = searchedBookings.filter((b) => b.status === "UNCONFIRMED");
+  const unconfirmedBookings = searchedBookings.filter(
+    (b) => b.status === "PENDING" || b.status === "UNCONFIRMED"
+  );
   const pastBookings = searchedBookings.filter(
-    (b) => new Date(b.startTime) < now && b.status !== "CANCELLED"
+    (b) => new Date(b.startTime) < now && b.status === "CONFIRMED"
   );
   const canceledBookings = searchedBookings.filter((b) => b.status === "CANCELLED");
-  const recurringBookings = searchedBookings.filter((b) => b.isRecurring);
+  const recurringBookings = searchedBookings.filter(
+    (b) => Boolean(b.isRecurring || b.notes?.includes("[RECURRING") || b.eventType?.title?.toLowerCase().includes("recurring"))
+  );
 
   const getCurrentTabList = () => {
     switch (activeTab) {
@@ -347,9 +351,19 @@ export function BookingsClient({ initialBookings, teamMemberships, user }: Booki
                         <span className="bg-red-500/10 text-red-600 dark:text-red-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-red-500/20">
                           Canceled
                         </span>
+                      ) : booking.status === "PENDING" || booking.status === "UNCONFIRMED" ? (
+                        <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-500/20">
+                          Pending
+                        </span>
                       ) : (
                         <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">
                           Confirmed
+                        </span>
+                      )}
+
+                      {(booking.isRecurring || booking.notes?.includes("[RECURRING") || booking.eventType?.title?.toLowerCase().includes("recurring")) && (
+                        <span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-500/20 flex items-center gap-1">
+                          <RotateCcw className="h-2.5 w-2.5" /> Recurring
                         </span>
                       )}
                     </div>
@@ -451,6 +465,10 @@ export function BookingsClient({ initialBookings, teamMemberships, user }: Booki
                   <span className="bg-red-500/10 text-red-600 dark:text-red-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-red-500/20">
                     Canceled
                   </span>
+                ) : selectedBooking.status === "PENDING" || selectedBooking.status === "UNCONFIRMED" ? (
+                  <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-500/20">
+                    Pending
+                  </span>
                 ) : (
                   <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">
                     Confirmed
@@ -463,6 +481,18 @@ export function BookingsClient({ initialBookings, teamMemberships, user }: Booki
             </DialogHeader>
 
             <div className="space-y-4 py-3 text-xs">
+              {/* Recurring Cadence Series Info */}
+              {(selectedBooking.isRecurring || selectedBooking.notes?.includes("[RECURRING") || selectedBooking.eventType?.title?.toLowerCase().includes("recurring")) && (
+                <div className="p-3 rounded-xl border border-blue-500/20 bg-blue-500/5 space-y-1">
+                  <div className="flex items-center gap-1.5 font-semibold text-blue-600 dark:text-blue-400 text-xs">
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    <span>Recurring Booking Series</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                    Recurring series repeats weekly on {format(new Date(selectedBooking.startTime), "EEEE")}s. Associated calendar events sync automatically.
+                  </p>
+                </div>
+              )}
               {/* Date & Time Info */}
               <div className="p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 space-y-2">
                 <div className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100 font-semibold">

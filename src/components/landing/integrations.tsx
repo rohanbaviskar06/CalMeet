@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Zap, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
@@ -90,6 +90,7 @@ const integrations = [
 ];
 
 export function Integrations() {
+  const shouldReduceMotion = useReducedMotion();
   return (
     <section id="integrations" className="py-24 bg-white dark:bg-black border-y">
       <div className="container mx-auto px-4">
@@ -158,7 +159,7 @@ export function Integrations() {
           viewport={{ once: true }}
           className="mt-10 text-center"
         >
-          <Link href="/resources" className="inline-flex items-center gap-1.5 text-sm font-bold text-zinc-900 dark:text-zinc-100 hover:underline underline-offset-4">
+          <Link href="/resources/app-store" className="inline-flex items-center gap-1.5 text-sm font-bold text-zinc-900 dark:text-zinc-100 hover:underline underline-offset-4">
             View all integrations <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </motion.div>

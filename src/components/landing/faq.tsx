@@ -9,17 +9,17 @@ const faqs = [
   {
     question: "Is CalMeet really free to start?",
     answer:
-      "Yes — CalMeet's free plan includes unlimited one-on-one event types, your personal booking link, and Google/Outlook calendar sync. No credit card required. Upgrade to Pro when you need advanced features like team scheduling, payments, or custom branding.",
+      "Yes — CalMeet's free plan includes unlimited event types, your personal booking link, and Google Calendar sync with conflict checking. No credit card required. Upgrade to Pro when you need advanced features like team round-robin, paid bookings, or custom branding.",
   },
   {
     question: "How does the calendar sync work?",
     answer:
-      "CalMeet connects to your Google or Outlook calendar via OAuth (no passwords stored). It reads your busy times in real-time to prevent double bookings, and writes new meetings back to your calendar automatically when someone books.",
+      "CalMeet connects to your Google Calendar via OAuth2 (no passwords stored). It reads your busy times in real-time to prevent double bookings, and writes new meetings back to your calendar automatically when someone books.",
   },
   {
     question: "Can I accept payments before a meeting?",
     answer:
-      "Yes. Connect Stripe to your account and add a price to any event type. CalMeet will collect payment during the booking flow — the meeting is only confirmed once payment succeeds. Great for consultants, coaches, and service providers.",
+      "Yes. Enable payment requirements on any event type and connect your Razorpay account. CalMeet will verify payment during the booking flow — the meeting is only confirmed once payment succeeds.",
   },
   {
     question: "What happens when someone books a meeting with me?",
@@ -81,14 +81,14 @@ export function FAQ() {
               <div>
                 <p className="font-bold text-sm">Still have questions?</p>
                 <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                  Our team is online and happy to help within minutes.
+                  Our team is available Mon–Fri (9 AM – 6 PM IST) with 24-hour response times.
                 </p>
               </div>
               <Link
-                href="/solutions/support"
+                href="/support"
                 className="inline-block text-xs font-bold text-primary hover:underline underline-offset-4"
               >
-                Chat with support →
+                Contact technical support →
               </Link>
             </div>
           </motion.div>

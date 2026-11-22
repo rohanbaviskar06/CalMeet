@@ -117,11 +117,17 @@ interface DateOverride {
 export function AvailabilityForm({ 
   user,
   initialAvailability, 
-  initialTimezone 
+  initialTimezone,
+  initialOverrides = [],
+  initialSchedules = [],
+  initialActiveScheduleId = "default"
 }: { 
   user?: any;
   initialAvailability: any[];
   initialTimezone: string;
+  initialOverrides?: DateOverride[];
+  initialSchedules?: any[];
+  initialActiveScheduleId?: string;
 }) {
   const { openPricingModal } = usePricingModal();
 
@@ -129,15 +135,32 @@ export function AvailabilityForm({
   const [view, setView] = useState<"list" | "edit">("list");
   const [subTab, setSubTab] = useState<"my" | "team">("my");
 
+  // Schedules state
+  const [schedules, setSchedules] = useState<any[]>(() => {
+    if (initialSchedules && initialSchedules.length > 0) {
+      return initialSchedules;
+    }
+    return [
+      {
+        id: "default",
+        name: "Working hours",
+        isDefault: true,
+      }
+    ];
+  });
+  const [activeScheduleId, setActiveScheduleId] = useState<string>(initialActiveScheduleId || "default");
+
   // Active Schedule Metadata
-  const [scheduleName, setScheduleName] = useState("Working hours");
+  const activeSchedule = schedules.find((s) => s.id === activeScheduleId) || schedules[0];
+  const [scheduleName, setScheduleName] = useState(activeSchedule?.name || "Working hours");
   const [isEditingName, setIsEditingName] = useState(false);
-  const [isDefault, setIsDefault] = useState(true);
+  const [isDefault, setIsDefault] = useState(activeSchedule?.isDefault ?? true);
   const [timezone, setTimezone] = useState(initialTimezone || "Asia/Kolkata");
   const [isSaving, setIsSaving] = useState(false);
 
   // Initialize weekly hours
   const [availability, setAvailability] = useState<DayAvailability[]>(() => {
+    const hasExistingData = initialAvailability.length > 0;
     return daysList.map(day => {
       const existingRecords = initialAvailability.filter(d => d.dayOfWeek === day.value);
       if (existingRecords.length > 0) {
@@ -152,8 +175,9 @@ export function AvailabilityForm({
           }))
         };
       }
-      // Default: Mon-Fri 09:00 - 17:00 active, Sun/Sat unavailable
-      const isWeekday = day.value >= 1 && day.value <= 5;
+      // If user has saved availability in DB, missing days were explicitly turned off!
+      // Only default to Mon-Fri active if user has zero configured records.
+      const isWeekday = !hasExistingData && (day.value >= 1 && day.value <= 5);
       return {
         dayOfWeek: day.value,
         label: day.label,
@@ -165,7 +189,7 @@ export function AvailabilityForm({
   });
 
   // Date Overrides
-  const [overrides, setOverrides] = useState<DateOverride[]>([]);
+  const [overrides, setOverrides] = useState<DateOverride[]>(() => initialOverrides || []);
   const [isOverrideModalOpen, setIsOverrideModalOpen] = useState(false);
   const [newOverrideDate, setNewOverrideDate] = useState("");
   const [newOverrideUnavailable, setNewOverrideUnavailable] = useState(true);
@@ -271,25 +295,7 @@ export function AvailabilityForm({
     toast.success(`Copied hours to ${copyTargetDays.length} selected days!`);
   };
 
-  const handleAddOverride = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newOverrideDate) return;
-
-    const newOv: DateOverride = {
-      id: "ov-" + Date.now(),
-      date: newOverrideDate,
-      isUnavailable: newOverrideUnavailable,
-      startTime: newOverrideStart,
-      endTime: newOverrideEnd,
-    };
-
-    setOverrides(prev => [...prev, newOv]);
-    setIsOverrideModalOpen(false);
-    setNewOverrideDate("");
-    toast.success(`Override added for ${newOverrideDate}`);
-  };
-
-  const handleSave = async () => {
+  const handleSave = async (overrideList?: DateOverride[], schedulesList?: any[], activeId?: string) => {
     setIsSaving(true);
     try {
       // Flatten intervals for the server action
@@ -315,13 +321,94 @@ export function AvailabilityForm({
         }
       });
 
-      await updateAvailability(flattened, timezone);
+      const curSchedId = activeId || activeScheduleId;
+      const curSchedules = schedulesList || schedules.map(s => s.id === curSchedId ? { ...s, name: scheduleName, isDefault } : s);
+      const curOverrides = overrideList || overrides;
+
+      await updateAvailability(flattened, timezone, curOverrides, curSchedules, curSchedId);
       toast.success("Availability schedule saved successfully!");
     } catch (error) {
       toast.error("Failed to save availability");
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleAddOverride = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newOverrideDate) return;
+
+    const newOv: DateOverride = {
+      id: "ov-" + Date.now(),
+      date: newOverrideDate,
+      isUnavailable: newOverrideUnavailable,
+      startTime: newOverrideStart,
+      endTime: newOverrideEnd,
+    };
+
+    const nextOverrides = [...overrides, newOv];
+    setOverrides(nextOverrides);
+    setIsOverrideModalOpen(false);
+    setNewOverrideDate("");
+    toast.success(`Override added for ${newOverrideDate}`);
+    await handleSave(nextOverrides);
+  };
+
+  const handleRemoveOverride = async (id: string) => {
+    const nextOverrides = overrides.filter(o => o.id !== id);
+    setOverrides(nextOverrides);
+    toast.success("Date override removed.");
+    await handleSave(nextOverrides);
+  };
+
+  const handleDuplicateSchedule = async (target: any) => {
+    const newId = "sched-" + Date.now();
+    const newName = `${target.name || scheduleName} (Copy)`;
+    const newSchedule = {
+      id: newId,
+      name: newName,
+      isDefault: false,
+    };
+    const updatedSchedules = [...schedules, newSchedule];
+    setSchedules(updatedSchedules);
+    toast.success(`Duplicated "${target.name || scheduleName}" as "${newName}"`);
+    await handleSave(overrides, updatedSchedules);
+  };
+
+  const handleSetDefaultSchedule = async (targetId: string) => {
+    const updatedSchedules = schedules.map(s => ({
+      ...s,
+      isDefault: s.id === targetId,
+    }));
+    setSchedules(updatedSchedules);
+    if (activeScheduleId === targetId) {
+      setIsDefault(true);
+    } else {
+      setIsDefault(false);
+    }
+    toast.success("Schedule set as default.");
+    await handleSave(overrides, updatedSchedules);
+  };
+
+  const handleCreateNewSchedule = async () => {
+    if (!newScheduleTitle.trim()) return;
+    const newId = "sched-" + Date.now();
+    const newName = newScheduleTitle.trim();
+    const newSchedule = {
+      id: newId,
+      name: newName,
+      isDefault: false,
+    };
+    const updatedSchedules = [...schedules, newSchedule];
+    setSchedules(updatedSchedules);
+    setActiveScheduleId(newId);
+    setScheduleName(newName);
+    setIsDefault(false);
+    setIsNewScheduleModalOpen(false);
+    setNewScheduleTitle("");
+    setView("edit");
+    toast.success(`Schedule "${newName}" created!`);
+    await handleSave(overrides, updatedSchedules, newId);
   };
 
   // Helper summary text (e.g. "Mon - Fri, 9:00 AM - 5:00 PM")
@@ -434,65 +521,72 @@ export function AvailabilityForm({
           </div>
         ) : (
           /* My Availability Schedule Card (Cal.com Clean Group) */
-          <div className="rounded-2xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden shadow-2xs">
-            {/* Schedule Item Row */}
-            <div 
-              onClick={() => setView("edit")}
-              className="group p-5 sm:p-6 flex items-center justify-between hover:bg-zinc-50/80 dark:hover:bg-zinc-900/40 transition-colors cursor-pointer"
-            >
-              <div className="space-y-1.5 min-w-0 pr-4">
-                <div className="flex items-center gap-2.5">
-                  <h3 className="font-semibold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 group-hover:text-primary transition-colors">
-                    {scheduleName}
-                  </h3>
-                  {isDefault && (
-                    <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold px-2 py-0.5 rounded-full text-[10px] leading-none border border-emerald-500/20">
-                      Default
-                    </span>
-                  )}
+          <div className="rounded-2xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden shadow-2xs divide-y divide-zinc-200/80 dark:divide-zinc-800">
+            {schedules.map((sched) => (
+              <div 
+                key={sched.id}
+                onClick={() => {
+                  setActiveScheduleId(sched.id);
+                  setScheduleName(sched.name);
+                  setIsDefault(sched.isDefault);
+                  setView("edit");
+                }}
+                className="group p-5 sm:p-6 flex items-center justify-between hover:bg-zinc-50/80 dark:hover:bg-zinc-900/40 transition-colors cursor-pointer"
+              >
+                <div className="space-y-1.5 min-w-0 pr-4">
+                  <div className="flex items-center gap-2.5">
+                    <h3 className="font-semibold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 group-hover:text-primary transition-colors">
+                      {sched.name}
+                    </h3>
+                    {sched.isDefault && (
+                      <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold px-2 py-0.5 rounded-full text-[10px] leading-none border border-emerald-500/20">
+                        Default
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    {activeDaysSummary()}
+                  </p>
+
+                  <div className="flex items-center gap-1.5 text-xs text-zinc-400 dark:text-zinc-500 pt-0.5">
+                    <Globe className="h-3.5 w-3.5" />
+                    <span>{timezone}</span>
+                  </div>
                 </div>
 
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  {activeDaysSummary()}
-                </p>
-
-                <div className="flex items-center gap-1.5 text-xs text-zinc-400 dark:text-zinc-500 pt-0.5">
-                  <Globe className="h-3.5 w-3.5" />
-                  <span>{timezone}</span>
+                {/* Action Dropdown Menu */}
+                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer outline-none">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-44 text-xs">
+                      <DropdownMenuItem onClick={() => {
+                        setActiveScheduleId(sched.id);
+                        setScheduleName(sched.name);
+                        setIsDefault(sched.isDefault);
+                        setView("edit");
+                      }} className="cursor-pointer gap-2">
+                        <Edit3 className="h-3.5 w-3.5" /> Edit Schedule
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => handleSetDefaultSchedule(sched.id)} 
+                        className="cursor-pointer gap-2"
+                      >
+                        <Check className="h-3.5 w-3.5" /> Set as Default
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => handleDuplicateSchedule(sched)} 
+                        className="cursor-pointer gap-2"
+                      >
+                        <Copy className="h-3.5 w-3.5" /> Duplicate
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
-
-              {/* Action Dropdown Menu */}
-              <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer outline-none">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-44 text-xs">
-                    <DropdownMenuItem onClick={() => setView("edit")} className="cursor-pointer gap-2">
-                      <Edit3 className="h-3.5 w-3.5" /> Edit Schedule
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        setIsDefault(true);
-                        toast.success("Schedule set as default.");
-                      }} 
-                      className="cursor-pointer gap-2"
-                    >
-                      <Check className="h-3.5 w-3.5" /> Set as Default
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        toast.success(`Duplicated "${scheduleName}" as "Working hours (Copy)"`);
-                      }} 
-                      className="cursor-pointer gap-2"
-                    >
-                      <Copy className="h-3.5 w-3.5" /> Duplicate
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
+            ))}
 
             {/* Bottom Out of Office Banner Link */}
             <div className="border-t border-zinc-200/80 dark:border-zinc-800/80 p-3.5 bg-zinc-50/60 dark:bg-zinc-900/30 text-center text-xs text-zinc-500 dark:text-zinc-400">
@@ -536,13 +630,7 @@ export function AvailabilityForm({
               </Button>
               <Button
                 size="sm"
-                onClick={() => {
-                  if (!newScheduleTitle.trim()) return;
-                  setScheduleName(newScheduleTitle.trim());
-                  setIsNewScheduleModalOpen(false);
-                  setView("edit");
-                  toast.success(`Schedule "${newScheduleTitle}" created!`);
-                }}
+                onClick={handleCreateNewSchedule}
                 className="h-8 text-xs bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
               >
                 Continue
@@ -618,7 +706,7 @@ export function AvailabilityForm({
           </div>
 
           <Button
-            onClick={handleSave}
+            onClick={() => handleSave()}
             disabled={isSaving}
             size="sm"
             className="h-9 px-4 text-xs font-semibold rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 shadow-2xs cursor-pointer"
@@ -821,7 +909,7 @@ export function AvailabilityForm({
 
                     <button
                       type="button"
-                      onClick={() => setOverrides(overrides.filter((o) => o.id !== ov.id))}
+                      onClick={() => handleRemoveOverride(ov.id)}
                       className="p-1.5 text-zinc-400 hover:text-red-500 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                       title="Remove date override"
                     >

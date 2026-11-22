@@ -45,19 +45,24 @@ export default function CollectiveEventsPage() {
 
           {/* Hero */}
           <div className="mb-10 border-b border-zinc-200 dark:border-zinc-800 pb-8">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-semibold mb-3 border border-zinc-200 dark:border-zinc-700">
-              <Users className="h-3.5 w-3.5" />
-              <span>Multi-Host Scheduling</span>
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-semibold border border-zinc-200 dark:border-zinc-700">
+                <Users className="h-3.5 w-3.5" />
+                <span>Multi-Host Scheduling</span>
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                Roadmap Preview
+              </span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">
               Collective scheduling for multi-host meetings
             </h1>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xl mb-6">
-              Only display time slots where all required team members are available. Coordinate sales demos, panel interviews, and client reviews in seconds.
+              Cross-reference multiple hosts&apos; calendars to display only slots where all required participants are free. Currently, CalMeet supports round-robin team distribution and personal links today, with collective multi-calendar intersection in active development.
             </p>
             <div className="flex gap-3">
-              <Button render={<Link href="/signup" />} size="sm" className="h-9 px-4 text-xs font-semibold">
-                Create Collective Event <ArrowRight className="h-3.5 w-3.5 ml-1" />
+              <Button render={<Link href="/solutions/teams" />} size="sm" className="h-9 px-4 text-xs font-semibold">
+                Explore Team Features <ArrowRight className="h-3.5 w-3.5 ml-1" />
               </Button>
             </div>
           </div>

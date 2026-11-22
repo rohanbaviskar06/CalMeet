@@ -55,8 +55,11 @@ export default async function BookingsPage() {
   // 3. Fetch all bookings (personal bookings + bookings of members in admined teams)
   const bookings = await prisma.booking.findMany({
     where: {
-      userId: { in: distinctMemberIds },
-      status: { in: ["CONFIRMED", "CANCELLED"] }
+      OR: [
+        { userId: { in: distinctMemberIds } },
+        { eventType: { userId: { in: distinctMemberIds } } },
+      ],
+      status: { in: ["CONFIRMED", "CANCELLED", "PENDING", "UNCONFIRMED"] }
     },
     include: {
       eventType: true,

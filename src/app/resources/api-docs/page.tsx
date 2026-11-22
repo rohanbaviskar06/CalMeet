@@ -39,9 +39,9 @@ export default function ApiDocsPage() {
       path: "/api/v1/me",
       title: "Get User Profile & Stats",
       description: "Retrieve authenticated account details, timezone, plan, and booking counts.",
-      curl: `curl -X GET "https://calmeet.com/api/v1/me" \\
+      curl: `curl -X GET "https://calmeet.app/api/v1/me" \\
   -H "Authorization: Bearer cal_live_your_api_key"`,
-      node: `const res = await fetch("https://calmeet.com/api/v1/me", {
+      node: `const res = await fetch("https://calmeet.app/api/v1/me", {
   headers: { "Authorization": "Bearer cal_live_your_api_key" }
 });
 const { data } = await res.json();
@@ -49,7 +49,7 @@ console.log(data);`,
       python: `import requests
 
 res = requests.get(
-    "https://calmeet.com/api/v1/me",
+    "https://calmeet.app/api/v1/me",
     headers={"Authorization": "Bearer cal_live_your_api_key"}
 )
 print(res.json())`,
@@ -75,9 +75,9 @@ print(res.json())`,
       path: "/api/v1/event-types",
       title: "List Event Types",
       description: "Retrieve all active scheduling event types configured on your account.",
-      curl: `curl -X GET "https://calmeet.com/api/v1/event-types" \\
+      curl: `curl -X GET "https://calmeet.app/api/v1/event-types" \\
   -H "Authorization: Bearer cal_live_your_api_key"`,
-      node: `const res = await fetch("https://calmeet.com/api/v1/event-types", {
+      node: `const res = await fetch("https://calmeet.app/api/v1/event-types", {
   headers: { "Authorization": "Bearer cal_live_your_api_key" }
 });
 const { data } = await res.json();
@@ -85,7 +85,7 @@ console.log(data);`,
       python: `import requests
 
 res = requests.get(
-    "https://calmeet.com/api/v1/event-types",
+    "https://calmeet.app/api/v1/event-types",
     headers={"Authorization": "Bearer cal_live_your_api_key"}
 )
 print(res.json())`,
@@ -97,7 +97,7 @@ print(res.json())`,
       "title": "15 Min Meeting",
       "slug": "15min",
       "duration": 15,
-      "bookingUrl": "https://calmeet.com/alex/15min",
+      "bookingUrl": "https://calmeet.app/alex/15min",
       "isActive": true
     }
   ]
@@ -108,7 +108,7 @@ print(res.json())`,
       path: "/api/v1/bookings",
       title: "Create a Programmatic Booking",
       description: "Create and confirm a booking slot on behalf of a guest programmatically.",
-      curl: `curl -X POST "https://calmeet.com/api/v1/bookings" \\
+      curl: `curl -X POST "https://calmeet.app/api/v1/bookings" \\
   -H "Authorization: Bearer cal_live_your_api_key" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -118,7 +118,7 @@ print(res.json())`,
     "startTime": "2026-09-04T10:00:00.000Z",
     "notes": "Discussing enterprise integration."
   }'`,
-      node: `const res = await fetch("https://calmeet.com/api/v1/bookings", {
+      node: `const res = await fetch("https://calmeet.app/api/v1/bookings", {
   method: "POST",
   headers: {
     "Authorization": "Bearer cal_live_your_api_key",
@@ -141,7 +141,7 @@ payload = {
     "startTime": "2026-09-04T10:00:00.000Z"
 }
 res = requests.post(
-    "https://calmeet.com/api/v1/bookings",
+    "https://calmeet.app/api/v1/bookings",
     headers={"Authorization": "Bearer cal_live_your_api_key"},
     json=payload
 )

@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
+import { isSafeWebhookUrl } from "@/lib/ssrf";
 
 export async function getWebhooks() {
   const session = await getServerSession(authOptions);
@@ -48,13 +49,9 @@ export async function createWebhook(data: { url: string; events?: string[] }) {
     return { error: "Webhook URL is required" };
   }
 
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-      return { error: "Webhook URL must start with http:// or https://" };
-    }
-  } catch {
-    return { error: "Invalid URL format" };
+  const urlCheck = await isSafeWebhookUrl(url);
+  if (!urlCheck.safe) {
+    return { error: urlCheck.reason || "Invalid webhook URL format." };
   }
 
   // Check plan permissions
@@ -165,13 +162,20 @@ export async function getApiKeys() {
 
     return {
       success: true,
-      apiKeys: keys.map((k: any) => ({
-        id: k.id,
-        name: k.name,
-        key: k.key,
-        lastUsed: k.lastUsed ? k.lastUsed.toISOString() : null,
-        createdAt: k.createdAt.toISOString(),
-      })),
+      apiKeys: keys.map((k: any) => {
+        const isLegacyPlain = k.key.startsWith("cal_live_");
+        const maskedKey = isLegacyPlain
+          ? `cal_live_••••••••${k.key.slice(-4)}`
+          : `cal_live_••••••••${k.key.slice(-4)}`;
+
+        return {
+          id: k.id,
+          name: k.name,
+          key: maskedKey,
+          lastUsed: k.lastUsed ? k.lastUsed.toISOString() : null,
+          createdAt: k.createdAt.toISOString(),
+        };
+      }),
     };
   } catch (err: any) {
     console.error("Error fetching API keys:", err);
@@ -187,14 +191,15 @@ export async function createApiKey(name: string) {
   const userId = (session.user as any).id;
 
   const keyName = name.trim() || "Secret API Key";
-  const secureKey = "cal_live_" + crypto.randomBytes(16).toString("hex");
+  const rawKey = "cal_live_" + crypto.randomBytes(24).toString("hex");
+  const hashedKey = crypto.createHash("sha256").update(rawKey).digest("hex");
 
   try {
     const newKey = await (prisma as any).apiKey.create({
       data: {
         userId,
         name: keyName,
-        key: secureKey,
+        key: hashedKey,
       },
     });
 
@@ -204,7 +209,7 @@ export async function createApiKey(name: string) {
       apiKey: {
         id: newKey.id,
         name: newKey.name,
-        key: newKey.key,
+        key: rawKey, // Show the secret key once to user upon creation
         lastUsed: null,
         createdAt: newKey.createdAt.toISOString(),
       },

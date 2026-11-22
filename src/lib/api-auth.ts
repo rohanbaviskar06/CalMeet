@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import { prisma } from "./prisma";
 
 export interface AuthenticatedApiUser {
@@ -38,8 +38,11 @@ export async function authenticateApiKey(
   }
 
   try {
-    const keyRecord = await (prisma as any).apiKey.findUnique({
-      where: { key: apiKeyString },
+    const hashedKey = crypto.createHash("sha256").update(apiKeyString).digest("hex");
+
+    // 1. Check for SHA-256 hashed key in database
+    let keyRecord = await (prisma as any).apiKey.findUnique({
+      where: { key: hashedKey },
       include: {
         user: {
           select: {
@@ -53,6 +56,43 @@ export async function authenticateApiKey(
         },
       },
     });
+
+    // 2. Safe migration path: Fall back to legacy plaintext key check
+    if (!keyRecord) {
+      keyRecord = await (prisma as any).apiKey.findUnique({
+        where: { key: apiKeyString },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              username: true,
+              timezone: true,
+              plan: true,
+            },
+          },
+        },
+      });
+
+      // Auto-migrate legacy key to secure hashed format
+      if (keyRecord) {
+        (prisma as any).apiKey
+          .update({
+            where: { id: keyRecord.id },
+            data: { key: hashedKey, lastUsed: new Date() },
+          })
+          .catch((e: unknown) => console.error("Error migrating legacy API key to hash:", e));
+      }
+    } else {
+      // Update lastUsed asynchronously
+      (prisma as any).apiKey
+        .update({
+          where: { id: keyRecord.id },
+          data: { lastUsed: new Date() },
+        })
+        .catch((e: unknown) => console.error("Error updating API key lastUsed:", e));
+    }
 
     if (!keyRecord || !keyRecord.user) {
       return {
@@ -68,14 +108,6 @@ export async function authenticateApiKey(
         ),
       };
     }
-
-    // Update lastUsed asynchronously
-    (prisma as any).apiKey
-      .update({
-        where: { id: keyRecord.id },
-        data: { lastUsed: new Date() },
-      })
-      .catch((e: unknown) => console.error("Error updating API key lastUsed:", e));
 
     return { user: keyRecord.user };
   } catch (err: any) {

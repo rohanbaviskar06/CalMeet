@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { 
   Calendar, 
   Clock, 
@@ -16,8 +16,8 @@ import {
 
 const features = [
   {
-    title: "Instant Cal.com-Style Booking",
-    description: "Share single day or multi-day week booking pages. 12h/24h toggle, timezone intelligence, and frictionless guest scheduling.",
+    title: "Frictionless Booking Experience",
+    description: "Share single day or multi-day month booking pages with 12h/24h toggle, smart timezone conversion, and clean guest scheduling.",
     icon: Calendar,
     tag: "Core Experience"
   },
@@ -41,7 +41,7 @@ const features = [
   },
   {
     title: "Paid Bookings & Instant Checkout",
-    description: "Charge for consultations upfront in INR or USD with built-in Razorpay and Stripe checkout workflows.",
+    description: "Charge for consultations upfront in INR with built-in Razorpay checkout and automated payment verification.",
     icon: CreditCard,
     tag: "Monetization"
   },

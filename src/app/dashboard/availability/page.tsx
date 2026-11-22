@@ -11,19 +11,29 @@ export default async function AvailabilityPage() {
     redirect("/login");
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: (session.user as any).id },
-    include: {
-      availability: true,
-      teamMemberships: {
-        include: {
-          team: true
-        }
-      }
-    }
-  });
+  const userId = (session.user as any).id;
+
+  const [user, configRecord] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        availability: true,
+        teamMemberships: {
+          include: {
+            team: true,
+          },
+        },
+      },
+    }),
+    prisma.integration.findFirst({
+      where: { userId, type: "availability_config" },
+    }),
+  ]);
 
   const userTimezone = user?.timezone || "Asia/Kolkata";
+  const config = configRecord?.credentials && typeof configRecord.credentials === "object"
+    ? (configRecord.credentials as any)
+    : null;
 
   return (
     <div className="max-w-5xl mx-auto py-2">
@@ -31,6 +41,9 @@ export default async function AvailabilityPage() {
         user={user}
         initialAvailability={user?.availability || []} 
         initialTimezone={userTimezone} 
+        initialOverrides={config?.overrides || []}
+        initialSchedules={config?.schedules || []}
+        initialActiveScheduleId={config?.activeScheduleId || "default"}
       />
     </div>
   );

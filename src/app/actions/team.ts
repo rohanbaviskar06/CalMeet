@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { sendEmail } from "@/lib/resend";
+import { recordAuditLog } from "@/lib/audit";
 import crypto from "crypto";
 
 export async function createTeam(name: string) {
@@ -211,6 +212,15 @@ export async function cancelInvitation(teamId: string, invitationId: string) {
     throw new Error("Unauthorized to cancel invitations");
   }
 
+  const invitation = await prisma.teamInvitation.findUnique({
+    where: { id: invitationId },
+  });
+
+  if (!invitation) throw new Error("Invitation not found");
+  if (invitation.teamId !== teamId) {
+    throw new Error("Invitation does not belong to the authorized team");
+  }
+
   await prisma.teamInvitation.delete({
     where: { id: invitationId },
   });
@@ -304,11 +314,26 @@ export async function removeTeamMember(teamId: string, memberId: string) {
     throw new Error("Unauthorized to remove team members");
   }
 
-  const memberToRemove = await prisma.teamMember.findUnique({
+  let memberToRemove = await prisma.teamMember.findUnique({
     where: { id: memberId },
   });
 
+  if (!memberToRemove) {
+    memberToRemove = await prisma.teamMember.findUnique({
+      where: {
+        teamId_userId: {
+          teamId,
+          userId: memberId,
+        },
+      },
+    });
+  }
+
   if (!memberToRemove) throw new Error("Team member not found");
+
+  if (memberToRemove.teamId !== teamId) {
+    throw new Error("Target member does not belong to the authorized team");
+  }
 
   // Prevent removing the owner
   if (memberToRemove.role === "OWNER") {
@@ -321,9 +346,72 @@ export async function removeTeamMember(teamId: string, memberId: string) {
   }
 
   await prisma.teamMember.delete({
-    where: { id: memberId },
+    where: { id: memberToRemove.id },
+  });
+
+  recordAuditLog({
+    action: "TEAM_MEMBER_REMOVED",
+    actorId: userId,
+    actorEmail: session.user.email || undefined,
+    teamId,
+    targetId: memberToRemove.userId,
+    details: { removedRole: memberToRemove.role },
   });
 
   revalidatePath("/dashboard/team");
   return { success: true };
+}
+
+export async function updateTeamMemberRole(
+  teamId: string,
+  memberId: string,
+  newRole: "ADMIN" | "MEMBER"
+) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const userId = (session.user as any).id;
+
+  const requester = await prisma.teamMember.findUnique({
+    where: {
+      teamId_userId: {
+        teamId,
+        userId,
+      },
+    },
+  });
+
+  if (!requester || requester.role !== "OWNER") {
+    throw new Error("Only the team owner can modify member roles");
+  }
+
+  const memberToUpdate = await prisma.teamMember.findUnique({
+    where: { id: memberId },
+  });
+
+  if (!memberToUpdate) throw new Error("Team member not found");
+  if (memberToUpdate.teamId !== teamId) {
+    throw new Error("Member does not belong to this team");
+  }
+
+  if (memberToUpdate.role === "OWNER") {
+    throw new Error("Cannot change the role of the team owner");
+  }
+
+  const updatedMember = await prisma.teamMember.update({
+    where: { id: memberId },
+    data: { role: newRole },
+  });
+
+  recordAuditLog({
+    action: "TEAM_ROLE_CHANGED",
+    actorId: userId,
+    actorEmail: session.user.email || undefined,
+    teamId,
+    targetId: memberToUpdate.userId,
+    details: { previousRole: memberToUpdate.role, newRole },
+  });
+
+  revalidatePath("/dashboard/team");
+  return { success: true, member: updatedMember };
 }

@@ -79,7 +79,7 @@ export const blogPosts = [
     image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800&auto=format&fit=crop",
     content: [
       "Organic search remains one of the highest converting channels for online services, but scheduling landing pages are often neglected when it comes to SEO strategy. When configured correctly, your event types, team directories, and booking pages can become powerful entry points for organic search traffic.",
-      "First, structure your URLs logically. Use clear, readable directory paths rather than cryptic query strings. For instance, prefer 'calmeet.com/company/sales' over 'calmeet.com/book?id=94829'. This alerts search engine crawlers to the page context immediately.",
+      "First, structure your URLs logically. Use clear, readable directory paths rather than cryptic query strings. For instance, prefer 'calmeet.app/company/sales' over 'calmeet.app/book?id=94829'. This alerts search engine crawlers to the page context immediately.",
       "Second, customize meta tags and heading structures for each scheduling form. Avoid duplicate titles like 'Schedule a Call'. Instead, use highly specific, descriptive names containing target keywords, such as 'Book a Free 15-Minute SaaS Product Demo' with a matching H1 header.",
       "Finally, prioritize load speed and accessibility. Search engines favor pages that load fast and work seamlessly on mobile devices. Optimizing assets, minimizing JavaScript bundles, and adding clear semantic tags will drastically increase your search results visibility."
     ]

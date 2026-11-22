@@ -1,6 +1,7 @@
 "use client";
 
 import { Navbar } from "@/components/landing/navbar";
+import { Footer } from "@/components/landing/footer";
 import { useState } from "react";
 import { FileText, Users, CreditCard, Scale, AlertTriangle, RefreshCw, Globe, Mail, ChevronDown } from "lucide-react";
 
@@ -150,10 +151,10 @@ export default function TermsPage() {
               <div className="text-xs text-zinc-500 dark:text-zinc-400">We&apos;re happy to clarify anything. Enterprise customers can request custom agreements.</div>
             </div>
             <a
-              href="mailto:legal@calmeet.com"
+              href="mailto:legal@calmeet.app"
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-lg text-xs font-semibold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors whitespace-nowrap"
             >
-              <Mail className="h-3.5 w-3.5" /> legal@calmeet.com
+              <Mail className="h-3.5 w-3.5" /> legal@calmeet.app
             </a>
           </div>
 
@@ -162,6 +163,8 @@ export default function TermsPage() {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }
