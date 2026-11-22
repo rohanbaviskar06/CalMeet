@@ -136,11 +136,11 @@ export function Integrations() {
                   <h3 className="font-bold text-sm leading-none text-zinc-900 dark:text-zinc-100">{integration.name}</h3>
                   {integration.comingSoon ? (
                     <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 flex-shrink-0">
-                      Soon
+                      Coming soon
                     </span>
                   ) : (
-                    <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-800 flex-shrink-0 ${integration.badge}`}>
-                      {integration.category}
+                    <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex-shrink-0">
+                      Available
                     </span>
                   )}
                 </div>

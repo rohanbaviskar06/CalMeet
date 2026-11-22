@@ -38,7 +38,7 @@ export default async function EmbedPage({ params }: { params: Promise<{ id: stri
     redirect("/dashboard/event-types");
   }
 
-  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXTAUTH_URL || "https://calmeet.app";
   const username = eventType.user.username || "user";
   const bookingUrl = `${baseUrl}/${username}/${eventType.slug}`;
 

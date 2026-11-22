@@ -112,6 +112,7 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
   );
   const [isTzOpen, setIsTzOpen] = useState(false);
   const [bookedBookingId, setBookedBookingId] = useState<string | null>(null);
+  const [manageUrl, setManageUrl] = useState<string | null>(null);
 
   const [utmSource, setUtmSource] = useState<string | undefined>(undefined);
   const [utmMedium, setUtmMedium] = useState<string | undefined>(undefined);
@@ -276,6 +277,9 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
         if (result.booking?.id) {
           setBookedBookingId(result.booking.id);
         }
+        if (result.manageUrl) {
+          setManageUrl(result.manageUrl);
+        }
         setStep(3);
       } else {
         toast.error(result.error || "Failed to book meeting");
@@ -299,6 +303,7 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
           <button
             type="button"
             onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+            aria-label="Previous month"
             className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -306,6 +311,7 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
           <button
             type="button"
             onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+            aria-label="Next month"
             className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
           >
             <ChevronRight className="h-4 w-4" />
@@ -420,22 +426,25 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-3 mt-6 sm:mt-8">
-          {bookedBookingId && (
+        <div className="flex flex-col sm:flex-row items-center gap-3 mt-6 sm:mt-8 w-full max-w-md">
+          {(manageUrl || bookedBookingId) && (
             <a 
-              href={`/booking/${bookedBookingId}/manage`}
-              className="rounded-xl h-10 px-5 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center transition border border-zinc-700 w-full sm:w-auto"
+              href={manageUrl || `/booking/${bookedBookingId}/manage`}
+              className="rounded-xl h-11 px-5 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center transition border border-zinc-700 w-full sm:flex-1 cursor-pointer"
             >
-              Manage / Reschedule Booking
+              Reschedule or Cancel
             </a>
           )}
           <Button 
-            className="rounded-xl h-10 px-5 text-xs font-semibold bg-white text-black hover:bg-zinc-200 transition cursor-pointer w-full sm:w-auto" 
+            className="rounded-xl h-11 px-5 text-xs font-semibold bg-white text-black hover:bg-zinc-200 transition cursor-pointer w-full sm:flex-1" 
             onClick={() => window.location.reload()}
           >
-            Book another meeting
+            Book Another
           </Button>
         </div>
+        <p className="text-[11px] text-zinc-500 mt-4 max-w-md leading-relaxed text-center">
+          🔒 Secure booking management: A confirmation email with calendar invites and your secure cancellation/rescheduling link has been sent.
+        </p>
       </div>
     );
   }
@@ -617,11 +626,22 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
 
                   {/* Cal.com Available Time Slots (2-column on mobile, 1-column on desktop) */}
                   <div className="lg:col-span-5 space-y-2.5 sm:space-y-3 pt-2 lg:pt-0">
-                    {/* Header: Date title + 12h/24h toggle */}
-                    <div className="flex items-center justify-between pb-1 border-b border-zinc-800/60 lg:border-none">
-                      <span className="text-xs sm:text-sm font-semibold text-zinc-200">
-                        {format(selectedDate, "EEE do")}
-                      </span>
+                    {/* Header: Date title + Timezone badge + 12h/24h toggle */}
+                    <div className="flex items-center justify-between pb-1 border-b border-zinc-800/60 lg:border-none flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm font-semibold text-zinc-200">
+                          {format(selectedDate, "EEE do")}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setIsTzOpen(true)}
+                          className="inline-flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white bg-zinc-800/80 hover:bg-zinc-800 px-2 py-0.5 rounded-md transition cursor-pointer"
+                          title="Click to switch timezone"
+                        >
+                          <Globe className="h-3 w-3 text-emerald-400 shrink-0" />
+                          <span className="truncate max-w-[110px]">{selectedTimezone}</span>
+                        </button>
+                      </div>
 
                       {/* 12h / 24h Toggle */}
                       <div className="flex items-center bg-[#222222] p-0.5 rounded-md border border-zinc-800">
@@ -693,6 +713,7 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
                         <button
                           type="button"
                           onClick={handlePrevWeek}
+                          aria-label="Previous week"
                           className="h-6 w-6 rounded flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
                         >
                           <ChevronLeft className="h-3.5 w-3.5" />
@@ -700,6 +721,7 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
                         <button
                           type="button"
                           onClick={handleNextWeek}
+                          aria-label="Next week"
                           className="h-6 w-6 rounded flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
                         >
                           <ChevronRight className="h-3.5 w-3.5" />
@@ -797,8 +819,46 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
                     Enter details
                   </h2>
                   <p className="text-xs text-zinc-400 mt-0.5">
-                    {format(selectedDate, "eeee, MMMM d, yyyy")} at {selectedTime && formatSlotTime(selectedTime)}
+                    Please provide your contact details to confirm the appointment.
                   </p>
+                </div>
+
+                {/* Meeting Review Summary Card */}
+                <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#181818] border border-zinc-800 space-y-3 shadow-inner">
+                  <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2.5">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-400">Meeting with {user.name || "Host"}</span>
+                      <div className="text-sm sm:text-base font-bold text-white">{eventType.title}</div>
+                    </div>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300">
+                      {eventType.duration}m
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5 text-xs text-zinc-300">
+                    <div className="flex items-center gap-2">
+                      <CalendarIcon className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                      <span>{format(selectedDate, "eeee, MMMM d, yyyy")}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                      <span>{selectedTime && formatSlotTime(selectedTime)} ({eventType.duration} mins)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Globe className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                      <span>Timezone: <strong className="text-white">{selectedTimezone}</strong></span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Video className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                      <span>
+                        {eventType.videoCallProvider === "CALMEET" 
+                          ? "CalMeet Video Call" 
+                          : eventType.videoCallProvider === "ZOOM"
+                          ? "Zoom Video Call"
+                          : "Google Meet Video"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">

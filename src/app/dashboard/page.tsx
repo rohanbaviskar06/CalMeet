@@ -33,7 +33,7 @@ export default async function DashboardPage() {
   const userId = (session.user as any).id;
 
   // Fetch data in parallel
-  const [user, totalBookingsCount, totalUpcomingCount, upcomingBookings, eventTypes, paidBookings] = await Promise.all([
+  const [user, totalBookingsCount, totalUpcomingCount, upcomingBookings, eventTypes, paidBookings, availabilityCount] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -88,6 +88,9 @@ export default async function DashboardPage() {
           select: { price: true, currency: true }
         }
       }
+    }),
+    prisma.availability.count({
+      where: { userId }
     })
   ]);
 
@@ -154,6 +157,8 @@ export default async function DashboardPage() {
         user={user}
         eventTypesCount={eventTypes.length}
         bookingsCount={totalBookingsCount}
+        hasConnectedCalendar={Boolean(googleIntegration)}
+        hasAvailability={availabilityCount > 0}
       />
 
       {/* Minimal 4-Column Stat Cards (Cal.com style) */}

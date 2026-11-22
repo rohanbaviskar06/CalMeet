@@ -691,7 +691,7 @@ export function SettingsForm({
                     defaultValue={user.username || "acme"} 
                     className="h-9 text-xs max-w-xs font-mono" 
                   />
-                  <span className="text-xs font-semibold text-zinc-500">.calmeet.com</span>
+                  <span className="text-xs font-semibold text-zinc-500">.calmeet.app</span>
                   <Button 
                     type="button" 
                     size="sm" 
@@ -704,7 +704,7 @@ export function SettingsForm({
                 </div>
               ) : (
                 <div className="p-3 rounded-lg border border-dashed border-zinc-200 dark:border-zinc-800 text-[11px] text-zinc-400 bg-background/50 flex items-center justify-between">
-                  <span>Preview: <strong className="text-zinc-600 dark:text-zinc-300 font-mono">https://company.calmeet.com</strong></span>
+                  <span>Preview: <strong className="text-zinc-600 dark:text-zinc-300 font-mono">https://company.calmeet.app</strong></span>
                   <span className="text-zinc-400">Available on Organizations & Enterprise</span>
                 </div>
               )}

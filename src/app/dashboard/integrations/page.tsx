@@ -96,6 +96,33 @@ export default async function IntegrationsPage() {
       )
     },
     {
+      id: "calmeet-video",
+      name: "CalMeet Video (WebRTC)",
+      description: "In-browser WebRTC video meeting rooms without third-party downloads.",
+      logo: "/logos/google-meet.svg",
+      category: "video",
+      isBeta: true,
+      component: (
+        <Button variant="outline" size="sm" className="w-full text-xs font-semibold h-8 rounded-xl" disabled>
+          Active Built-in
+        </Button>
+      )
+    },
+    {
+      id: "razorpay",
+      name: "Razorpay Payments",
+      description: "Accept payments for consultations via UPI, Cards, and Net Banking.",
+      logo: "/logos/razorpay.png",
+      category: "business",
+      component: (
+        <Link href="/dashboard/settings">
+          <Button variant="outline" size="sm" className="w-full text-xs font-semibold h-8 rounded-xl">
+            Configure Gateway
+          </Button>
+        </Link>
+      )
+    },
+    {
       id: "outlook",
       name: "Microsoft Outlook",
       description: "Sync with your Outlook/Office 365 calendar and tasks.",
@@ -197,15 +224,19 @@ export default async function IntegrationsPage() {
                           <img src={item.logo} alt={item.name} className="w-full h-full object-contain" />
                         </div>
                         {item.comingSoon ? (
-                          <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-[10px] font-bold px-2 py-0.5 rounded-full border border-zinc-200/80 dark:border-zinc-700">
-                            Coming Soon
+                          <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-zinc-200/80 dark:border-zinc-700">
+                            Coming soon
                           </span>
                         ) : item.isConnected ? (
                           <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/20 flex items-center gap-1">
                             <CheckCircle2 className="h-3 w-3" /> Connected
                           </span>
+                        ) : item.isBeta ? (
+                          <span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-500/20">
+                            Beta
+                          </span>
                         ) : (
-                          <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-zinc-200/60 dark:border-zinc-700">
+                          <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">
                             Available
                           </span>
                         )}
@@ -215,7 +246,7 @@ export default async function IntegrationsPage() {
                         <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
                           {item.name}
                         </h3>
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2 leading-relaxed">
+                        <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1 line-clamp-2 leading-relaxed">
                           {item.description}
                         </p>
                       </div>
@@ -232,7 +263,7 @@ export default async function IntegrationsPage() {
                           className="w-full opacity-50 cursor-not-allowed text-xs font-semibold h-8 rounded-xl border-zinc-200 dark:border-zinc-800" 
                           disabled
                         >
-                          Coming Soon
+                          Coming soon
                         </Button>
                       )}
                     </div>

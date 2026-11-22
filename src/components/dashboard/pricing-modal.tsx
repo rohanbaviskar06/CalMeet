@@ -96,7 +96,7 @@ export function PricingModalProvider({
       features: [
         "Everything in Teams, plus:",
         "Unlimited sub-teams & departments",
-        "Company subdomain (company.calmeet.com)",
+        "Company subdomain (company.calmeet.app)",
         "SAML SSO & SCIM directory sync",
         "Role-Based Access Control (RBAC)",
         "CRM routing & weighted distribution",
@@ -150,7 +150,8 @@ export function PricingModalProvider({
               {/* Close Button */}
               <button
                 onClick={closePricingModal}
-                className="absolute right-4 top-4 rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
+                aria-label="Close modal"
+                className="absolute right-4 top-4 rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>

@@ -31,7 +31,7 @@ const steps = [
               <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
                 Connected Calendars
               </p>
-              <h4 className="text-base font-bold mt-0.5">Sync your schedule</h4>
+              <p className="text-base font-bold mt-0.5 text-zinc-900 dark:text-zinc-100">Sync your schedule</p>
             </div>
             <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
               <Plus className="h-4 w-4 text-zinc-900 dark:text-zinc-100" />
@@ -178,7 +178,7 @@ const steps = [
                 <CheckCircle2 className="h-4 w-4" />
                 <span className="text-xs font-semibold uppercase tracking-wide opacity-90">Confirmed</span>
               </div>
-              <h4 className="text-lg font-bold">Meeting Booked!</h4>
+              <p className="text-lg font-bold">Meeting Booked!</p>
               <p className="text-xs opacity-80 mt-0.5">A calendar invite has been sent to both parties</p>
             </div>
             <div className="bg-white dark:bg-zinc-900 p-4 space-y-3">

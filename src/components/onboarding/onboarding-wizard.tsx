@@ -524,7 +524,7 @@ export function OnboardingWizard({
                     Booking Link URL
                   </label>
                   <div className="flex items-center rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3 py-2 text-xs focus-within:ring-1 focus-within:ring-zinc-400 dark:focus-within:ring-zinc-600">
-                    <span className="text-zinc-400 select-none font-mono">calmeet.com/</span>
+                    <span className="text-zinc-400 select-none font-mono">calmeet.app/</span>
                     <input
                       type="text"
                       required

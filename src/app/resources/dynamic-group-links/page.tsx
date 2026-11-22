@@ -9,7 +9,7 @@ import Link from "next/link";
 const features = [
   {
     title: "URL-Based Ad-Hoc Group Meetings",
-    description: "Generate instant multi-person booking links on the fly by combining usernames: `calmeet.com/alex+sarah+david`.",
+    description: "Generate instant multi-person booking links on the fly by combining usernames: `calmeet.app/alex+sarah+david`.",
     icon: Link2,
   },
   {

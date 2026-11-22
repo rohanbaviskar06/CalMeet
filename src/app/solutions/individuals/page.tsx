@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 const features = [
   {
     title: "Personalized Booking Link",
-    description: "Claim your custom calmeet.com/username link. Share it across email signatures, LinkedIn, X, or your portfolio website.",
+    description: "Claim your custom calmeet.app/username link. Share it across email signatures, LinkedIn, X, or your portfolio website.",
     icon: Globe,
   },
   {

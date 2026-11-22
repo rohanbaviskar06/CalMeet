@@ -24,7 +24,7 @@ export function Footer() {
 
           {/* Product Column */}
           <div className="space-y-6">
-            <h4 className="font-bold text-sm uppercase tracking-widest text-foreground">Product</h4>
+            <h3 className="font-bold text-sm uppercase tracking-widest text-foreground">Product</h3>
             <ul className="space-y-4 text-sm text-muted-foreground font-medium">
               <li><Link href="/resources" className="hover:text-primary transition-colors">Features</Link></li>
               <li><Link href="/resources/app-store" className="hover:text-primary transition-colors">Integrations & Apps</Link></li>
@@ -36,7 +36,7 @@ export function Footer() {
 
           {/* Solutions Column */}
           <div className="space-y-6">
-            <h4 className="font-bold text-sm uppercase tracking-widest text-foreground">Solutions</h4>
+            <h3 className="font-bold text-sm uppercase tracking-widest text-foreground">Solutions</h3>
             <ul className="space-y-4 text-sm text-muted-foreground font-medium">
               <li><Link href="/solutions/individuals" className="hover:text-primary transition-colors">For Individuals</Link></li>
               <li><Link href="/solutions/teams" className="hover:text-primary transition-colors">For Teams</Link></li>
@@ -47,7 +47,7 @@ export function Footer() {
 
           {/* Support & Legal Column */}
           <div className="space-y-6">
-            <h4 className="font-bold text-sm uppercase tracking-widest text-foreground">Support & Legal</h4>
+            <h3 className="font-bold text-sm uppercase tracking-widest text-foreground">Support & Legal</h3>
             <ul className="space-y-4 text-sm text-muted-foreground font-medium">
               <li>
                 <Link href="/support" className="flex items-center gap-2">

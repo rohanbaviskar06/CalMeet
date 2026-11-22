@@ -24,7 +24,7 @@ export default function EmbedPage() {
   const [slug, setSlug] = useState("15min");
 
   const iframeCode = `<iframe 
-  src="https://calmeet.com/${username}/${slug}?embed=true" 
+  src="https://calmeet.app/${username}/${slug}?embed=true" 
   width="100%" 
   height="700px" 
   frameborder="0"
@@ -149,7 +149,7 @@ export default function EmbedPage() {
               {`export function BookingWidget() {
   return (
     <iframe
-      src="https://calmeet.com/alex/15min?embed=true"
+      src="https://calmeet.app/alex/15min?embed=true"
       className="w-full h-[700px] rounded-2xl border border-zinc-800"
     />
   );

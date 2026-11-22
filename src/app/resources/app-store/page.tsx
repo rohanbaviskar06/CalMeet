@@ -11,13 +11,15 @@ const apps = [
   { name: "Google Calendar", category: "Calendar", desc: "Two-way real-time calendar synchronization and busy slot conflict checking", status: "Available", href: "/dashboard/settings" },
   { name: "Google Meet", category: "Video", desc: "Automated instant Google Meet room generation for every booked appointment", status: "Available", href: "/dashboard/settings" },
   { name: "Zoom Video", category: "Video", desc: "Dynamic Zoom meeting URLs generated automatically for booked slots", status: "Available", href: "/dashboard/settings" },
+  { name: "CalMeet Video", category: "Video", desc: "In-browser WebRTC video meeting rooms directly inside CalMeet", status: "Beta", href: "/dashboard/settings" },
   { name: "Developer Webhooks", category: "Automation", desc: "Signed HMAC-SHA256 event listeners for booking creation, rescheduling, and cancellation", status: "Available", href: "/dashboard/settings?tab=webhooks" },
   { name: "Razorpay", category: "Payments", desc: "Accept UPI, Cards & Net Banking in INR for verified paid bookings", status: "Available", href: "/dashboard/settings" },
-  { name: "Stripe", category: "Payments", desc: "Accept international card payments upfront with webhook settlement", status: "Coming Soon", href: "#" },
-  { name: "Microsoft Outlook", category: "Calendar", desc: "Office 365 and Outlook calendar synchronization", status: "Coming Soon", href: "#" },
-  { name: "Microsoft Teams", category: "Video", desc: "Enterprise Teams video conferencing links", status: "Coming Soon", href: "#" },
-  { name: "Slack", category: "Notifications", desc: "Instant team channel alerts for new and rescheduled bookings", status: "Coming Soon", href: "#" },
-  { name: "Zapier", category: "Automation", desc: "Connect with 5,000+ business applications via triggers", status: "Coming Soon", href: "#" },
+  { name: "Apple Calendar (CalDAV)", category: "Calendar", desc: "Sync iCloud Calendar via secure app-specific CalDAV connection", status: "Beta", href: "/dashboard/settings" },
+  { name: "Stripe", category: "Payments", desc: "Accept international card payments upfront with webhook settlement", status: "Coming soon", href: "#" },
+  { name: "Microsoft Outlook", category: "Calendar", desc: "Office 365 and Outlook calendar synchronization", status: "Coming soon", href: "#" },
+  { name: "Microsoft Teams", category: "Video", desc: "Enterprise Teams video conferencing links", status: "Coming soon", href: "#" },
+  { name: "Slack", category: "Notifications", desc: "Instant team channel alerts for new and rescheduled bookings", status: "Coming soon", href: "#" },
+  { name: "Zapier", category: "Automation", desc: "Connect with 5,000+ business applications via triggers", status: "Coming soon", href: "#" },
 ];
 
 const categories = ["All Apps", "Calendar", "Video", "Payments", "Automation", "CRM", "Notifications"];
@@ -100,21 +102,23 @@ export default function AppStorePage() {
                     <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
                       {app.category}
                     </span>
-                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                       app.status === "Available"
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400"
+                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                        : app.status === "Beta"
+                        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700"
                     }`}>
                       {app.status}
                     </span>
                   </div>
 
                   <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{app.name}</h3>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed mt-1">{app.desc}</p>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed mt-1">{app.desc}</p>
                 </div>
 
                 <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80">
-                  {app.status === "Coming Soon" ? (
+                  {app.status === "Coming soon" ? (
                     <span className="text-[11px] text-zinc-400 font-medium">In Development</span>
                   ) : (
                     <Link

@@ -110,9 +110,11 @@ export function FAQ() {
                 >
                   <button
                     onClick={() => toggle(index)}
-                    className="w-full flex items-center justify-between gap-4 p-5 text-left"
+                    aria-expanded={isOpen}
+                    aria-controls={`faq-answer-${index}`}
+                    className="w-full flex items-center justify-between gap-4 p-5 text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-2xl"
                   >
-                    <span className={`font-semibold text-sm leading-snug transition-colors ${isOpen ? "text-primary" : ""}`}>
+                    <span className={`font-semibold text-sm leading-snug transition-colors ${isOpen ? "text-primary" : "text-zinc-900 dark:text-zinc-100"}`}>
                       {faq.question}
                     </span>
                     <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 ${
@@ -129,6 +131,7 @@ export function FAQ() {
                   <AnimatePresence initial={false}>
                     {isOpen && (
                       <motion.div
+                        id={`faq-answer-${index}`}
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}

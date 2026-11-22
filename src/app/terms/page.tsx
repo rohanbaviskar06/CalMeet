@@ -21,7 +21,7 @@ const sections = [
     subsections: [
       { title: "Permitted Use", text: "CalMeet is a scheduling and meeting management platform. You may use it for personal, professional, or business scheduling purposes in compliance with these Terms and all applicable laws." },
       { title: "Prohibited Conduct", text: "You may not use CalMeet to send spam; impersonate any person or entity; distribute malware; scrape user data without permission; violate any applicable laws; or attempt to gain unauthorized access to any system." },
-      { title: "Account Responsibility", text: "You are responsible for maintaining the confidentiality of your credentials and for all activities under your account. Notify us immediately at support@calmeet.com if you suspect unauthorized access." },
+      { title: "Account Responsibility", text: "You are responsible for maintaining the confidentiality of your credentials and for all activities under your account. Notify us immediately at support@calmeet.app if you suspect unauthorized access." },
     ]
   },
   {
@@ -30,7 +30,7 @@ const sections = [
     subsections: [
       { title: "Plans", text: "CalMeet offers Free, Pro, Teams, and Enterprise plans. Features and pricing are described on our Pricing page and may change with reasonable notice." },
       { title: "Payment", text: "Paid plans are billed monthly or annually in advance. We accept major credit/debit cards and UPI for Indian customers, processed via Razorpay." },
-      { title: "Refunds", text: "We offer a 14-day money-back guarantee for new paid subscriptions. Contact support@calmeet.com within 14 days of your first payment." },
+      { title: "Refunds", text: "We offer a 14-day money-back guarantee for new paid subscriptions. Contact support@calmeet.app within 14 days of your first payment." },
       { title: "Cancellation", text: "You may cancel your subscription at any time from Settings → Billing. Your plan remains active until the end of the billing period. No cancellation fees." },
     ]
   },

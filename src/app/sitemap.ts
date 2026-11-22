@@ -13,6 +13,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/terms",
     "/cookies",
     "/support",
+    "/help",
+    "/solutions",
     "/solutions/individuals",
     "/solutions/teams",
     "/solutions/sales",
@@ -24,6 +26,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/solutions/telehealth",
     "/solutions/hr",
     "/solutions/organizations",
+    "/resources",
     "/resources/app-store",
     "/resources/help-docs",
     "/resources/api-docs",
@@ -36,6 +39,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/resources/payments",
     "/resources/webhooks",
     "/resources/font",
+    "/login",
+    "/signup",
+    "/forgot-password",
   ];
 
   return routes.map((route) => ({

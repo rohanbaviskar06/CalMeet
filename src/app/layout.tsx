@@ -24,8 +24,24 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://calmeet.app"),
-  title: "CalMeet - Modern Scheduling for Teams",
+  title: {
+    default: "CalMeet - Modern Scheduling for Solo Pros & Teams",
+    template: "%s | CalMeet",
+  },
   description: "CalMeet helps you connect with people when it matters. Automate your meetings, sync your calendars, and reclaim your time.",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://calmeet.app",
+    siteName: "CalMeet",
+    title: "CalMeet - Modern Scheduling for Solo Pros & Teams",
+    description: "Open-source scheduling infrastructure. Connect Google Calendar, automate reminders, and share personalized booking links.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "CalMeet - Modern Scheduling for Solo Pros & Teams",
+    description: "Open-source scheduling infrastructure. Connect Google Calendar, automate reminders, and share personalized booking links.",
+  },
 };
 
 

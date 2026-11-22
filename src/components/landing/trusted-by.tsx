@@ -76,7 +76,7 @@ export function TrustedBy() {
     <section className="py-12 border-y border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/40 dark:bg-[#0f0f0f] text-zinc-900 dark:text-zinc-100 overflow-hidden">
       <div className="container mx-auto px-4 max-w-5xl">
         <div className="text-center mb-6">
-          <p className="text-[11px] font-semibold tracking-wider text-zinc-400 dark:text-zinc-500 uppercase">
+          <p className="text-[11px] font-semibold tracking-wider text-zinc-600 dark:text-zinc-400 uppercase">
             Seamlessly integrates with your daily workflow
           </p>
         </div>

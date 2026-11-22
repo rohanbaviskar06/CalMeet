@@ -27,7 +27,7 @@ export function Hero() {
           {/* Heading */}
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
             Scheduling simplified <br />
-            <span className="text-zinc-400 dark:text-zinc-500">for solo pros and modern teams.</span>
+            <span className="text-zinc-500 dark:text-zinc-400">for solo pros and modern teams.</span>
           </h1>
 
           <p className="max-w-2xl mx-auto text-base sm:text-lg text-zinc-600 dark:text-zinc-400 mb-10 leading-relaxed">
@@ -106,7 +106,7 @@ export function Hero() {
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Alex User</p>
-                      <h3 className="text-base font-bold tracking-tight">15 Min Meeting</h3>
+                      <p className="text-base font-bold tracking-tight text-zinc-900 dark:text-zinc-100">15 Min Meeting</p>
                     </div>
                   </div>
 

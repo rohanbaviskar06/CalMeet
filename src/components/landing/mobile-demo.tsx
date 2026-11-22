@@ -78,7 +78,7 @@ export function MobileDemo() {
 
                 <div className="flex-1 p-6 overflow-y-auto">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="font-bold">Select a Date</h3>
+                    <p className="font-bold text-sm text-foreground">Select a Date</p>
                     <div className="flex gap-1">
                       <ChevronLeft className="h-4 w-4 text-muted-foreground" />
                       <ChevronRight className="h-4 w-4" />
@@ -97,7 +97,7 @@ export function MobileDemo() {
                     ))}
                   </div>
 
-                  <h3 className="font-bold mb-4">Select a Time</h3>
+                  <p className="font-bold text-sm text-foreground mb-4">Select a Time</p>
                   <div className="space-y-2">
                     {["9:00 AM", "10:30 AM", "1:00 PM"].map(t => (
                       <div key={t} className={`p-3 rounded-xl border text-center font-bold text-xs ${t === "10:30 AM" ? "border-primary bg-primary/5 text-primary" : "bg-card"}`}>
