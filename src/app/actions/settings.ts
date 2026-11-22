@@ -195,50 +195,13 @@ export async function changePassword(data: {
 }
 
 /**
- * Persists Two-Factor Authentication state in the user's integrations table.
+ * Two-Factor Authentication is currently hidden until login step-up verification code entry is deployed.
  */
 export async function toggleTwoFactorAuth(enabled: boolean) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) throw new Error("Unauthorized");
-  const userId = (session.user as any).id;
-
-  if (enabled) {
-    const existing = await prisma.integration.findFirst({
-      where: { userId, type: "security_2fa" },
-    });
-
-    if (existing) {
-      await prisma.integration.update({
-        where: { id: existing.id },
-        data: {
-          credentials: JSON.stringify({
-            enabled: true,
-            method: "authenticator_app",
-            updatedAt: new Date().toISOString(),
-          }),
-        },
-      });
-    } else {
-      await prisma.integration.create({
-        data: {
-          userId,
-          type: "security_2fa",
-          credentials: JSON.stringify({
-            enabled: true,
-            method: "authenticator_app",
-            updatedAt: new Date().toISOString(),
-          }),
-        },
-      });
-    }
-  } else {
-    await prisma.integration.deleteMany({
-      where: { userId, type: "security_2fa" },
-    });
-  }
-
-  revalidatePath("/dashboard/settings");
-  return { success: true, enabled };
+  return {
+    success: false,
+    error: "Two-Factor Authentication is currently under development until sign-in verification code enforcement is deployed.",
+  };
 }
 
 /**

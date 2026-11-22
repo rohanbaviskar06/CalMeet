@@ -79,7 +79,7 @@ export function PricingModalProvider({
         "Collective & Round-robin routing",
         "1 Team with unlimited invites",
         "Remove CalMeet watermark",
-        "Automated SMS/Email workflows",
+        "Automated Email workflows (SMS roadmap)",
         "Dynamic routing forms",
         "Advanced booking analytics",
         "Webhooks & developer API keys"
@@ -114,8 +114,8 @@ export function PricingModalProvider({
       features: [
         "Everything in Organizations, plus:",
         "Dedicated CSM & onboarding engineer",
-        "99.99% Uptime SLA guarantee",
-        "SOC2 & HIPAA BAA compliance",
+        "99.9% Uptime Target (Custom SLA on Request)",
+        "SOC 2 & HIPAA-Ready Architecture (Custom BAA Available)",
         "Dedicated Slack Connect channel"
       ],
       buttonLabel: "Select Enterprise",

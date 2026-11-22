@@ -16,6 +16,7 @@ interface BookingEmailData {
   notes?: string | null;
   timezone?: string;
   bookingId?: string;
+  manageToken?: string;
 }
 
 /**
@@ -172,6 +173,16 @@ export function generateGuestConfirmationEmail(data: BookingEmailData) {
           <a href="${outlookCalUrl}" target="_blank" style="display:inline-block;margin:0 4px;padding:6px 12px;border:1px solid #e4e4e7;border-radius:6px;font-size:12px;font-weight:600;color:#27272a;text-decoration:none;background:#ffffff;">+ Outlook</a>
         </div>
       </div>
+
+      <!-- Manage Booking Section -->
+      ${data.bookingId ? `
+      <div style="border-top:1px solid #f4f4f5;margin-top:20px;padding-top:16px;text-align:center;">
+        <p style="font-size:12px;color:#71717a;margin:0 0 8px 0;">Need to reschedule or cancel this meeting?</p>
+        <a href="${(process.env.NEXTAUTH_URL || 'http://localhost:3000')}/booking/${data.bookingId}/manage${data.manageToken ? `?token=${data.manageToken}` : ''}" target="_blank" style="display:inline-block;padding:8px 16px;border:1px solid #d4d4d8;border-radius:6px;font-size:12px;font-weight:600;color:#18181b;text-decoration:none;background:#ffffff;">
+          Manage Your Booking
+        </a>
+      </div>
+      ` : ""}
     </div>
 
     <!-- Footer -->
@@ -252,6 +263,12 @@ export function generateMeetingReminderEmail(data: BookingEmailData & { reminder
             <td style="padding:4px 0;"><a href="${meetLink}" style="color:#2563eb;font-weight:600;text-decoration:underline;">${meetLink}</a></td>
           </tr>
           ` : ""}
+          ${notes ? `
+          <tr>
+            <td style="padding:4px 0;color:#64748b;">Notes:</td>
+            <td style="padding:4px 0;color:#334155;">${notes}</td>
+          </tr>
+          ` : ""}
         </table>
       </div>
 
@@ -263,9 +280,18 @@ export function generateMeetingReminderEmail(data: BookingEmailData & { reminder
       </div>
       ` : ""}
 
+      ${data.bookingId ? `
+      <div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:16px;text-align:center;">
+        <p style="font-size:12px;color:#64748b;margin:0 0 8px 0;">Need to reschedule or cancel?</p>
+        <a href="${(process.env.NEXTAUTH_URL || 'http://localhost:3000')}/booking/${data.bookingId}/manage${data.manageToken ? `?token=${data.manageToken}` : ''}" target="_blank" style="display:inline-block;padding:6px 14px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;font-weight:600;color:#0f172a;text-decoration:none;background:#ffffff;">
+          Reschedule or Cancel
+        </a>
+      </div>
+      ` : `
       <p style="font-size:12px;color:#71717a;margin:16px 0 0 0;text-align:center;">
         Need to change your time? Reply directly to this email to reach ${hostName}.
       </p>
+      `}
     </div>
 
     <!-- Footer -->

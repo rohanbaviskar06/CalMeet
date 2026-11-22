@@ -23,7 +23,7 @@ const features = [
   },
   {
     title: "Compliant Cloud Infrastructure",
-    description: "CalMeet is hosted on HIPAA and SOC2-compliant cloud providers (AWS, Supabase) with encrypted secrets and hashed credentials.",
+    description: "CalMeet is hosted on HIPAA-ready and SOC2-compliant cloud providers (AWS, Supabase) with encrypted secrets and hashed credentials. Custom enterprise BAA reviews available.",
     icon: ShieldCheck,
   },
   {
@@ -104,7 +104,7 @@ export default function TelehealthSolutionPage() {
                 "Custom intake questions and medical disclosure checkboxes",
                 "Two-way calendar sync preventing practitioner double-booking",
                 "Automated patient confirmation emails and calendar invites",
-                "Hosted on SOC2 and HIPAA-compliant cloud data centers",
+                "Hosted on SOC2 and HIPAA-ready cloud infrastructure",
                 "Buffer times between consults for notes and charting",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">

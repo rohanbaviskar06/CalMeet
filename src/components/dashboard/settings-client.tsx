@@ -332,7 +332,6 @@ export function SettingsForm({
 
   const securitySettingsCards = [
     { id: "password", title: "Password", description: "Update your password or sign-in method", icon: KeyRound },
-    { id: "2fa", title: "Two factor authentication", description: "Add an extra layer of security to your account", icon: Lock },
     { id: "compliance", title: "Compliance", description: "Manage data compliance and export your data", icon: ShieldCheck },
   ];
 
@@ -1224,7 +1223,7 @@ export function SettingsForm({
             <div>
               <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Two-Factor Authentication</h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Add an extra layer of security using an authenticator app (Google Authenticator / 1Password).
+                Additional sign-in protection and authentication options.
               </p>
             </div>
             <Link href="/dashboard/settings" className="text-xs font-semibold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 flex items-center gap-1">
@@ -1233,37 +1232,14 @@ export function SettingsForm({
           </div>
 
           <div className="space-y-4">
-            <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold">
-                  <Shield className="h-4 w-4" />
-                </div>
-                <div className="text-xs">
-                  <span className="font-semibold text-zinc-900 dark:text-zinc-100 block">Authenticator App 2FA</span>
-                  <span className="text-[11px] text-zinc-400">Require TOTP verification code on each login</span>
-                </div>
+            <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 text-amber-800 dark:text-amber-400 text-xs flex items-start gap-3">
+              <Lock className="h-5 w-5 shrink-0 mt-0.5 text-amber-600" />
+              <div className="space-y-1">
+                <span className="font-bold block">Two-Factor Authentication (Under Active Development)</span>
+                <p className="text-[11px] leading-relaxed text-zinc-600 dark:text-zinc-400">
+                  This option is temporarily hidden from security settings until sign-in verification code enforcement is fully integrated with login, preventing false security expectations.
+                </p>
               </div>
-              <Switch
-                checked={formData.twoFactorEnabled}
-                disabled={isToggling2FA}
-                onCheckedChange={async (checked) => {
-                  setIsToggling2FA(true);
-                  try {
-                    const res = await toggleTwoFactorAuth(checked);
-                    if (res.success) {
-                      setFormData({ ...formData, twoFactorEnabled: checked });
-                      toast.success(checked ? "Two-Factor Auth Enabled & Saved" : "Two-Factor Auth Disabled");
-                    } else {
-                      toast.error("Failed to update 2FA status.");
-                    }
-                  } catch (err: any) {
-                    toast.error(err.message || "Error updating 2FA.");
-                  } finally {
-                    setIsToggling2FA(false);
-                  }
-                }}
-                className="scale-90"
-              />
             </div>
 
             {/* SAML SSO Section */}
@@ -1380,7 +1356,7 @@ export function SettingsForm({
                       </span>
                     )}
                   </div>
-                  <span className="text-[11px] text-zinc-400">SOC2 Type II report, HIPAA Business Associate Agreement (BAA), and tamper-proof audit trails.</span>
+                  <span className="text-[11px] text-zinc-400">SOC 2 & HIPAA-ready architecture, enterprise custom DPA/BAA reviews, and tamper-proof audit trails.</span>
                 </div>
                 {user.plan !== "ENTERPRISE" ? (
                   <Button
@@ -1402,7 +1378,7 @@ export function SettingsForm({
                   <ShieldCheck className="h-3 w-3 text-emerald-500" /> SOC2 Type II
                 </span>
                 <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-card border border-zinc-200 dark:border-zinc-800 px-2 py-1 rounded-md text-zinc-600 dark:text-zinc-300">
-                  <ShieldCheck className="h-3 w-3 text-emerald-500" /> HIPAA BAA
+                  <ShieldCheck className="h-3 w-3 text-emerald-500" /> HIPAA Ready
                 </span>
                 <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-card border border-zinc-200 dark:border-zinc-800 px-2 py-1 rounded-md text-zinc-600 dark:text-zinc-300">
                   <ShieldCheck className="h-3 w-3 text-emerald-500" /> GDPR & DPA
@@ -1508,7 +1484,7 @@ export function SettingsForm({
                   price: "Custom",
                   suffix: "quote",
                   desc: "Custom security, SLA & compliance.",
-                  features: ["Dedicated CSM & Engineer", "99.99% Uptime SLA", "SOC2 & HIPAA BAA", "Slack Connect Channel"],
+                  features: ["Dedicated CSM & Engineer", "99.9% Uptime Target", "SOC2 & HIPAA Ready Architecture", "Slack Connect Channel"],
                   popular: false
                 }
               ].map((p) => {

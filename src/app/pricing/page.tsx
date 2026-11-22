@@ -74,7 +74,7 @@ const plans: PlanTier[] = [
       "Collective & Round-Robin Scheduling",
       "1 Team with Unlimited Invitations",
       "Remove CalMeet Watermark (White-label)",
-      "Automated Workflows (SMS & Email Reminders)",
+      "Automated Workflows (Email Reminders, SMS roadmap)",
       "Smart Routing Forms with Conditional Logic",
       "Advanced Analytics (Heatmap & Conversion)",
       "Developer Webhooks & API Keys",
@@ -116,7 +116,7 @@ const plans: PlanTier[] = [
     features: [
       "Everything in Organizations, plus:",
       "Dedicated Account Manager & CSM",
-      "99.99% Uptime SLA Guarantee",
+      "99.9% Uptime Target (Custom SLA Available)",
       "Enterprise Security Pack & Custom DPA",
       "Private Cloud & Dedicated Infrastructure",
       "Custom Invoicing, PO & Master Service Agreement",
@@ -149,7 +149,7 @@ const comparisonData: ComparisonCategory[] = [
       { title: "Active Event Types", free: "Unlimited", teams: "Unlimited", org: "Unlimited", enterprise: "Unlimited" },
       { title: "Calendar Sync (Google/Outlook)", free: true, teams: true, org: true, enterprise: true },
       { title: "Conferencing (Meet, Zoom, Cal Video)", free: true, teams: true, org: true, enterprise: true },
-      { title: "Payment Collection (Stripe/Razorpay)", free: true, teams: true, org: true, enterprise: true },
+      { title: "Payment Collection (Razorpay active, Stripe in preview)", free: true, teams: true, org: true, enterprise: true },
       { title: "Embed Widgets (Inline, Popup, Button)", free: true, teams: true, org: true, enterprise: true },
       { title: "Out of Office & Away Redirect", free: true, teams: true, org: true, enterprise: true }
     ]
@@ -167,7 +167,7 @@ const comparisonData: ComparisonCategory[] = [
   {
     name: "Automations & Workflows",
     features: [
-      { title: "Automated Email & SMS Reminders", free: false, teams: true, org: true, enterprise: true },
+      { title: "Automated Email Reminders & Notifications (SMS roadmap)", free: false, teams: true, org: true, enterprise: true },
       { title: "Post-Meeting Follow-up Triggers", free: false, teams: true, org: true, enterprise: true },
       { title: "Routing Forms with Conditional Logic", free: false, teams: true, org: true, enterprise: true },
       { title: "Developer Webhooks", free: false, teams: true, org: true, enterprise: true },
@@ -191,7 +191,7 @@ const comparisonData: ComparisonCategory[] = [
       { title: "SCIM User Provisioning", free: false, teams: false, org: true, enterprise: true },
       { title: "Role-Based Access Control (RBAC)", free: false, teams: false, org: true, enterprise: true },
       { title: "Audit Logs & Activity Trail", free: false, teams: false, org: true, enterprise: true },
-      { title: "Dedicated SLA Uptime Guarantee", free: false, teams: false, org: "99.9%", enterprise: "99.99% Guaranteed" },
+      { title: "High-Availability Uptime Target", free: false, teams: false, org: "99.9% Target", enterprise: "Custom SLA Available" },
       { title: "Support Level", free: "Community", teams: "Priority Email", org: "24/7 Priority", enterprise: "Dedicated Slack & CSM" }
     ]
   }
@@ -470,7 +470,7 @@ export default function PricingPage() {
                 Ready to automate your scheduling?
               </h2>
               <p className="text-zinc-400 text-sm md:text-base leading-relaxed">
-                Join thousands of individuals and teams streamlining their meetings, routing leads, and eliminating booking friction.
+                Streamline your meetings, route qualified leads, and eliminate scheduling friction with CalMeet.
               </p>
               <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link href="/signup" className="w-full sm:w-auto">

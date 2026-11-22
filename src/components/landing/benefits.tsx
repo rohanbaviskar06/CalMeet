@@ -249,7 +249,7 @@ export function Benefits() {
               </motion.button>
             </Link>
             <p className="text-xs text-muted-foreground mt-3">
-              Join 10,000+ professionals already using CalMeet
+              Built for professionals, consultants, and fast-moving teams
             </p>
           </motion.div>
         </motion.div>

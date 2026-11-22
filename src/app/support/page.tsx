@@ -67,7 +67,7 @@ function SupportFormContent() {
         toast.success("Support ticket submitted!");
         setTicketResult(res.ticketId);
       } else {
-        toast.error("Failed to submit ticket. Please try again.");
+        toast.error(res.error || "Failed to submit ticket. Please try again.");
       }
     } catch (err: any) {
       toast.error(err.message || "An error occurred.");

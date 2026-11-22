@@ -9,6 +9,7 @@ import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { isSlotWithinHostAvailability } from "@/lib/timezone";
 import { isSafeWebhookUrl } from "@/lib/ssrf";
+import { generateBookingGuestToken, verifyBookingAccess } from "@/lib/booking-auth";
 import crypto from "crypto";
 
 const bookingSchema = z.object({
@@ -181,6 +182,7 @@ export async function sendBookingNotifications(bookingId: string) {
 
       const hostName = eventType.user.name || "Host";
       const hostEmail = eventType.user.email || "";
+      const guestToken = generateBookingGuestToken(booking);
 
       const emailHtml = generateGuestConfirmationEmail({
         guestName,
@@ -195,6 +197,7 @@ export async function sendBookingNotifications(bookingId: string) {
         notes,
         timezone: eventType.user.timezone || "UTC",
         bookingId: booking.id,
+        manageToken: guestToken,
       });
 
       await sendEmail({
@@ -402,9 +405,13 @@ export async function createBooking(formData: z.infer<typeof bookingSchema>) {
 
     await sendBookingNotifications(booking.id);
 
+    const guestToken = generateBookingGuestToken(booking);
+
     return {
       success: true,
       booking: { ...booking, meetLink },
+      token: guestToken,
+      manageUrl: `/booking/${booking.id}/manage?token=${guestToken}`,
       requiresPayment: false,
     };
   } catch (error: any) {
@@ -525,10 +532,12 @@ export async function cancelBookingWithReason({
   bookingId,
   reason = "Schedule conflict",
   cancelledBy = "HOST",
+  token,
 }: {
   bookingId: string;
   reason?: string;
   cancelledBy?: "HOST" | "GUEST";
+  token?: string;
 }) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id;
@@ -540,13 +549,13 @@ export async function cancelBookingWithReason({
 
   if (!booking) throw new Error("Booking not found");
 
-  // Authorization check: If cancelledBy HOST, require session match
-  if (cancelledBy === "HOST") {
-    if (!session?.user) throw new Error("Unauthorized");
-    if (booking.eventType.userId !== userId && booking.userId !== userId) {
-      throw new Error("Unauthorized to cancel this booking");
-    }
+  // Secure guest link or account authorization
+  const access = await verifyBookingAccess(booking, token);
+  if (!access.authorized) {
+    throw new Error(access.reason || "Unauthorized to cancel this booking. A secure guest link or account authorization is required.");
   }
+
+  const effectiveCancelledBy = access.role || cancelledBy;
 
   // Cancel Google Calendar event if associated
   try {
@@ -559,7 +568,7 @@ export async function cancelBookingWithReason({
     console.error("Failed to delete Google Calendar event on cancellation:", gcalErr);
   }
 
-  const cancelTag = `\n[CANCELLED by ${cancelledBy} at ${new Date().toISOString()}: ${reason}]`;
+  const cancelTag = `\n[CANCELLED by ${effectiveCancelledBy} at ${new Date().toISOString()}: ${reason}]`;
   const updatedNotes = (booking.notes || "") + cancelTag;
 
   await prisma.booking.update({
@@ -624,7 +633,7 @@ export async function cancelBookingWithReason({
       endTime: booking.endTime.toISOString(),
       status: "CANCELLED",
       reason,
-      cancelledBy,
+      cancelledBy: effectiveCancelledBy,
     });
   } catch (whErr) {
     console.error("Failed to dispatch developer webhooks on cancel:", whErr);
@@ -635,7 +644,7 @@ export async function cancelBookingWithReason({
   return { success: true };
 }
 
-export async function getBookingForManagement(bookingId: string) {
+export async function getBookingForManagement(bookingId: string, token?: string) {
   try {
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
@@ -661,8 +670,21 @@ export async function getBookingForManagement(bookingId: string) {
       return { success: false, error: "Booking not found" };
     }
 
+    const access = await verifyBookingAccess(booking, token);
+    if (!access.authorized) {
+      return {
+        success: false,
+        unauthorized: true,
+        error: "Access denied. A valid secure guest link or account authorization is required to view or manage this booking.",
+      };
+    }
+
+    const guestToken = generateBookingGuestToken(booking);
+
     return {
       success: true,
+      token: guestToken,
+      role: access.role,
       booking: {
         id: booking.id,
         guestName: booking.guestName,
@@ -701,12 +723,14 @@ export async function rescheduleBooking({
   newEndTime,
   reason = "Guest requested new time",
   rescheduledBy = "GUEST",
+  token,
 }: {
   bookingId: string;
   newStartTime: string;
   newEndTime: string;
   reason?: string;
   rescheduledBy?: "HOST" | "GUEST";
+  token?: string;
 }) {
   try {
     const booking = await prisma.booking.findUnique({
@@ -727,6 +751,16 @@ export async function rescheduleBooking({
     if (!booking) {
       return { success: false, error: "Booking not found" };
     }
+
+    const access = await verifyBookingAccess(booking, token);
+    if (!access.authorized) {
+      return {
+        success: false,
+        error: "Unauthorized to reschedule this booking. A valid secure guest link or account authorization is required.",
+      };
+    }
+
+    const effectiveRescheduledBy = access.role || rescheduledBy;
 
     if (booking.status === "CANCELLED") {
       return { success: false, error: "Cannot reschedule a cancelled booking" };
@@ -791,7 +825,7 @@ export async function rescheduleBooking({
         throw new Error("This time slot is already booked with another meeting. Please select a different time.");
       }
 
-      const rescheduleTag = `\n[RESCHEDULED by ${rescheduledBy} from ${booking.startTime.toISOString()} to ${newStart.toISOString()} at ${new Date().toISOString()}: ${reason}]`;
+      const rescheduleTag = `\n[RESCHEDULED by ${effectiveRescheduledBy} from ${booking.startTime.toISOString()} to ${newStart.toISOString()} at ${new Date().toISOString()}: ${reason}]`;
       const updatedNotes = (booking.notes || "") + rescheduleTag;
 
       return tx.booking.update({

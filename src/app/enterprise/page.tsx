@@ -24,7 +24,7 @@ import Link from "next/link";
 const features = [
   {
     title: "Security & Cloud Compliance",
-    description: "Built on SOC2 and HIPAA-compliant cloud infrastructure (AWS, Supabase, Google Cloud) with SHA-256 hashed API keys and encrypted secrets.",
+    description: "Built on SOC2 and HIPAA-ready cloud infrastructure (AWS, Supabase, Google Cloud) with SHA-256 hashed API keys, encrypted secrets, and custom BAA review options.",
     icon: <ShieldCheck className="h-6 w-6" />
   },
   {

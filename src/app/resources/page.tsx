@@ -76,7 +76,7 @@ const resources = [
   },
   {
     title: "Payments",
-    description: "Accept Stripe payments directly for bookings",
+    description: "Accept paid bookings (Razorpay active, Stripe in preview)",
     logo: "/logos/stripe.png",
     href: "/resources/payments"
   },
@@ -94,7 +94,7 @@ const resources = [
   },
   {
     title: "Workflows",
-    description: "Automate SMS, emails, and booking reminders",
+    description: "Automate email reminders and booking workflows",
     logo: "/logos/zapier.svg",
     href: "/resources/workflows"
   },

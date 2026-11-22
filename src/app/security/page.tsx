@@ -46,12 +46,12 @@ const checklist = [
   "HMAC-SHA256 signed webhook payloads",
   "Server-side SSRF validation on webhook endpoints",
   "Automated cloud database backups",
-  "Multi-factor authentication (2FA) support",
+  "Multi-factor authentication (2FA roadmap)",
   "Secure session token management",
   "GDPR & CCPA compliant data controls",
   "Security headers (CSP, HSTS, X-Frame-Options)",
   "Dependency vulnerability scanning on build",
-  "Hosted on SOC 2 and HIPAA compliant providers",
+  "Hosted on SOC 2 and HIPAA-ready cloud providers",
   "Incident response SLA under 4 hours",
 ];
 

@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { BookingForm } from "@/components/booking/booking-form";
 import { RoutingQuestionnaire } from "@/components/routing/routing-questionnaire";
 
@@ -142,9 +143,9 @@ export default async function BookingPage({
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                 <span><strong>Interactive Sample Booking</strong> — Select any available slot to test the attendee confirmation workflow.</span>
               </span>
-              <a href="/signup" className="text-[11px] font-semibold text-primary hover:underline whitespace-nowrap">
+              <Link href="/signup" className="text-[11px] font-semibold text-primary hover:underline whitespace-nowrap">
                 Create Your Own Link →
-              </a>
+              </Link>
             </div>
           )}
           <div className={cn(

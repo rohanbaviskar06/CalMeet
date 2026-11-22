@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/resend";
 import { generateMeetingReminderEmail } from "@/lib/email-templates";
+import { generateBookingGuestToken } from "@/lib/booking-auth";
 
 /**
  * Dispatch reminder emails for bookings starting in the next 24 hours.
@@ -64,6 +65,7 @@ export async function dispatchUpcomingReminders(windowHours = 24) {
         notes: notes?.replace("[REMINDER_SENT]", "").trim(),
         timezone: eventType.user.timezone || "UTC",
         bookingId: booking.id,
+        manageToken: generateBookingGuestToken(booking),
         reminderNotice,
       });
 

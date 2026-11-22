@@ -27,7 +27,7 @@ const teamSizes = [
     icon: User,
     href: "/solutions/individuals",
     badge: "Solo",
-    features: ["Personal calmeet.com/you link", "Google Calendar 2-way sync", "Paid bookings via Razorpay/Stripe"]
+    features: ["Personal calmeet.app/you link", "Google Calendar 2-way sync", "Paid bookings via Razorpay (Stripe roadmap)"]
   },
   {
     title: "For Teams",

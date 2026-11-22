@@ -395,7 +395,7 @@ export function WorkflowsClient({ initialWorkflows }: WorkflowsClientProps) {
                         >
                           <option value="Send email to attendees">Send email to attendees</option>
                           <option value="Send email to host">Send email to host</option>
-                          <option value="Send SMS to invitee">Send SMS to invitee</option>
+                          <option value="Send SMS to invitee" disabled>Send SMS to invitee (Roadmap / Coming Soon)</option>
                           <option value="Webhook">Trigger Webhook</option>
                         </select>
                       </div>
@@ -584,7 +584,7 @@ export function WorkflowsClient({ initialWorkflows }: WorkflowsClientProps) {
                 No workflows created
               </h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-sm">
-                Set up automated emails, SMS reminders, and post-meeting follow-ups to save time and reduce no-shows.
+                Set up automated email notifications, webhook triggers, and post-meeting follow-ups to save time and reduce no-shows.
               </p>
               <Button
                 onClick={startNewWorkflow}
