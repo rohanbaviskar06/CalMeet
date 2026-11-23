@@ -13,8 +13,8 @@ const features = [
     icon: CreditCard,
   },
   {
-    title: "Razorpay & Stripe Gateways",
-    description: "Accept payments globally in USD, EUR, GBP via Stripe, or in INR via UPI, NetBanking, and RuPay cards via Razorpay.",
+    title: "Razorpay Gateway (Active) & Stripe (In Preview)",
+    description: "Accept payments in INR via UPI, NetBanking, and RuPay cards via Razorpay today. Stripe global payments (USD, EUR, GBP) are currently in preview.",
     icon: Globe,
   },
   {
@@ -53,7 +53,7 @@ export default function PaymentsPage() {
               Monetize your time with integrated payments
             </h1>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xl mb-6">
-              Charge for consultations, legal advice, coaching, and expert sessions upfront. Connect Razorpay or Stripe in minutes.
+              Charge for consultations, legal advice, coaching, and expert sessions upfront. Connect Razorpay in minutes (Stripe integration in preview).
             </p>
             <div className="flex gap-3">
               <Button render={<Link href="/signup" />} size="sm" className="h-9 px-4 text-xs font-semibold">
@@ -107,7 +107,7 @@ export default function PaymentsPage() {
           <div className="p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-0.5">Ready to charge for your expertise?</div>
-              <div className="text-xs text-zinc-500 dark:text-zinc-400">Connect your Razorpay or Stripe account in Settings to get started.</div>
+              <div className="text-xs text-zinc-500 dark:text-zinc-400">Connect your Razorpay account in Settings to get started (Stripe in preview).</div>
             </div>
             <Button render={<Link href="/signup" />} size="sm" className="h-9 px-4 text-xs font-semibold">
               Get Started Free

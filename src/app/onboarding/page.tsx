@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 
 export const metadata = {
-  title: "Onboarding | CalMeet",
+  title: "Onboarding",
   description: "Get started with your CalMeet workspace",
 };
 

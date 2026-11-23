@@ -26,9 +26,9 @@ const workflowTemplates = [
     icon: Mail,
   },
   {
-    title: "24-Hour Pre-Meeting SMS Reminder",
+    title: "24-Hour Pre-Meeting SMS Reminder (Roadmap / In Development)",
     trigger: "24 hours before meeting starts",
-    action: "Send SMS reminder with 1-click reschedule link to reduce no-shows",
+    action: "Send SMS reminder with 1-click reschedule link (roadmap) to reduce no-shows",
     icon: MessageSquare,
   },
   {
@@ -142,7 +142,7 @@ export default function WorkflowsPage() {
             <div className="grid sm:grid-cols-2 gap-3">
               {[
                 "Custom email templates with dynamic merge variables",
-                "SMS notifications via Twilio gateway",
+                "SMS notifications via Twilio gateway (Roadmap / In Development)",
                 "Slack and Microsoft Teams channel webhook triggers",
                 "Dynamic reschedule and cancellation links included",
                 "Automated delivery logs and failure retries",

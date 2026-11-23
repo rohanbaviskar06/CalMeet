@@ -70,12 +70,16 @@ export async function dispatchUpcomingReminders(windowHours = 24) {
       });
 
       try {
-        await sendEmail({
+        const sendRes = await sendEmail({
           to: guestEmail,
           subject: `Reminder: ${eventType.title} with ${hostName} (${reminderNotice})`,
           html: reminderHtml,
           fromName: `${hostName} via CalMeet`,
         });
+
+        if (sendRes && (sendRes as any).error) {
+          throw new Error((sendRes as any).error);
+        }
 
         // Mark reminder as sent to prevent duplicate dispatch
         const updatedNotes = notes
@@ -86,6 +90,25 @@ export async function dispatchUpcomingReminders(windowHours = 24) {
           where: { id: booking.id },
           data: { notes: updatedNotes },
         });
+
+        // Persist dispatch logs separately from guest notes in database
+        try {
+          await prisma.integration.create({
+            data: {
+              userId: eventType.userId,
+              type: "reminder_dispatch_log",
+              credentials: JSON.stringify({
+                bookingId: booking.id,
+                recipient: guestEmail,
+                dispatchedAt: new Date().toISOString(),
+                windowHours,
+                status: "DELIVERED",
+              }),
+            },
+          });
+        } catch (logErr) {
+          console.warn("Could not write reminder dispatch log:", logErr);
+        }
 
         sentCount++;
         console.log(`Reminder successfully sent to guest: ${guestEmail}`);

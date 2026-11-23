@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
+import { blogPosts } from "@/data/blog-posts";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://calmeet.app";
-  const routes = [
+  const staticRoutes = [
     "",
     "/pricing",
     "/enterprise",
@@ -43,6 +44,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/signup",
     "/forgot-password",
   ];
+
+  const blogRoutes = blogPosts.map((post) => `/blog/${post.slug}`);
+  const routes = [...staticRoutes, ...blogRoutes];
 
   return routes.map((route) => ({
     url: `${baseUrl}${route}`,

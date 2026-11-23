@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 
 export const metadata = {
-  title: "Select Plan | CalMeet Onboarding",
+  title: "Select Plan",
 };
 
 export default async function GettingStartedOnboardingPage() {

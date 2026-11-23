@@ -49,6 +49,20 @@ interface ContactItem {
   bookings: any[];
 }
 
+/**
+ * Safely encodes a cell value for CSV, protecting against formula injection (=, +, -, @)
+ * and properly escaping internal double quotes.
+ */
+function safeCsvCell(val: any): string {
+  if (val === null || val === undefined) return '""';
+  let str = String(val);
+  if (/^[=+\-@\t\r]/.test(str)) {
+    str = "'" + str;
+  }
+  str = str.replace(/"/g, '""');
+  return `"${str}"`;
+}
+
 export function ContactsClient({ contacts }: { contacts: ContactItem[] }) {
   const [selectedContact, setSelectedContact] = useState<ContactItem | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -74,21 +88,23 @@ export function ContactsClient({ contacts }: { contacts: ContactItem[] }) {
 
     const headers = ["Name", "Email", "Total Meetings", "Next Meeting", "Last Meeting"];
     const rows = contacts.map(c => [
-      `"${c.name || ""}"`,
-      `"${c.email}"`,
-      c.totalMeetings,
-      c.nextMeeting ? `"${new Date(c.nextMeeting).toISOString()}"` : '""',
-      c.lastMeeting ? `"${new Date(c.lastMeeting).toISOString()}"` : '""',
+      safeCsvCell(c.name || ""),
+      safeCsvCell(c.email),
+      safeCsvCell(c.totalMeetings),
+      safeCsvCell(c.nextMeeting ? new Date(c.nextMeeting).toISOString() : ""),
+      safeCsvCell(c.lastMeeting ? new Date(c.lastMeeting).toISOString() : ""),
     ]);
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = [headers.map(safeCsvCell).join(","), ...rows.map(e => e.join(","))].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `calmeet-contacts-${format(new Date(), "yyyy-MM-dd")}.csv`);
+    link.href = url;
+    link.download = `calmeet-contacts-${format(new Date(), "yyyy-MM-dd")}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
     toast.success("Contacts exported to CSV!");
   };
 

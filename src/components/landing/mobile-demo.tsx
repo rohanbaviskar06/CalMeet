@@ -111,9 +111,9 @@ export function MobileDemo() {
                       <Globe className="h-3 w-3" />
                       <span>Indian Standard Time (IST)</span>
                     </div>
-                    <button className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold text-xs shadow-lg shadow-primary/20">
+                    <div role="presentation" aria-hidden="true" className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold text-xs shadow-lg shadow-primary/20 text-center select-none cursor-default">
                       Next
-                    </button>
+                    </div>
                   </div>
                 </div>
               </div>

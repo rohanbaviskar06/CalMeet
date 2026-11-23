@@ -1,13 +1,14 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { createGoogleMeetEvent, getGoogleCalendarBusyTimes } from "@/lib/google-calendar";
 import { createZoomMeeting } from "@/lib/zoom";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { isSlotWithinHostAvailability } from "@/lib/timezone";
+import { isSlotWithinHostAvailability, getZonedTimeInfo } from "@/lib/timezone";
 import { isSafeWebhookUrl } from "@/lib/ssrf";
 import { generateBookingGuestToken, verifyBookingAccess } from "@/lib/booking-auth";
 import crypto from "crypto";
@@ -236,6 +237,92 @@ export async function sendBookingNotifications(bookingId: string) {
   }
 }
 
+/**
+ * Helper to check whether a time window intersects with host's Out of Office or Date Overrides.
+ */
+export async function checkHostOutOfOfficeAndOverrides(
+  userId: string,
+  startTime: Date,
+  endTime: Date,
+  hostTimezone = "UTC"
+): Promise<{ allowed: boolean; reason?: string }> {
+  try {
+    // 1. Check Out of Office from user_preferences
+    const prefRecord = await prisma.integration.findFirst({
+      where: { userId, type: "user_preferences" },
+    });
+    if (prefRecord?.credentials) {
+      try {
+        const prefs = typeof prefRecord.credentials === "string" 
+          ? JSON.parse(prefRecord.credentials) 
+          : prefRecord.credentials;
+        if (prefs?.outOfOfficeEnabled && prefs.outOfOfficeStart && prefs.outOfOfficeEnd) {
+          const oooStart = new Date(`${prefs.outOfOfficeStart}T00:00:00Z`);
+          const oooEnd = new Date(`${prefs.outOfOfficeEnd}T23:59:59.999Z`);
+          if (startTime <= oooEnd && endTime >= oooStart) {
+            return {
+              allowed: false,
+              reason: "The host is currently out of office during this selected time window.",
+            };
+          }
+        }
+      } catch {}
+    }
+
+    // 2. Check Date Overrides from availability_config
+    const availRecord = await prisma.integration.findFirst({
+      where: { userId, type: "availability_config" },
+    });
+    if (availRecord?.credentials) {
+      try {
+        const config = typeof availRecord.credentials === "string"
+          ? JSON.parse(availRecord.credentials)
+          : availRecord.credentials;
+        const overrides: any[] = config?.overrides || [];
+        if (overrides.length > 0) {
+          const formatter = new Intl.DateTimeFormat("en-CA", {
+            timeZone: hostTimezone,
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          });
+          const slotDateStr = formatter.format(startTime); // "YYYY-MM-DD"
+          const matchingOverride = overrides.find((o) => o.date === slotDateStr);
+          if (matchingOverride) {
+            if (matchingOverride.isUnavailable) {
+              return {
+                allowed: false,
+                reason: "The host is unavailable on this date due to a schedule override.",
+              };
+            }
+            if (matchingOverride.startTime && matchingOverride.endTime) {
+              const startInfo = getZonedTimeInfo(startTime, hostTimezone);
+              const endInfo = getZonedTimeInfo(endTime, hostTimezone);
+              const [sH, sM] = matchingOverride.startTime.split(":").map(Number);
+              const [eH, eM] = matchingOverride.endTime.split(":").map(Number);
+              const overrideStartMin = sH * 60 + sM;
+              const overrideEndMin = eH * 60 + eM;
+              if (
+                startInfo.minutesFromMidnight < overrideStartMin ||
+                endInfo.minutesFromMidnight > overrideEndMin
+              ) {
+                return {
+                  allowed: false,
+                  reason: "The selected time falls outside the host's configured hours for this date.",
+                };
+              }
+            }
+          }
+        }
+      } catch {}
+    }
+  } catch (err) {
+    console.warn("Could not check out of office or overrides:", err);
+  }
+
+  return { allowed: true };
+}
+
 export async function createBooking(formData: z.infer<typeof bookingSchema>) {
   try {
     const validatedData = bookingSchema.parse(formData);
@@ -304,6 +391,17 @@ export async function createBooking(formData: z.infer<typeof bookingSchema>) {
       return { success: false, error: "The selected time falls outside the host's configured availability." };
     }
 
+    // 2b. Check Out of office and Date Overrides
+    const hostCheck = await checkHostOutOfOfficeAndOverrides(
+      eventType.userId,
+      startTime,
+      endTime,
+      eventType.user.timezone || "UTC"
+    );
+    if (!hostCheck.allowed) {
+      return { success: false, error: hostCheck.reason };
+    }
+
     // 3. Check for Google Calendar busy conflicts if host has Google Calendar connected
     try {
       const busySlots = await getGoogleCalendarBusyTimes(eventType.userId, startTime, endTime);
@@ -319,49 +417,94 @@ export async function createBooking(formData: z.infer<typeof bookingSchema>) {
 
     const isPaid = eventType.requiresPayment && (eventType.price || 0) > 0;
 
-    // 4. Create the booking inside a transaction with concurrent double-booking protection
-    const booking = await prisma.$transaction(async (tx) => {
-      // Check for overlapping confirmed or active bookings across ALL event types for this host
-      const existingOverlap = await tx.booking.findFirst({
-        where: {
-          userId: eventType.userId,
-          status: { in: ["CONFIRMED", "PENDING"] },
-          startTime: { lt: endTime },
-          endTime: { gt: startTime },
-        },
-      });
+    // 4. Create the booking inside a serializable transaction with concurrent double-booking protection
+    const booking = await prisma.$transaction(
+      async (tx) => {
+        // Check for overlapping confirmed or active bookings across ALL event types for this host
+        const existingOverlap = await tx.booking.findFirst({
+          where: {
+            userId: eventType.userId,
+            status: { in: ["CONFIRMED", "PENDING"] },
+            startTime: { lt: endTime },
+            endTime: { gt: startTime },
+          },
+        });
 
-      if (existingOverlap) {
-        throw new Error("This time slot is no longer available. Please select another time.");
+        if (existingOverlap) {
+          throw new Error("This time slot is no longer available. Please select another time.");
+        }
+
+        return tx.booking.create({
+          data: {
+            eventTypeId: validatedData.eventTypeId,
+            userId: eventType.userId,
+            guestName: validatedData.guestName,
+            guestEmail: validatedData.guestEmail,
+            startTime,
+            endTime,
+            status: isPaid ? "PENDING" : "CONFIRMED",
+            meetLink: null,
+            notes: validatedData.notes || null,
+            utmSource: validatedData.utmSource || null,
+            utmMedium: validatedData.utmMedium || null,
+            referer: validatedData.referer || null,
+            paymentStatus: isPaid ? "UNPAID" : "PAID",
+          },
+        });
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+    );
+
+    // 5. If paid, resolve credentials and return pending booking awaiting verified payment completion
+    if (isPaid) {
+      let hostKeyId = process.env.RAZORPAY_KEY_ID;
+      let hostKeySecret = process.env.RAZORPAY_KEY_SECRET;
+      const integration = await prisma.integration.findFirst({
+        where: { userId: eventType.userId, type: "razorpay" },
+      });
+      if (integration?.credentials) {
+        try {
+          const creds = JSON.parse(integration.credentials as string);
+          if (creds.keyId) hostKeyId = creds.keyId;
+          if (creds.keySecret) hostKeySecret = creds.keySecret;
+        } catch {}
       }
 
-      return tx.booking.create({
-        data: {
-          eventTypeId: validatedData.eventTypeId,
-          userId: eventType.userId,
-          guestName: validatedData.guestName,
-          guestEmail: validatedData.guestEmail,
-          startTime,
-          endTime,
-          status: isPaid ? "PENDING" : "CONFIRMED",
-          meetLink: null,
-          notes: validatedData.notes || null,
-          utmSource: validatedData.utmSource || null,
-          utmMedium: validatedData.utmMedium || null,
-          referer: validatedData.referer || null,
-          paymentStatus: isPaid ? "UNPAID" : "PAID",
-        },
-      });
-    });
+      let orderId = `order_${booking.id.replace(/[^a-zA-Z0-9]/g, "").slice(0, 16)}`;
+      if (hostKeyId && hostKeySecret && !hostKeyId.includes("your_razorpay") && !hostKeyId.includes("rzp_test_your")) {
+        try {
+          const Razorpay = (await import("razorpay")).default;
+          const rzp = new Razorpay({ key_id: hostKeyId, key_secret: hostKeySecret });
+          const rzpOrder = await rzp.orders.create({
+            amount: Math.round((eventType.price || 0) * 100),
+            currency: eventType.currency || "INR",
+            receipt: `rcpt_${booking.id.slice(0, 10)}`,
+            notes: {
+              bookingId: booking.id,
+              eventTypeId: eventType.id,
+            },
+          });
+          if (rzpOrder?.id) {
+            orderId = rzpOrder.id;
+          }
+        } catch (orderErr) {
+          console.warn("Could not create Razorpay live order, using fallback orderId:", orderErr);
+        }
+      }
 
-    // 5. If paid, return pending booking awaiting payment completion
-    if (isPaid) {
+      await prisma.booking.update({
+        where: { id: booking.id },
+        data: { razorpayOrderId: orderId },
+      });
+
       return {
         success: true,
-        booking,
+        booking: { ...booking, razorpayOrderId: orderId },
         requiresPayment: true,
+        orderId,
         price: eventType.price,
-        currency: eventType.currency,
+        currency: eventType.currency || "INR",
+        keyId: hostKeyId || process.env.RAZORPAY_KEY_ID || "rzp_test_calmeet",
       };
     }
 
@@ -444,7 +587,13 @@ export async function verifyAndConfirmBookingPayment(data: {
     }
 
     if (booking.status === "CONFIRMED" && booking.paymentStatus === "PAID") {
-      return { success: true, booking };
+      const guestToken = generateBookingGuestToken(booking);
+      return {
+        success: true,
+        booking,
+        token: guestToken,
+        manageUrl: `/booking/${booking.id}/manage?token=${guestToken}`,
+      };
     }
 
     // Determine Razorpay secret: host's connected integration or server env fallback
@@ -517,10 +666,47 @@ export async function verifyAndConfirmBookingPayment(data: {
 
     await sendBookingNotifications(updatedBooking.id);
 
-    return { success: true, booking: updatedBooking };
+    const guestToken = generateBookingGuestToken(updatedBooking);
+
+    return {
+      success: true,
+      booking: updatedBooking,
+      token: guestToken,
+      manageUrl: `/booking/${updatedBooking.id}/manage?token=${guestToken}`,
+    };
   } catch (error: any) {
     console.error("Payment verification error:", error);
     return { success: false, error: error.message || "Failed to verify payment" };
+  }
+}
+
+/**
+ * Records payment failure, decline, or dismissal on an unconfirmed booking.
+ */
+export async function recordBookingPaymentFailure(data: {
+  bookingId: string;
+  reason?: string;
+}) {
+  try {
+    const booking = await prisma.booking.findUnique({
+      where: { id: data.bookingId },
+    });
+    if (!booking) return { success: false, error: "Booking not found" };
+
+    const failTag = `\n[PAYMENT_ATTEMPT_FAILED at ${new Date().toISOString()}: ${data.reason || "Payment declined or cancelled"}]`;
+    const updatedNotes = (booking.notes || "") + failTag;
+
+    await prisma.booking.update({
+      where: { id: data.bookingId },
+      data: {
+        paymentStatus: "UNPAID",
+        notes: updatedNotes,
+      },
+    });
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to record payment failure" };
   }
 }
 
@@ -809,35 +995,54 @@ export async function rescheduleBooking({
       }
     }
 
-    // 5. Concurrency & Overlap Conflict Check in a transaction
-    const updatedBooking = await prisma.$transaction(async (tx) => {
-      const conflict = await tx.booking.findFirst({
-        where: {
-          id: { not: bookingId },
-          eventType: { userId: booking.eventType.userId },
-          status: { in: ["CONFIRMED", "PENDING"] },
-          startTime: { lt: newEnd },
-          endTime: { gt: newStart },
-        },
-      });
+    // 4b. Validate Out of Office and Date Overrides
+    const hostCheck = await checkHostOutOfOfficeAndOverrides(
+      booking.eventType.userId,
+      newStart,
+      newEnd,
+      host?.timezone || "UTC"
+    );
+    if (!hostCheck.allowed) {
+      return { success: false, error: hostCheck.reason };
+    }
 
-      if (conflict) {
-        throw new Error("This time slot is already booked with another meeting. Please select a different time.");
-      }
+    // 5. Concurrency & Overlap Conflict Check in a serializable transaction
+    const updatedBooking = await prisma.$transaction(
+      async (tx) => {
+        const conflict = await tx.booking.findFirst({
+          where: {
+            id: { not: bookingId },
+            eventType: { userId: booking.eventType.userId },
+            status: { in: ["CONFIRMED", "PENDING"] },
+            startTime: { lt: newEnd },
+            endTime: { gt: newStart },
+          },
+        });
 
-      const rescheduleTag = `\n[RESCHEDULED by ${effectiveRescheduledBy} from ${booking.startTime.toISOString()} to ${newStart.toISOString()} at ${new Date().toISOString()}: ${reason}]`;
-      const updatedNotes = (booking.notes || "") + rescheduleTag;
+        if (conflict) {
+          throw new Error("This time slot is already booked with another meeting. Please select a different time.");
+        }
 
-      return tx.booking.update({
-        where: { id: bookingId },
-        data: {
-          startTime: newStart,
-          endTime: newEnd,
-          status: "CONFIRMED",
-          notes: updatedNotes,
-        },
-      });
-    });
+        const rescheduleTag = `\n[RESCHEDULED by ${effectiveRescheduledBy} from ${booking.startTime.toISOString()} to ${newStart.toISOString()} at ${new Date().toISOString()}: ${reason}]`;
+        const updatedNotes = (booking.notes || "") + rescheduleTag;
+
+        const targetStatus = (booking.paymentStatus === "PAID" || booking.status === "CONFIRMED") ? "CONFIRMED" : booking.status;
+
+        return tx.booking.update({
+          where: { id: bookingId },
+          data: {
+            startTime: newStart,
+            endTime: newEnd,
+            status: targetStatus,
+            paymentStatus: booking.paymentStatus,
+            razorpayOrderId: booking.razorpayOrderId,
+            razorpayPaymentId: booking.razorpayPaymentId,
+            notes: updatedNotes,
+          },
+        });
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+    );
 
     // 6. Notify host
     try {

@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 
 export const metadata = {
-  title: "Personal Settings | CalMeet Onboarding",
+  title: "Personal Settings",
 };
 
 export default async function PersonalSettingsOnboardingPage() {

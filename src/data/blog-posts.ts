@@ -28,17 +28,17 @@ export const blogPosts = [
     ]
   },
   {
-    title: "CalMeet for Healthcare: Now HIPAA Compliant",
+    title: "CalMeet for Healthcare: HIPAA-Ready Cloud Infrastructure",
     slug: "calmeet-healthcare-hipaa",
-    description: "We're excited to announce our latest security milestone for healthcare providers.",
+    description: "Discover our security architecture and HIPAA-ready cloud infrastructure for healthcare scheduling.",
     category: "Product",
     author: "Sarah Johnson",
     date: "April 28, 2026",
     image: "https://images.unsplash.com/photo-1505751172107-596225a48805?q=80&w=800&auto=format&fit=crop",
     content: [
-      "Patient confidentiality is a right, not a feature. In our commitment to making professional scheduling accessible to all industries, CalMeet is officially HIPAA compliant starting today.",
-      "Healthcare practitioners can now sync electronic health records, request patient pre-screen details via routing forms, and hold telemedicine meetings secure under standard encryption agreements.",
-      "This release includes signed Business Associate Agreements (BAAs) for our Enterprise Tier clients."
+      "Patient confidentiality is essential. In our commitment to making professional scheduling secure across all industries, CalMeet is built on HIPAA-ready cloud infrastructure with end-to-end encryption in transit and at rest.",
+      "Healthcare practitioners can organize appointments, request patient intake details via encrypted routing forms, and hold telemedicine meetings under secure cloud hosting protocols.",
+      "Enterprise clients can execute custom Business Associate Agreements (BAAs) covering dedicated deployments."
     ]
   },
   {

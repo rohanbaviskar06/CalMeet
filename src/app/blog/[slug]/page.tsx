@@ -19,12 +19,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   
   if (!post) {
     return {
-      title: "Article Not Found | CalMeet",
+      title: "Article Not Found",
     };
   }
 
   return {
-    title: `${post.title} | CalMeet Blog`,
+    title: `${post.title} — Blog`,
     description: post.description,
     openGraph: {
       title: post.title,

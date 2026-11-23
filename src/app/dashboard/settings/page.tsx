@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { SettingsForm } from "@/components/dashboard/settings-client";
 
 export const metadata = {
-  title: "Settings | CalMeet",
+  title: "Settings",
   description: "Manage your account settings, integrations, and preferences",
 };
 

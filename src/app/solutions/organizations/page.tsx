@@ -34,7 +34,7 @@ const features = [
   },
   {
     title: "Dedicated APIs & Custom SLAs",
-    description: "High-rate-limit REST APIs, signed webhooks with guaranteed delivery, 99.99% uptime SLA, and dedicated engineering support.",
+    description: "High-rate-limit REST APIs, signed webhooks with retry delivery, 99.9% uptime target with custom SLA for enterprise, and dedicated engineering support.",
     icon: Code2,
   },
 ];
@@ -106,7 +106,7 @@ export default function OrganizationsSolutionPage() {
                 "GDPR, CCPA & SOC 2 compliant architecture",
                 "Centralized audit logs & activity tracking",
                 "Dedicated Customer Success Manager",
-                "99.99% Uptime Service Level Agreement (SLA)",
+                "99.9% Uptime Target (Custom Enterprise SLA Available)",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />

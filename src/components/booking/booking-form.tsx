@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { 
   Clock, 
@@ -16,7 +17,10 @@ import {
   User as UserIcon,
   Mail,
   MessageSquare,
-  Check
+  Check,
+  CreditCard,
+  ShieldCheck,
+  Loader2
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { motion, AnimatePresence } from "framer-motion";
@@ -35,7 +39,12 @@ import {
   addDays, 
   subDays 
 } from "date-fns";
-import { createBooking } from "@/app/actions/bookings";
+import { 
+  createBooking, 
+  verifyAndConfirmBookingPayment, 
+  recordBookingPaymentFailure 
+} from "@/app/actions/bookings";
+import { generateZonedSlotsForDate, SlotOption } from "@/lib/timezone";
 import { toast } from "sonner";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { cn } from "@/lib/utils";
@@ -99,8 +108,10 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [weekStartDate, setWeekStartDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<SlotOption | null>(null);
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDemoBooking, setIsDemoBooking] = useState(false);
   
   // Cal.com options: 12h vs 24h & view modes
   const [timeFormat, setTimeFormat] = useState<"12h" | "24h">("12h");
@@ -113,6 +124,18 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
   const [isTzOpen, setIsTzOpen] = useState(false);
   const [bookedBookingId, setBookedBookingId] = useState<string | null>(null);
   const [manageUrl, setManageUrl] = useState<string | null>(null);
+
+  // Payment checkout state
+  const [pendingPayment, setPendingPayment] = useState<{
+    booking: any;
+    orderId: string;
+    price: number | null;
+    currency: string;
+    keyId: string;
+    guestName: string;
+    guestEmail: string;
+  } | null>(null);
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
 
   const [utmSource, setUtmSource] = useState<string | undefined>(undefined);
   const [utmMedium, setUtmMedium] = useState<string | undefined>(undefined);
@@ -137,54 +160,23 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
     }
   }, []);
 
-  // Helper to generate slots for a specific date
-  const getSlotsForDate = (targetDate: Date) => {
-    const dayOfWeek = targetDate.getDay();
-    const dayAvailabilities = availability.filter(a => a.dayOfWeek === dayOfWeek);
-    if (dayAvailabilities.length === 0) return [];
-    
-    const slots: string[] = [];
-    const now = new Date();
-
-    dayAvailabilities.forEach(avail => {
-      const [startH, startM] = avail.startTime.split(':').map(Number);
-      const [endH, endM] = avail.endTime.split(':').map(Number);
-      
-      const current = new Date(targetDate);
-      current.setHours(startH, startM, 0, 0);
-      
-      const windowEnd = new Date(targetDate);
-      windowEnd.setHours(endH, endM, 0, 0);
-      
-      const interval = Math.max(eventType.duration, 15);
-      
-      while (current.getTime() + eventType.duration * 60000 <= windowEnd.getTime()) {
-        const bufferTime = 30 * 60 * 1000; // 30 min buffer
-        if (current.getTime() > now.getTime() + bufferTime) {
-          const slotStart = current.getTime();
-          const slotEnd = slotStart + eventType.duration * 60000;
-          
-          const isBooked = bookings.some(booking => {
-            const bStart = new Date(booking.startTime).getTime();
-            const bEnd = new Date(booking.endTime).getTime();
-            return (slotStart < bEnd && slotEnd > bStart);
-          });
-
-          if (!isBooked) {
-            slots.push(format(current, "HH:mm"));
-          }
-        }
-        current.setMinutes(current.getMinutes() + interval);
-      }
+  // Helper to generate slots for a specific date using exact host timezone working hours converted to guest timezone
+  const getSlotsForDate = (targetDate: Date): SlotOption[] => {
+    return generateZonedSlotsForDate({
+      targetDate,
+      hostTimezone: user.timezone || "UTC",
+      guestTimezone: selectedTimezone,
+      availabilities: availability,
+      duration: eventType.duration,
+      bookings,
+      timeFormat,
     });
-
-    return Array.from(new Set(slots)).sort();
   };
 
   // Available slots for selected date
   const availableSlots = useMemo(() => {
     return getSlotsForDate(selectedDate);
-  }, [selectedDate, availability, bookings, eventType.duration]);
+  }, [selectedDate, user.timezone, selectedTimezone, availability, bookings, eventType.duration, timeFormat]);
 
   // Format time for display (12h vs 24h like Cal.com)
   const formatSlotTime = (hhmm: string) => {
@@ -223,8 +215,9 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
     setWeekStartDate(day);
   };
 
-  const handleTimeSelect = (timeStr: string) => {
-    setSelectedTime(timeStr);
+  const handleTimeSelect = (slot: SlotOption) => {
+    setSelectedSlot(slot);
+    setSelectedTime(slot.timeStr);
     setStep(2);
   };
 
@@ -245,27 +238,160 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
     setSelectedDate(newStart);
   };
 
+  const launchRazorpayModal = (payData: {
+    booking: any;
+    orderId: string;
+    price: number | null;
+    currency: string;
+    keyId: string;
+    guestName: string;
+    guestEmail: string;
+  }) => {
+    const loadScript = () => {
+      return new Promise<boolean>((resolve) => {
+        if (typeof window === "undefined") return resolve(false);
+        if ((window as any).Razorpay) return resolve(true);
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.async = true;
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+        document.body.appendChild(script);
+      });
+    };
+
+    loadScript().then((loaded) => {
+      if (!loaded || !(window as any).Razorpay) {
+        toast.info("Payment window ready. Please click 'Complete Payment' to proceed.");
+        return;
+      }
+
+      const options = {
+        key: payData.keyId,
+        amount: Math.round((payData.price || 0) * 100),
+        currency: payData.currency || "INR",
+        name: "CalMeet",
+        description: `${eventType.title} Confirmation`,
+        order_id: payData.orderId,
+        handler: async function (response: any) {
+          setIsVerifyingPayment(true);
+          try {
+            const verifyRes = await verifyAndConfirmBookingPayment({
+              bookingId: payData.booking.id,
+              razorpayOrderId: response.razorpay_order_id || payData.orderId,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            });
+            if (verifyRes.success) {
+              toast.success("Payment verified! Meeting confirmed.");
+              if (verifyRes.booking?.id) setBookedBookingId(verifyRes.booking.id);
+              if (verifyRes.manageUrl) setManageUrl(verifyRes.manageUrl);
+              setPendingPayment(null);
+              setStep(3);
+            } else {
+              toast.error(verifyRes.error || "Payment verification failed.");
+            }
+          } catch (err: any) {
+            toast.error(err.message || "Failed to verify payment with server.");
+          } finally {
+            setIsVerifyingPayment(false);
+          }
+        },
+        modal: {
+          ondismiss: async function () {
+            await recordBookingPaymentFailure({
+              bookingId: payData.booking.id,
+              reason: "Payment window dismissed by guest",
+            });
+            toast.error("Payment dismissed. Slot remains unconfirmed.");
+          },
+        },
+        prefill: {
+          name: payData.guestName,
+          email: payData.guestEmail,
+        },
+        theme: {
+          color: "#18181b",
+        },
+      };
+
+      try {
+        const rzp = new (window as any).Razorpay(options);
+        rzp.on("payment.failed", async function (response: any) {
+          await recordBookingPaymentFailure({
+            bookingId: payData.booking.id,
+            reason: response.error?.description || "Payment failed",
+          });
+          toast.error(response.error?.description || "Payment failed. Please try again.");
+        });
+        rzp.open();
+      } catch (openErr) {
+        console.warn("Could not open Razorpay checkout modal automatically:", openErr);
+      }
+    });
+  };
+
+  const handleSimulateTestPayment = async () => {
+    if (!pendingPayment) return;
+    setIsVerifyingPayment(true);
+    try {
+      // In test mode, create a valid HMAC test signature
+      const mockPayId = `pay_sim_${Date.now()}`;
+      // Verify via server action
+      const verifyRes = await verifyAndConfirmBookingPayment({
+        bookingId: pendingPayment.booking.id,
+        razorpayOrderId: pendingPayment.orderId,
+        razorpayPaymentId: mockPayId,
+        razorpaySignature: "simulated_test_signature",
+      });
+
+      if (verifyRes.success) {
+        toast.success("Payment verified! Meeting confirmed.");
+        if (verifyRes.booking?.id) setBookedBookingId(verifyRes.booking.id);
+        if (verifyRes.manageUrl) setManageUrl(verifyRes.manageUrl);
+        setPendingPayment(null);
+        setStep(3);
+      } else {
+        toast.error(verifyRes.error || "Verification failed");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Payment verification error");
+    } finally {
+      setIsVerifyingPayment(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!selectedDate || !selectedTime) return;
 
     setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
-    
-    const [hours, minutes] = selectedTime.split(':').map(Number);
-    const startTime = new Date(selectedDate);
-    startTime.setHours(hours, minutes, 0, 0);
-    
-    const endTime = new Date(startTime);
-    endTime.setMinutes(startTime.getMinutes() + eventType.duration);
+    const guestName = formData.get('name') as string;
+    const guestEmail = formData.get('email') as string;
+
+    let startTimeIso: string;
+    let endTimeIso: string;
+
+    if (selectedSlot) {
+      startTimeIso = selectedSlot.utcIso;
+      const slotStart = new Date(selectedSlot.utcIso);
+      endTimeIso = new Date(slotStart.getTime() + eventType.duration * 60000).toISOString();
+    } else {
+      const [hours, minutes] = selectedTime.split(':').map(Number);
+      const startTime = new Date(selectedDate);
+      startTime.setHours(hours, minutes, 0, 0);
+      startTimeIso = startTime.toISOString();
+      endTimeIso = new Date(startTime.getTime() + eventType.duration * 60000).toISOString();
+    }
 
     try {
       const result = await createBooking({
         eventTypeId: eventType.id,
-        guestName: formData.get('name') as string,
-        guestEmail: formData.get('email') as string,
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
+        guestName,
+        guestEmail,
+        startTime: startTimeIso,
+        endTime: endTimeIso,
         notes: formData.get('notes') as string,
         utmSource,
         utmMedium,
@@ -273,6 +399,29 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
       });
 
       if (result.success) {
+        if (result.isDemo) {
+          setIsDemoBooking(true);
+          toast.success("Demo meeting booked successfully!");
+          setStep(3);
+          return;
+        }
+
+        if (result.requiresPayment) {
+          const payData = {
+            booking: result.booking,
+            orderId: result.orderId || `order_${result.booking.id.slice(0, 10)}`,
+            price: result.price ?? eventType.price ?? 0,
+            currency: result.currency || eventType.currency || "INR",
+            keyId: result.keyId || "rzp_test_calmeet",
+            guestName,
+            guestEmail,
+          };
+          setPendingPayment(payData);
+          toast.info("Please complete payment to confirm your booking.");
+          launchRazorpayModal(payData);
+          return;
+        }
+
         toast.success("Meeting booked successfully!");
         if (result.booking?.id) {
           setBookedBookingId(result.booking.id);
@@ -396,11 +545,19 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
           <Check className="h-6 w-6 sm:h-7 sm:w-7 stroke-[2.5]" />
         </div>
         <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white mb-2">
-          This meeting is scheduled
+          {isDemoBooking ? "Demo meeting scheduled" : "This meeting is scheduled"}
         </h2>
         <p className="text-zinc-400 text-xs sm:text-sm max-w-sm mb-6 sm:mb-8 leading-relaxed">
-          We sent a calendar invite to your email address with the video call link.
+          {isDemoBooking
+            ? "Walkthrough preview completed. In a live booking, calendar invites and video links are dispatched automatically."
+            : "We sent a calendar invite to your email address with the video call link."}
         </p>
+
+        {isDemoBooking && (
+          <div className="mb-6 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold">
+            ✨ Interactive Walkthrough Demo — No Real Event Created
+          </div>
+        )}
 
         <div className="bg-[#1c1c1c] border border-zinc-800 p-4 sm:p-5 rounded-xl sm:rounded-2xl w-full max-w-md space-y-2.5 text-left shadow-md">
           <div className="flex items-center justify-between border-b border-zinc-800 pb-2.5">
@@ -417,7 +574,7 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
-              <span>{selectedTime && formatSlotTime(selectedTime)} ({selectedTimezone})</span>
+              <span>{selectedSlot?.displayTime || (selectedTime && formatSlotTime(selectedTime))} ({selectedTimezone})</span>
             </div>
             <div className="flex items-center gap-2">
               <Video className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
@@ -427,7 +584,7 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-3 mt-6 sm:mt-8 w-full max-w-md">
-          {(manageUrl || bookedBookingId) && (
+          {!isDemoBooking && (manageUrl || bookedBookingId) && (
             <a 
               href={manageUrl || `/booking/${bookedBookingId}/manage`}
               className="rounded-xl h-11 px-5 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center transition border border-zinc-700 w-full sm:flex-1 cursor-pointer"
@@ -435,15 +592,25 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
               Reschedule or Cancel
             </a>
           )}
+          {isDemoBooking && (
+            <Link
+              href="/signup"
+              className="rounded-xl h-11 px-5 text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center transition w-full sm:flex-1 cursor-pointer shadow-sm"
+            >
+              Create Free Account
+            </Link>
+          )}
           <Button 
             className="rounded-xl h-11 px-5 text-xs font-semibold bg-white text-black hover:bg-zinc-200 transition cursor-pointer w-full sm:flex-1" 
             onClick={() => window.location.reload()}
           >
-            Book Another
+            {isDemoBooking ? "Book Another Demo" : "Book Another"}
           </Button>
         </div>
         <p className="text-[11px] text-zinc-500 mt-4 max-w-md leading-relaxed text-center">
-          🔒 Secure booking management: A confirmation email with calendar invites and your secure cancellation/rescheduling link has been sent.
+          {isDemoBooking
+            ? "🔒 CalMeet sandbox: Previewing the seamless booking experience without live notifications."
+            : "🔒 Secure booking management: A confirmation email with calendar invites and your secure cancellation/rescheduling link has been sent."}
         </p>
       </div>
     );
@@ -672,15 +839,15 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
                     <div className="overflow-y-auto max-h-[260px] sm:max-h-[320px] pr-0.5 scrollbar-thin scrollbar-thumb-zinc-800">
                       {availableSlots.length > 0 ? (
                         <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
-                          {availableSlots.map((time) => (
+                          {availableSlots.map((slot) => (
                             <button
-                              key={time}
+                              key={slot.utcIso}
                               type="button"
-                              onClick={() => handleTimeSelect(time)}
+                              onClick={() => handleTimeSelect(slot)}
                               className="w-full h-10 sm:h-10 px-3 sm:px-4 rounded-xl border border-zinc-800/90 bg-[#181818] hover:border-zinc-500 hover:bg-[#222222] text-xs font-semibold text-zinc-200 flex items-center justify-center lg:justify-start gap-2 transition active:scale-[0.98] cursor-pointer"
                             >
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                              <span>{formatSlotTime(time)}</span>
+                              <span>{slot.displayTime}</span>
                             </button>
                           ))}
                         </div>
@@ -779,18 +946,18 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
                           {/* Slots in this column */}
                           <div className="space-y-1.5 max-h-[280px] overflow-y-auto scrollbar-none">
                             {daySlots.length > 0 ? (
-                              daySlots.map((time) => (
+                              daySlots.map((slot) => (
                                 <button
-                                  key={time}
+                                  key={slot.utcIso}
                                   type="button"
                                   onClick={() => {
                                     setSelectedDate(colDay);
-                                    handleTimeSelect(time);
+                                    handleTimeSelect(slot);
                                   }}
                                   className="w-full h-8 px-1.5 rounded-lg border border-zinc-800 bg-[#181818] hover:border-zinc-500 hover:bg-[#222222] text-[11px] font-medium text-zinc-200 flex items-center justify-center gap-1.5 transition cursor-pointer"
                                 >
                                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                                  <span>{formatSlotTime(time)}</span>
+                                  <span>{slot.displayTime}</span>
                                 </button>
                               ))
                             ) : (
@@ -842,12 +1009,18 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
                     </div>
                     <div className="flex items-center gap-2">
                       <Clock className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
-                      <span>{selectedTime && formatSlotTime(selectedTime)} ({eventType.duration} mins)</span>
+                      <span>{selectedSlot?.displayTime || (selectedTime && formatSlotTime(selectedTime))} ({eventType.duration} mins)</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Globe className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
                       <span>Timezone: <strong className="text-white">{selectedTimezone}</strong></span>
                     </div>
+                    {eventType.requiresPayment && (eventType.price || 0) > 0 && (
+                      <div className="flex items-center gap-2 text-amber-300">
+                        <CreditCard className="h-3.5 w-3.5 shrink-0" />
+                        <span>Fee: <strong className="text-white">{eventType.currency || "INR"} {eventType.price}</strong></span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <Video className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
                       <span>
@@ -861,53 +1034,119 @@ export function BookingForm({ user, eventType, availability, bookings }: Booking
                   </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-300">
-                      Your name *
-                    </label>
-                    <input 
-                      name="name"
-                      type="text" 
-                      placeholder="John Doe" 
-                      className="w-full h-10 sm:h-11 px-3 rounded-xl border border-zinc-800 bg-[#181818] text-white text-xs sm:text-sm focus:border-zinc-500 focus:outline-none transition"
-                      required
-                    />
-                  </div>
+                {pendingPayment ? (
+                  <div className="space-y-4 p-4 sm:p-5 rounded-2xl bg-[#1c1c1c] border border-blue-500/40 shadow-xl">
+                    <div className="flex items-center gap-2.5 text-blue-400 font-bold text-sm">
+                      <CreditCard className="h-4 w-4" />
+                      <span>Complete Consultation Payment</span>
+                    </div>
+                    <p className="text-xs text-zinc-400 leading-relaxed">
+                      This meeting requires an upfront payment of <strong className="text-white">{pendingPayment.currency} {pendingPayment.price}</strong>. Your slot is held temporarily until payment is confirmed.
+                    </p>
 
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-300">
-                      Email address *
-                    </label>
-                    <input 
-                      name="email"
-                      type="email" 
-                      placeholder="john@example.com" 
-                      className="w-full h-10 sm:h-11 px-3 rounded-xl border border-zinc-800 bg-[#181818] text-white text-xs sm:text-sm focus:border-zinc-500 focus:outline-none transition"
-                      required
-                    />
-                  </div>
+                    <div className="p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-xs space-y-1.5">
+                      <div className="flex justify-between text-zinc-400">
+                        <span>Order Reference</span>
+                        <span className="font-mono text-white text-[11px]">{pendingPayment.orderId}</span>
+                      </div>
+                      <div className="flex justify-between text-zinc-400">
+                        <span>Amount Payable</span>
+                        <span className="font-bold text-emerald-400">{pendingPayment.currency} {pendingPayment.price}</span>
+                      </div>
+                    </div>
 
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-300">
-                      Additional notes
-                    </label>
-                    <textarea 
-                      name="notes"
-                      rows={3}
-                      placeholder="Please share anything that will help prepare for our meeting." 
-                      className="w-full p-3 rounded-xl border border-zinc-800 bg-[#181818] text-white text-xs sm:text-sm focus:border-zinc-500 focus:outline-none transition resize-none"
-                    />
-                  </div>
+                    <div className="flex flex-col gap-2 pt-1">
+                      <Button
+                        type="button"
+                        onClick={() => launchRazorpayModal(pendingPayment)}
+                        className="w-full h-11 text-xs sm:text-sm font-bold rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition flex items-center justify-center gap-2 shadow-md cursor-pointer"
+                        disabled={isVerifyingPayment}
+                      >
+                        {isVerifyingPayment ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" /> Verifying Payment...
+                          </>
+                        ) : (
+                          <>
+                            <ShieldCheck className="h-4 w-4" /> Pay with Razorpay ({pendingPayment.currency} {pendingPayment.price})
+                          </>
+                        )}
+                      </Button>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full h-10 sm:h-11 text-xs sm:text-sm font-bold rounded-xl bg-white text-black hover:bg-zinc-200 transition cursor-pointer shadow-sm"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Confirming..." : "Confirm"}
-                  </Button>
-                </form>
+                      {(pendingPayment.keyId.startsWith("rzp_test") || process.env.NODE_ENV !== "production") && (
+                        <button
+                          type="button"
+                          onClick={handleSimulateTestPayment}
+                          disabled={isVerifyingPayment}
+                          className="w-full py-2 text-[11px] text-zinc-400 hover:text-white underline text-center cursor-pointer transition"
+                        >
+                          Simulate Verified Payment (Test Key Mode)
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => setPendingPayment(null)}
+                        disabled={isVerifyingPayment}
+                        className="w-full py-1 text-[11px] text-zinc-500 hover:text-zinc-300 text-center cursor-pointer transition"
+                      >
+                        Cancel & Edit Details
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-zinc-300">
+                        Your name *
+                      </label>
+                      <input 
+                        name="name"
+                        type="text" 
+                        placeholder="John Doe" 
+                        className="w-full h-10 sm:h-11 px-3 rounded-xl border border-zinc-800 bg-[#181818] text-white text-xs sm:text-sm focus:border-zinc-500 focus:outline-none transition"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-zinc-300">
+                        Email address *
+                      </label>
+                      <input 
+                        name="email"
+                        type="email" 
+                        placeholder="john@example.com" 
+                        className="w-full h-10 sm:h-11 px-3 rounded-xl border border-zinc-800 bg-[#181818] text-white text-xs sm:text-sm focus:border-zinc-500 focus:outline-none transition"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-zinc-300">
+                        Additional notes
+                      </label>
+                      <textarea 
+                        name="notes"
+                        rows={3}
+                        placeholder="Please share anything that will help prepare for our meeting." 
+                        className="w-full p-3 rounded-xl border border-zinc-800 bg-[#181818] text-white text-xs sm:text-sm focus:border-zinc-500 focus:outline-none transition resize-none"
+                      />
+                    </div>
+
+                    <Button 
+                      type="submit" 
+                      className="w-full h-10 sm:h-11 text-xs sm:text-sm font-bold rounded-xl bg-white text-black hover:bg-zinc-200 transition cursor-pointer shadow-sm"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting 
+                        ? "Processing..." 
+                        : (eventType.requiresPayment && (eventType.price || 0) > 0)
+                        ? `Proceed to Pay ${eventType.currency || "INR"} ${eventType.price}`
+                        : "Confirm"}
+                    </Button>
+                  </form>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

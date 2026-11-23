@@ -173,6 +173,7 @@ export function NotificationBell() {
           <Button 
             variant="ghost" 
             size="icon" 
+            aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
             className="relative h-10 w-10 rounded-full transition-all hover:bg-muted duration-200"
           >
             {unreadCount > 0 ? (

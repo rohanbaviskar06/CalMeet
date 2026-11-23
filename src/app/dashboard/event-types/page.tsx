@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { EventTypeList } from "@/components/dashboard/event-type-client";
 
 export const metadata = {
-  title: "Event Types | CalMeet",
+  title: "Event Types",
   description: "Configure different events for people to book on your calendar",
 };
 

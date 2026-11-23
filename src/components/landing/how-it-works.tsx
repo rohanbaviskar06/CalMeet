@@ -70,9 +70,9 @@ const steps = [
                   <span className="text-[10px] font-bold text-zinc-900 dark:text-zinc-100">Synced</span>
                 </div>
               ) : (
-                <button className="text-[10px] font-bold text-zinc-900 dark:text-zinc-100 px-2.5 py-1 rounded-full border border-zinc-300 dark:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                <span role="presentation" className="text-[10px] font-bold text-zinc-900 dark:text-zinc-100 px-2.5 py-1 rounded-full border border-zinc-300 dark:border-zinc-600 select-none">
                   Connect
-                </button>
+                </span>
               )}
             </motion.div>
           ))}

@@ -7,7 +7,7 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Embed Event Type | CalMeet",
+  title: "Embed Event Type",
   description: "Embed your booking schedule onto websites, apps, and emails",
 };
 

@@ -71,9 +71,9 @@ export default async function DashboardLayout({
               </div>
             </header>
 
-            <main className="flex-1 px-4 md:px-8 py-4 md:py-6 pb-24 md:pb-6 overflow-y-auto">
+            <div className="flex-1 px-4 md:px-8 py-4 md:py-6 pb-24 md:pb-6 overflow-y-auto">
               <div className="max-w-6xl mx-auto w-full">{children}</div>
-            </main>
+            </div>
             <MobileNav plan={plan} />
           </SidebarInset>
         </div>
